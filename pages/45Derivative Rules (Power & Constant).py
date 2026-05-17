@@ -1,0 +1,444 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+st.set_page_config(page_title="Derivative Rules", layout="wide")
+
+def render_derivative_rules_lab():
+    html_code = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        .container { display: flex; flex-direction: row; gap: 30px; width: 100%; max-width: 1200px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        .controls { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; }
+        .viz { flex: 1.5; display: flex; flex-direction: column; gap: 15px; position: relative;}
+        
+        .canvas-wrapper { position: relative; width: 100%; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .canvas-label { position: absolute; top: 10px; left: 15px; font-weight: 800; font-size: 16px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 8px; backdrop-filter: blur(4px); }
+        canvas { background: #1e293b; width: 100%; display: block; }
+        
+        .title { font-size: 28px; font-weight: 900; color: #f8fafc; margin-bottom: 5px; }
+        .desc { font-size: 15px; color: #94a3b8; line-height: 1.5; }
+        
+        .func-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .func-btn { background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center; font-size: 14px;}
+        .func-btn:hover { background: rgba(255,255,255,0.1); }
+        .func-btn.active { background: rgba(167, 139, 250, 0.2); border-color: #a78bfa; color: #a78bfa; box-shadow: 0 0 15px rgba(167, 139, 250, 0.3); }
+        
+        .slider-group { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;}
+        .slider-label { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #cbd5e1;}
+        
+        input[type="range"] { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; outline: none; -webkit-appearance: none; margin-bottom: 15px;}
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: background 0.2s, box-shadow 0.2s; background: #FFD166; box-shadow: 0 0 10px #FFD166; }
+        
+        .val-display { font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 900; }
+        
+        .auto-btn { background: rgba(78, 205, 196, 0.2); color: #4ECDC4; border: 1px solid rgba(78, 205, 196, 0.5); padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; text-transform: uppercase; letter-spacing: 1px;}
+        .auto-btn:hover { background: rgba(78, 205, 196, 0.4); box-shadow: 0 0 15px rgba(78, 205, 196, 0.3);}
+        
+        .math-box { display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .math-eq { font-family: monospace; font-size: 20px; font-weight: bold; }
+        
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="controls">
+                <div>
+                    <div class="title">The Derivative Painter 🖌️</div>
+                    <div class="desc">Drag the point on the top graph to "paint" the slope on the bottom graph. Watch the derivative perfectly trace out a new function!</div>
+                </div>
+                
+                <div class="func-selector" id="func-btns">
+                    <button class="func-btn" data-type="const">Constant (y = 3)</button>
+                    <button class="func-btn" data-type="linear">Linear (y = 1.5x)</button>
+                    <button class="func-btn active" data-type="quad">Quadratic (y = 0.5x²)</button>
+                    <button class="func-btn" data-type="cubic">Cubic (y = 0.1x³)</button>
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>x position</span>
+                        <span id="x-val" class="val-display" style="color: #FFD166;">0.00</span>
+                    </div>
+                    <input type="range" id="x-slider" min="-6" max="6" step="0.05" value="0">
+                    <button class="auto-btn" id="auto-btn">✨ Auto-Sweep</button>
+                </div>
+                
+                <div class="math-box">
+                    <div style="font-size: 14px; color: #a78bfa; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Function</div>
+                    <div class="math-eq" id="f-eq" style="color: #f8fafc;">f(x) = 0.5x²</div>
+                    <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0;"></div>
+                    <div style="font-size: 14px; color: #4ECDC4; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Derivative (Slope)</div>
+                    <div class="math-eq" id="df-eq" style="color: #4ECDC4;">f'(x) = x</div>
+                    <div class="math-eq" id="df-val" style="color: #4ECDC4; font-size: 24px; margin-top: 5px;">0.00</div>
+                </div>
+            </div>
+            
+            <div class="viz">
+                <div class="canvas-wrapper">
+                    <div class="canvas-label" style="color: #a78bfa;">Function f(x)</div>
+                    <canvas id="cvs-top" width="600" height="280"></canvas>
+                </div>
+                <div class="canvas-wrapper">
+                    <div class="canvas-label" style="color: #4ECDC4;">Derivative f'(x)</div>
+                    <canvas id="cvs-bot" width="600" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            const cvsTop = document.getElementById('cvs-top');
+            const ctxTop = cvsTop.getContext('2d');
+            const cvsBot = document.getElementById('cvs-bot');
+            const ctxBot = cvsBot.getContext('2d');
+            
+            const xSlider = document.getElementById('x-slider');
+            const autoBtn = document.getElementById('auto-btn');
+            const funcBtns = document.querySelectorAll('.func-btn');
+            
+            const xValDisp = document.getElementById('x-val');
+            const fEqDisp = document.getElementById('f-eq');
+            const dfEqDisp = document.getElementById('df-eq');
+            const dfValDisp = document.getElementById('df-val');
+            
+            // Define functions
+            const funcs = {
+                'const': { 
+                    f: x => 3, 
+                    df: x => 0, 
+                    str: "f(x) = 3", 
+                    dstr: "f'(x) = 0" 
+                },
+                'linear': { 
+                    f: x => 1.5 * x, 
+                    df: x => 1.5, 
+                    str: "f(x) = 1.5x", 
+                    dstr: "f'(x) = 1.5" 
+                },
+                'quad': { 
+                    f: x => 0.5 * x * x - 2, 
+                    df: x => x, 
+                    str: "f(x) = 0.5x² - 2", 
+                    dstr: "f'(x) = x" 
+                },
+                'cubic': { 
+                    f: x => 0.1 * x * x * x, 
+                    df: x => 0.3 * x * x, 
+                    str: "f(x) = 0.1x³", 
+                    dstr: "f'(x) = 0.3x²" 
+                }
+            };
+            
+            let currentType = 'quad';
+            let traces = [];
+            let lastX = null;
+            let autoInterval = null;
+            let autoDirection = 1;
+            
+            // Coordinate System Configuration
+            const rangeX = 7; // -7 to 7
+            const rangeY = 6; // -6 to 6
+            const w = cvsTop.width;
+            const h = cvsTop.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const scaleX = w / (rangeX * 2);
+            const scaleY = h / (rangeY * 2);
+            
+            function toScreen(x, y) {
+                return { px: cx + x * scaleX, py: cy - y * scaleY };
+            }
+            
+            funcBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    funcBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentType = e.target.dataset.type;
+                    traces = []; // clear trail
+                    updateEq();
+                    draw();
+                });
+            });
+            
+            function updateEq() {
+                const fn = funcs[currentType];
+                fEqDisp.innerText = fn.str;
+                dfEqDisp.innerText = fn.dstr;
+            }
+            
+            xSlider.addEventListener('input', () => {
+                stopAuto();
+                updateTrace();
+                draw();
+            });
+            
+            function updateTrace() {
+                let x = parseFloat(xSlider.value);
+                let df = funcs[currentType].df(x);
+                
+                // If jumped too far (slider clicked), clear traces to avoid weird lines
+                if (lastX !== null && Math.abs(x - lastX) > 0.5) {
+                    traces = [];
+                }
+                
+                traces.push({x: x, y: df});
+                lastX = x;
+                
+                // Sort traces by x just in case
+                traces.sort((a, b) => a.x - b.x);
+            }
+            
+            function stopAuto() {
+                if (autoInterval) {
+                    clearInterval(autoInterval);
+                    autoInterval = null;
+                    autoBtn.innerText = "✨ Auto-Sweep";
+                }
+            }
+            
+            autoBtn.addEventListener('click', () => {
+                if (autoInterval) {
+                    stopAuto();
+                } else {
+                    autoBtn.innerText = "⏸️ Pause Sweep";
+                    xSlider.value = -6; // Start from left
+                    traces = []; // Clear
+                    lastX = null;
+                    
+                    autoInterval = setInterval(() => {
+                        let x = parseFloat(xSlider.value);
+                        x += 0.05 * autoDirection;
+                        if (x > 6) { x = 6; autoDirection = -1; }
+                        if (x < -6) { x = -6; autoDirection = 1; }
+                        
+                        xSlider.value = x;
+                        updateTrace();
+                        draw();
+                    }, 20);
+                }
+            });
+            
+            function drawGrid(ctx) {
+                ctx.clearRect(0, 0, w, h);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for(let i = -10; i <= 10; i++) {
+                    let p1 = toScreen(i, -10);
+                    let p2 = toScreen(i, 10);
+                    ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py);
+                    p1 = toScreen(-10, i);
+                    p2 = toScreen(10, i);
+                    ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py);
+                }
+                ctx.stroke();
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, cy); ctx.lineTo(w, cy); // X axis
+                ctx.moveTo(cx, 0); ctx.lineTo(cx, h); // Y axis
+                ctx.stroke();
+            }
+            
+            function drawFunction(ctx, fn, color) {
+                ctx.beginPath();
+                for(let x = -rangeX; x <= rangeX; x += 0.1) {
+                    let y = fn(x);
+                    let p = toScreen(x, y);
+                    if (x === -rangeX) ctx.moveTo(p.px, p.py);
+                    else ctx.lineTo(p.px, p.py);
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            function draw() {
+                const x = parseFloat(xSlider.value);
+                const fn = funcs[currentType].f;
+                const dfn = funcs[currentType].df;
+                
+                const y = fn(x);
+                const slope = dfn(x);
+                
+                // Update UI
+                xValDisp.innerText = x.toFixed(2);
+                dfValDisp.innerText = slope.toFixed(2);
+                
+                // --- TOP CANVAS ---
+                drawGrid(ctxTop);
+                // Draw faded ghost derivative on top? No, keep it separate.
+                drawFunction(ctxTop, fn, 'rgba(167, 139, 250, 0.8)'); // Purple
+                
+                // Tangent Line
+                let lineExt = 3; 
+                let p1 = toScreen(x - lineExt, y - slope * lineExt);
+                let p2 = toScreen(x + lineExt, y + slope * lineExt);
+                
+                ctxTop.beginPath();
+                ctxTop.moveTo(p1.px, p1.py);
+                ctxTop.lineTo(p2.px, p2.py);
+                ctxTop.strokeStyle = '#FFD166';
+                ctxTop.lineWidth = 3;
+                ctxTop.stroke();
+                
+                // Base Point
+                let pBase = toScreen(x, y);
+                ctxTop.beginPath();
+                ctxTop.arc(pBase.px, pBase.py, 7, 0, Math.PI * 2);
+                ctxTop.fillStyle = '#FFD166';
+                ctxTop.fill();
+                ctxTop.strokeStyle = '#fff';
+                ctxTop.lineWidth = 2;
+                ctxTop.stroke();
+                
+                
+                // --- BOTTOM CANVAS ---
+                drawGrid(ctxBot);
+                
+                // Draw theoretical derivative faded
+                drawFunction(ctxBot, dfn, 'rgba(255, 255, 255, 0.1)');
+                
+                // Draw trace
+                if (traces.length > 0) {
+                    ctxBot.beginPath();
+                    traces.forEach((t, i) => {
+                        let p = toScreen(t.x, t.y);
+                        if(i === 0) ctxBot.moveTo(p.px, p.py);
+                        else ctxBot.lineTo(p.px, p.py);
+                    });
+                    ctxBot.strokeStyle = '#4ECDC4';
+                    ctxBot.lineWidth = 4;
+                    ctxBot.shadowColor = '#4ECDC4';
+                    ctxBot.shadowBlur = 10;
+                    ctxBot.stroke();
+                    ctxBot.shadowBlur = 0;
+                }
+                
+                // Draw derivative point
+                let pdBase = toScreen(x, slope);
+                ctxBot.beginPath();
+                ctxBot.arc(pdBase.px, pdBase.py, 7, 0, Math.PI * 2);
+                ctxBot.fillStyle = '#4ECDC4';
+                ctxBot.fill();
+                ctxBot.strokeStyle = '#fff';
+                ctxBot.lineWidth = 2;
+                ctxBot.stroke();
+                
+                // Draw vertical connecting line between canvases (simulated)
+                // We draw a faint dashed line straight down from the top point to the bottom border
+                ctxTop.beginPath();
+                ctxTop.moveTo(pBase.px, pBase.py);
+                ctxTop.lineTo(pBase.px, h);
+                ctxTop.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctxTop.setLineDash([5, 5]);
+                ctxTop.stroke();
+                ctxTop.setLineDash([]);
+                
+                ctxBot.beginPath();
+                ctxBot.moveTo(pdBase.px, 0);
+                ctxBot.lineTo(pdBase.px, pdBase.py);
+                ctxBot.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctxBot.setLineDash([5, 5]);
+                ctxBot.stroke();
+                ctxBot.setLineDash([]);
+            }
+            
+            // Initialize
+            updateEq();
+            traces.push({x: 0, y: funcs['quad'].df(0)});
+            draw();
+        </script>
+    </body>
+    </html>
+    """
+    components.html(html_code, height=750)
+
+
+def main():
+    st.title("🧮 Page 45: Derivative Rules (Power & Constant)")
+    
+    st.markdown(
+        """
+        Calculating the derivative using the limit definition (shrinking $h$ to zero) every single time would be exhausting. 
+        Fortunately, mathematicians noticed **patterns**. 
+        
+        By spotting these patterns, we created "shortcut rules" to find derivatives instantly. Let's build the intuition for the two most fundamental rules: the **Constant Rule** and the **Power Rule**.
+        """
+    )
+    
+    st.divider()
+
+    st.markdown("### 1) The Discovery Lab 🔬")
+    st.markdown("Play with the simulator below. Your goal is to see how the slope (tangent line) of the original function maps exactly to the height of the derivative function.")
+    
+    render_derivative_rules_lab()
+    
+    st.divider()
+    
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.markdown("### The Constant Rule")
+        st.info("**Rule:** If $f(x) = C$, then $f'(x) = 0$")
+        st.markdown(
+            """
+            **The Intuition:**
+            A constant function is just a flat, horizontal line. If you are walking on flat ground, you are neither going up nor down. 
+            
+            Your slope (rate of change) is exactly **zero** everywhere. 
+            
+            * **Example:** $f(x) = 5 \\implies f'(x) = 0$
+            """
+        )
+        
+    with col2:
+        st.markdown("### The Power Rule")
+        st.success("**Rule:** If $f(x) = x^n$, then $f'(x) = n \\cdot x^{n-1}$")
+        st.markdown(
+            """
+            **The Intuition:**
+            When you traced the Quadratic function ($x^2$), the slope perfectly matched the Linear function ($2x$). 
+            When you traced the Cubic function ($x^3$), the slope matched the Quadratic function ($3x^2$).
+            
+            **The Pattern:** You bring the exponent down to the front, and subtract 1 from the exponent.
+            
+            * **Example:** $f(x) = x^3 \\implies f'(x) = 3x^2$
+            * **Example:** $f(x) = x^{10} \\implies f'(x) = 10x^9$
+            """
+        )
+        
+    st.divider()
+    
+    st.markdown("### 🤖 Bridge to AI: Why does this matter?")
+    st.markdown(
+        """
+        When you train a Neural Network, you define a **Loss Function** (which measures how wrong the AI is) and you want to find the minimum of that function.
+        
+        Most Loss Functions (like Mean Squared Error) use powers, e.g., $Loss = (Prediction - Reality)^2$. 
+        
+        To minimize it, the AI needs to find the derivative. Thanks to the **Power Rule**, the computer doesn't need to calculate infinite limits! It just uses the shortcut $2 \\times (Prediction - Reality)$ and instantly knows which direction is downhill. **Calculus rules are the engine that makes AI fast.**
+        """
+    )
+    
+    st.divider()
+    st.markdown(
+        f"""
+        <div style="color:#94a3b8; font-size:0.95rem;">
+        Page 45 — you now know the shortcuts. But what happens when we stack functions inside each other? That's the core of Deep Learning. Up next: The Chain Rule!
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+if __name__ == "__main__":
+    main()
