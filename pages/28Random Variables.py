@@ -89,7 +89,9 @@ def render_continuous():
         st.markdown("</div>", unsafe_allow_html=True)
        
     with col2:
-        x = np.linspace(130, 210, 500)
+        x_min = mu - 4 * sigma
+        x_max = mu + 4 * sigma
+        x = np.linspace(x_min, x_max, 500)
         y = norm.pdf(x, mu, sigma)
        
         fig = go.Figure(data=[go.Scatter(x=x, y=y, fill='tozeroy', mode='lines', line=dict(color='#10b981', width=3))])
@@ -102,7 +104,7 @@ def render_continuous():
             font=dict(color='#f8fafc'),
             margin=dict(l=20, r=20, t=40, b=20)
         )
-        fig.update_xaxes(gridcolor='#334155')
+        fig.update_xaxes(gridcolor='#334155', range=[x_min, x_max])
         fig.update_yaxes(gridcolor='#334155')
         st.plotly_chart(fig, use_container_width=True)
 
@@ -128,31 +130,27 @@ def render_bridge():
         }
         bin_width = bin_mapping[bins]
         st.markdown(f"**Current Bucket Width:** {bin_width} cm")
-        st.markdown("Notice how as the buckets get thinner, the tops of the bars start to form a smooth curve. Calculus takes this to the extreme: an infinite number of infinitely thin bars!")
+        st.markdown("As the buckets get thinner, the density bars approximate a smooth curve. In the limit, continuous probability is described by a density rather than infinitely thin probability bars.")
         st.markdown("</div>", unsafe_allow_html=True)
        
     with col2:
         # Simulate data
-        np.random.seed(42)
-        data = np.random.normal(170, 7, 10000)
+        rng = np.random.default_rng(42)
+        data = rng.normal(170, 7, 10000)
        
         fig = go.Figure()
        
-        if bin_width > 0.5:
-            # Discrete histogram
-            counts, edges = np.histogram(data, bins=np.arange(130, 210 + bin_width, bin_width))
-            # Normalize to density so it matches the curve
-            density = counts / (counts.sum() * bin_width)
-           
-            fig.add_trace(go.Bar(
-                x=edges[:-1] + bin_width/2,
-                y=density,
-                width=bin_width,
-                marker_color='rgba(59, 130, 246, 0.6)',
-                marker_line_color='rgba(59, 130, 246, 1)',
-                marker_line_width=1,
-                name="Discrete Bins"
-            ))
+        counts, edges = np.histogram(data, bins=np.arange(130, 210 + bin_width, bin_width))
+        density = counts / (len(data) * bin_width)
+        fig.add_trace(go.Bar(
+            x=edges[:-1] + bin_width/2,
+            y=density,
+            width=bin_width,
+            marker_color='rgba(59, 130, 246, 0.6)',
+            marker_line_color='rgba(59, 130, 246, 1)',
+            marker_line_width=1,
+            name="Density by Bucket"
+        ))
            
         # Always show the continuous curve as a target
         x_smooth = np.linspace(130, 210, 500)
@@ -161,15 +159,9 @@ def render_bridge():
             x=x_smooth,
             y=y_smooth,
             mode='lines',
-            line=dict(color='#f43f5e', width=3, dash='dash' if bin_width > 0.5 else 'solid'),
+            line=dict(color='#f43f5e', width=3, dash='dash'),
             name="Continuous Curve"
         ))
-       
-        # If the smallest bin width, fill the curve
-        if bin_width <= 0.5:
-            fig.data[0].fill = 'tozeroy'
-            fig.data[0].fillcolor = 'rgba(244, 63, 94, 0.3)'
-            fig.data[0].name = "Smooth Distribution"
            
         fig.update_layout(
             title="Histogram Approaching Continuous Density",
@@ -201,4 +193,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

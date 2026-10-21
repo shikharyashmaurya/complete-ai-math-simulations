@@ -8,10 +8,8 @@ st.set_page_config(page_title="Z-Scores & Standardization", layout="wide")
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: sans-serif;
     }
 
     .hero-box {
@@ -176,7 +174,7 @@ def render_interactive_ruler():
             fig_raw.add_annotation(
                 x=x_val, y=max(y_raw)*0.5,
                 text=f"x = {x_val:.1f}", showarrow=True, arrowhead=2, ax=50 if x_val > mu else -50, ay=0,
-                font=dict(color="#10b981", size=14, family="Inter")
+                font=dict(color="#10b981", size=14, family="sans-serif")
             )
            
             # Draw Sigma Ruler arrows
@@ -242,7 +240,7 @@ def render_interactive_ruler():
             fig_std.add_annotation(
                 x=z_score, y=max(y_std)*0.5,
                 text=f"z = {z_score:.2f}", showarrow=True, arrowhead=2, ax=50 if z_score > 0 else -50, ay=0,
-                font=dict(color="#34d399", size=14, family="Inter")
+                font=dict(color="#34d399", size=14, family="sans-serif")
             )
            
             # Ruler marks
@@ -334,4 +332,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

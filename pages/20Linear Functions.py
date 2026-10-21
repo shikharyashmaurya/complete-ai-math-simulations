@@ -11,8 +11,7 @@ def render_threejs_interactive():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background: #0f172a; color: white; }
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; }
         #canvas-container { width: 100%; height: 600px; position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         #ui-layer {
             position: absolute; top: 20px; right: 20px; 
@@ -60,8 +59,8 @@ def render_threejs_interactive():
             transition: opacity 0.5s;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js" integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf" crossorigin="anonymous"></script>
     </head>
     <body>
     <div id="canvas-container">
@@ -254,8 +253,7 @@ def render_neuron_cartoon():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; }
+        body { margin: 0; padding: 0; background: transparent; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; justify-content: center; align-items: center; }
         
         .machine-container {
             display: flex;
@@ -439,7 +437,7 @@ def main():
         - **w (weight)** is **sensitivity**: nudge **x** by a little, and **y** reacts **w times** as hard.
         - **b (bias)** is **shift**: the entire line rides up or down without changing its steepness.
 
-        This single straight line is the absolute foundation of Neural Networks. Every single connection between neurons is just multiplying by a weight and adding a bias.
+        This affine rule is a building block for neural networks: each neuron combines weighted inputs and adds a bias. A layer applies this operation to many neurons at once, then may apply a non-linear activation.
         """
     )
     
@@ -490,4 +488,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

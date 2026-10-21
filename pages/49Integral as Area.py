@@ -138,14 +138,18 @@ const funcs = {
 
 let currentF = 'quadratic';
 let a = -2, b = 2, n = 10;
+let canvasDpr = Math.min(window.devicePixelRatio || 1, 2);
 
 function resize() {
   const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width * devicePixelRatio;
-  canvas.height = rect.height * devicePixelRatio;
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
-  ctx.scale(devicePixelRatio, devicePixelRatio);
+  canvasDpr = Math.min(window.devicePixelRatio || 1, 2);
+  const width = Math.min(rect.width, 1200);
+  const height = Math.min(rect.height, 650);
+  canvas.width = Math.round(width * canvasDpr);
+  canvas.height = Math.round(height * canvasDpr);
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
   draw();
 }
 
@@ -166,8 +170,8 @@ function getTrueIntegral(fa, fb) {
 }
 
 function draw() {
-  const w = canvas.width / devicePixelRatio;
-  const h = canvas.height / devicePixelRatio;
+  const w = canvas.width / canvasDpr;
+  const h = canvas.height / canvasDpr;
   ctx.clearRect(0, 0, w, h);
 
   const fn = funcs[currentF];
@@ -270,7 +274,11 @@ document.querySelectorAll('.fbtn').forEach(btn => {
 });
 
 window.addEventListener('resize', resize);
-setTimeout(resize, 100);
+const initialResize = setTimeout(resize, 100);
+window.addEventListener('pagehide', () => {
+  clearTimeout(initialResize);
+  window.removeEventListener('resize', resize);
+});
 
 </script>
 </body>

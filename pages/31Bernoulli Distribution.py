@@ -8,10 +8,8 @@ st.set_page_config(page_title="Bernoulli Distribution", layout="wide")
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: system-ui, sans-serif;
     }
 
     .hero-box {
@@ -194,7 +192,12 @@ def render_coin_section(p):
     q = 1 - p
 
     # The coin face changes based on p
-    if p >= 0.5:
+    if p == 0.5:
+        coin_class = "coin-heads"
+        coin_emoji = "H"
+        label_class = "label-heads"
+        label_text = "Fair Coin"
+    elif p > 0.5:
         coin_class = "coin-heads"
         coin_emoji = "H"
         label_class = "label-heads"
@@ -321,7 +324,8 @@ def render_simulation(p):
     )
 
     if st.button("🪙 Flip Coins!", use_container_width=True):
-        st.session_state["sim_results"] = np.random.binomial(1, p, n_flips)
+        rng = np.random.default_rng()
+        st.session_state["sim_results"] = rng.binomial(1, p, n_flips)
         st.session_state["sim_p"] = p
         st.session_state["sim_n"] = n_flips
 
@@ -580,4 +584,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

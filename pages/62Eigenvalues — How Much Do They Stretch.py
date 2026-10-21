@@ -187,12 +187,22 @@ let vx = 1.4, vy = 0.9;
 let pulseOn = false;
 let pulseT = 0;
 let particles = [];
+let pulseFrame = null;
+let drawFrame = null;
 
 const cvs = document.getElementById('cvs');
 const ctx = cvs.getContext('2d');
 const OX = cvs.width / 2, OY = cvs.height / 2, SCALE = 68;
 
 function setMode(m) {
+  if (pulseOn) {
+    pulseOn = false;
+    if (pulseFrame !== null) cancelAnimationFrame(pulseFrame);
+    pulseFrame = null;
+    const pulseBtn = document.getElementById('pulse-btn');
+    pulseBtn.classList.remove('active');
+    pulseBtn.textContent = '▶ PULSE λ (watch it breathe)';
+  }
   mode = m;
   document.getElementById('mode-1d').classList.toggle('active', m === '1d');
   document.getElementById('mode-2d').classList.toggle('active', m === '2d');
@@ -260,12 +270,15 @@ function togglePulse() {
     btn.textContent = '⏸ STOP PULSE';
     animatePulse();
   } else {
+    if (pulseFrame !== null) cancelAnimationFrame(pulseFrame);
+    pulseFrame = null;
     btn.classList.remove('active');
     btn.textContent = '▶ PULSE λ (watch it breathe)';
   }
 }
 
 function animatePulse() {
+  pulseFrame = null;
   if (!pulseOn) return;
   pulseT += 0.03;
   const wave = Math.sin(pulseT) * 1.8;
@@ -278,7 +291,7 @@ function animatePulse() {
     document.getElementById('sl-l2').value = 1.0 + Math.cos(pulseT * 0.7) * 1.0;
     onMatrixSlider();
   }
-  requestAnimationFrame(animatePulse);
+  pulseFrame = requestAnimationFrame(animatePulse);
 }
 
 function transform(x, y) {
@@ -394,7 +407,7 @@ function spawnParticles(x, y, col) {
   }
 }
 
-function draw() {
+function draw(emitParticles = true) {
   const { wx, wy } = transform(vx, vy);
   const lenV = Math.sqrt(vx*vx + vy*vy);
   const lenW = Math.sqrt(wx*wx + wy*wy);
@@ -418,13 +431,18 @@ function draw() {
   const eigs = getEigenInfo();
   let alignedIdx = -1, alignedLam = null;
   const vAng = Math.atan2(vy, vx);
+  const scalarTransform = mode === '2d' && Math.abs(l1 - l2) < 1e-6;
+  if (scalarTransform && lenV > 1e-9) {
+    alignedIdx = 0;
+    alignedLam = (l1 + l2) / 2;
+  }
 
   for (let i = 0; i < eigs.length; i++) {
     const ev = eigs[i];
     let evAng = Math.atan2(ev.vy, ev.vx);
     let diff = Math.abs(vAng - evAng) % Math.PI;
     if (diff > Math.PI/2) diff = Math.PI - diff;
-    const isAligned = diff < 0.08;
+    const isAligned = !scalarTransform && diff < 0.08;
     if (isAligned) { alignedIdx = i; alignedLam = ev.lambda; }
 
     ctx.save();
@@ -473,11 +491,11 @@ function draw() {
   particles = particles.filter(p => p.a > 0);
   ctx.globalAlpha = 1;
 
-  if (alignedIdx >= 0) {
+  if (alignedIdx >= 0 && emitParticles) {
     spawnParticles(OX+vx*SCALE, OY-vy*SCALE, eigs[alignedIdx].color);
   }
 
-  const displayLam = mode === '1d' ? lambda1d : (alignedLam !== null ? alignedLam : null);
+  const displayLam = alignedLam;
   document.getElementById('len-before').textContent = lenV.toFixed(2);
   document.getElementById('len-after').textContent = lenW.toFixed(2);
 
@@ -485,7 +503,9 @@ function draw() {
   if (alignedIdx >= 0 && displayLam !== null) {
     const cls = classifyLambda(displayLam);
     status.className = 'status-banner highlight';
-    status.textContent = '✓ On eigen-direction! ' + cls.text + '  ‖Av‖/‖v‖ = ' + Math.abs(displayLam).toFixed(2);
+    status.textContent = (scalarTransform
+      ? '✓ Every nonzero direction is an eigen-direction! '
+      : '✓ On eigen-direction! ') + cls.text + '  ‖Av‖/‖v‖ = ' + Math.abs(displayLam).toFixed(2);
     document.getElementById('ratio-text').textContent = 'ratio ≈ |λ| = ' + Math.abs(displayLam).toFixed(2);
     updateBadges(displayLam);
     document.getElementById('eq-lam').textContent = displayLam.toFixed(2);
@@ -501,51 +521,60 @@ function draw() {
   }
 
   drawMiniBars();
+  if (particles.length && drawFrame === null) {
+    drawFrame = requestAnimationFrame(() => {
+      drawFrame = null;
+      draw(false);
+    });
+  }
 }
-
-function loop() {
-  draw();
-  requestAnimationFrame(loop);
-}
-loop();
 
 let dragging = false;
 cvs.addEventListener('mousedown', e => {
   const r = cvs.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const mx = (e.clientX - r.left) * cvs.width / r.width;
+  const my = (e.clientY - r.top) * cvs.height / r.height;
   const px = OX + vx*SCALE, py = OY - vy*SCALE;
   if (Math.hypot(mx-px, my-py) < 22) dragging = true;
 });
 cvs.addEventListener('mousemove', e => {
   if (!dragging) return;
   const r = cvs.getBoundingClientRect();
-  vx = (e.clientX - r.left - OX) / SCALE;
-  vy = -(e.clientY - r.top - OY) / SCALE;
+  vx = ((e.clientX - r.left) * cvs.width / r.width - OX) / SCALE;
+  vy = -((e.clientY - r.top) * cvs.height / r.height - OY) / SCALE;
   const m = Math.hypot(vx, vy);
   if (m > 3.5) { vx = vx/m*3.5; vy = vy/m*3.5; }
   if (m < 0.15) { vx = 0.2; vy = 0; }
+  draw();
 });
 window.addEventListener('mouseup', () => dragging = false);
 
 cvs.addEventListener('touchstart', e => {
   if (e.touches.length !== 1) return;
   const r = cvs.getBoundingClientRect();
-  const mx = e.touches[0].clientX - r.left, my = e.touches[0].clientY - r.top;
+  const mx = (e.touches[0].clientX - r.left) * cvs.width / r.width;
+  const my = (e.touches[0].clientY - r.top) * cvs.height / r.height;
   const px = OX + vx*SCALE, py = OY - vy*SCALE;
   if (Math.hypot(mx-px, my-py) < 28) { dragging = true; e.preventDefault(); }
 });
 cvs.addEventListener('touchmove', e => {
   if (!dragging || e.touches.length !== 1) return;
   const r = cvs.getBoundingClientRect();
-  vx = (e.touches[0].clientX - r.left - OX) / SCALE;
-  vy = -(e.touches[0].clientY - r.top - OY) / SCALE;
+  vx = ((e.touches[0].clientX - r.left) * cvs.width / r.width - OX) / SCALE;
+  vy = -((e.touches[0].clientY - r.top) * cvs.height / r.height - OY) / SCALE;
   const m = Math.hypot(vx, vy);
   if (m > 3.5) { vx = vx/m*3.5; vy = vy/m*3.5; }
+  draw();
   e.preventDefault();
 });
 cvs.addEventListener('touchend', () => dragging = false);
 
 setMode('1d');
+window.addEventListener('pagehide', () => {
+  pulseOn = false;
+  if (pulseFrame !== null) cancelAnimationFrame(pulseFrame);
+  if (drawFrame !== null) cancelAnimationFrame(drawFrame);
+});
 </script>
 </body>
 </html>

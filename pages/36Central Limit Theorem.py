@@ -8,10 +8,8 @@ st.set_page_config(page_title="Central Limit Theorem", layout="wide")
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: system-ui, sans-serif;
     }
 
     .hero-box {
@@ -104,7 +102,7 @@ def render_hero():
     <div class="hero-box">
         <div class="hero-title">🎲 Page 36: Central Limit Theorem</div>
         <div class="hero-sub">
-            The closest thing to magic in mathematics. No matter what crazy shape your original data has, if you take samples and average them, those averages will <strong>always</strong> form a beautiful, predictable <strong>Bell Curve</strong>.<br><br>
+            The Central Limit Theorem explains why, under suitable conditions (including finite variance), averages of sufficiently large independent samples are approximately Normal—even when the original data is not.<br><br>
             It is the grand bridge between chaotic randomness and structured predictability!
         </div>
     </div>
@@ -141,7 +139,7 @@ def render_interactive_simulation():
             <div class="stat-label" style="color: #3b82f6;">Theoretical Expected Sum</div>
             <div class="stat-val" style="color: #60a5fa;">{mu_sum:.1f}</div>
             <div style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px;">
-                With {n_dice} dice, the most likely sum is around {mu_sum:.1f}.
+                With {n_dice} dice, the average sum is {mu_sum:.1f}.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -149,7 +147,8 @@ def render_interactive_simulation():
     with right:
         # Generate the random data
         # n_rolls rows (experiments), n_dice cols (dice per experiment)
-        rolls = np.random.randint(1, 7, size=(n_rolls, n_dice))
+        rng = np.random.default_rng(42)
+        rolls = rng.integers(1, 7, size=(n_rolls, n_dice))
         sums = np.sum(rolls, axis=1)
        
         fig = go.Figure()
@@ -170,7 +169,7 @@ def render_interactive_simulation():
        
         fig.add_trace(go.Scatter(
             x=x_curve, y=y_curve, mode='lines',
-            name='Theoretical Bell Curve',
+            name='Normal Approximation (not exact)',
             line=dict(color='#fbbf24', width=4, dash='dot')
         ))
        
@@ -191,6 +190,7 @@ def render_interactive_simulation():
         fig.update_yaxes(gridcolor='rgba(51,65,85,0.4)')
        
         st.plotly_chart(fig, use_container_width=True)
+        st.caption("The overlaid Normal curve is an approximation; for small numbers of dice, the sum distribution is discrete and can differ substantially.")
 
     st.markdown("""
     <div class="insight-box">
@@ -199,7 +199,7 @@ def render_interactive_simulation():
     <ul>
         <li><strong>n = 1:</strong> The shape is a flat block (Uniform Distribution). Any number from 1 to 6 is equally likely.</li>
         <li><strong>n = 2:</strong> The shape is a triangle. There are many ways to roll a 7 (1+6, 2+5...), but only one way to roll a 2 (1+1).</li>
-        <li><strong>n = 10:</strong> The shape magically smooths out into a perfect <strong>Bell Curve</strong> (Normal Distribution)!</li>
+        <li><strong>n = 10:</strong> The sums are more bell-shaped, but remain discrete and are not a perfect Normal curve.</li>
     </ul>
     </p>
     </div>
@@ -220,7 +220,7 @@ def render_math_breakdown():
             <div class="stat-label" style="color:#ec4899;">What it means in English</div>
             <div style="color:#cbd5e1; font-size:0.95rem; text-align: left; margin-top: 15px;">
                 Take any distribution (dice, coin flips, human heights, crazy irregular shapes). If you take a sample of size <strong>n</strong> and calculate the <strong>mean</strong> (or sum), and repeat this many times... <br><br>
-                The distribution of those means will approximate a <strong>Normal Distribution</strong>, as long as <strong>n</strong> is large enough (usually n > 30 is plenty).
+                Under suitable conditions, the distribution of sample means approaches a <strong>Normal Distribution</strong> as <strong>n</strong> grows. A rule such as n > 30 is only a rough guide; highly skewed or heavy-tailed populations may need larger samples.
             </div>
         </div>""", unsafe_allow_html=True)
        
@@ -270,4 +270,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

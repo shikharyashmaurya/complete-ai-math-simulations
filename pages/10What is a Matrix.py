@@ -90,6 +90,7 @@ with col2:
     ax.text(0, 2.8, "Inventory Matrix", fontsize=14, ha='center', fontweight='bold', color='#A23B72')
     
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 # ============ SECTION 2: Dimensions & Notation ============
 st.markdown('<div class="section-title">📐 Part 2: Rows, Columns & Dimensions</div>', unsafe_allow_html=True)
@@ -157,6 +158,7 @@ ax.text(cols/2-0.5, rows+1.2, f"A {rows}×{cols} Matrix", ha='center', fontsize=
        fontweight='bold', color=chosen_color)
 
 st.pyplot(fig, use_container_width=True)
+plt.close(fig)
 
 # Show the mathematical notation
 st.markdown(f"**Matrix Notation:** A ∈ ℝ^({rows}×{cols})")
@@ -228,6 +230,7 @@ ax.text(cols/2-0.5, rows+1.2, f"A[{sel_row},{sel_col}] = {selected_val}", ha='ce
        fontsize=16, fontweight='bold', color=chosen_color)
 
 st.pyplot(fig, use_container_width=True)
+plt.close(fig)
 
 # ============ SECTION 4: Real-World Examples ============
 st.markdown('<div class="section-title">🌍 Part 4: Matrices in the Real World</div>', unsafe_allow_html=True)
@@ -261,6 +264,7 @@ with tabs[0]:
     ax2.axis('off')
     
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 with tabs[1]:
     st.markdown("**A chess board is a 8×8 matrix!**")
@@ -286,6 +290,7 @@ with tabs[1]:
     ax.set_title("Chess Board as 8×8 Matrix", fontsize=14, fontweight='bold')
     
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 with tabs[2]:
     st.markdown("**Student grades as a matrix:**")
@@ -315,6 +320,7 @@ with tabs[2]:
     
     plt.colorbar(im, ax=ax, label='Grade')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 with tabs[3]:
     st.markdown("**Temperature readings: 5 cities × 7 days**")
@@ -344,6 +350,7 @@ with tabs[3]:
     
     plt.colorbar(im, ax=ax, label='Temperature (°C)')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 # ============ SECTION 5: Special Matrices ============
 st.markdown('<div class="section-title">⭐ Part 5: Special Matrix Types</div>', unsafe_allow_html=True)
@@ -375,6 +382,7 @@ with col1:
     
     ax.text(1, 3.3, "3×3 Square Matrix", ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 with col2:
     st.markdown("""
@@ -399,6 +407,7 @@ with col2:
     
     ax.text(1.5, 1.3, "1×4 Row Vector", ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 col1, col2 = st.columns(2)
 
@@ -425,6 +434,7 @@ with col1:
     
     ax.text(0, 4.3, "4×1 Column Vector", ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 with col2:
     st.markdown("""
@@ -450,6 +460,7 @@ with col2:
     
     ax.text(1, 3.3, "3×3 Zero Matrix", ha='center', fontsize=12, fontweight='bold')
     st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
 # ============ SECTION 6: Key Takeaway ============
 st.markdown('<div class="section-title">🎓 Key Takeaways</div>', unsafe_allow_html=True)

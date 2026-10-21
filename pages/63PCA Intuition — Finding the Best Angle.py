@@ -281,14 +281,15 @@ function setCloud(type, btn) {
   if (btn) btn.classList.add('active');
   rawPts = generateCloud(type);
   pts = centerCloud(rawPts);
-  squashT = 0;
   recomputePCA();
   const deg = Math.round(pcaInfo.angle * 180 / Math.PI);
   document.getElementById('ang-sl').value = ((deg % 180) + 180) % 180;
   onAngleInput(false);
+  if (mode === 'squash') startSquashAnim();
 }
 
 function setMode(m) {
+  stopSweep();
   mode = m;
   document.querySelectorAll('.mbtn').forEach(b => {
     b.classList.toggle('active', b.dataset.m === m);
@@ -346,10 +347,7 @@ function snapToPCA() {
 function toggleSweep() {
   const btn = document.getElementById('sweep-btn');
   if (sweepTimer) {
-    clearInterval(sweepTimer);
-    sweepTimer = null;
-    btn.textContent = '▶ AUTO-SWEEP ANGLES';
-    btn.classList.remove('on');
+    stopSweep();
     return;
   }
   btn.textContent = '⏸ PAUSE SWEEP';
@@ -363,6 +361,18 @@ function toggleSweep() {
   }, 45);
 }
 
+function stopSweep() {
+  if (sweepTimer) {
+    clearInterval(sweepTimer);
+    sweepTimer = null;
+  }
+  const btn = document.getElementById('sweep-btn');
+  if (btn) {
+    btn.textContent = '▶ AUTO-SWEEP ANGLES';
+    btn.classList.remove('on');
+  }
+}
+
 function startSquashAnim() {
   squashT = 0;
   if (squashAnim) clearInterval(squashAnim);
@@ -372,6 +382,14 @@ function startSquashAnim() {
     draw();
   }, 30);
 }
+
+window.addEventListener('pagehide', () => {
+  stopSweep();
+  if (squashAnim) {
+    clearInterval(squashAnim);
+    squashAnim = null;
+  }
+});
 
 function currentAxis() {
   if (mode === 'pca' || mode === 'squash') {

@@ -10,9 +10,8 @@ def render_sgd_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:white;overflow:hidden;}
+body{font-family:sans-serif;background:#0f172a;color:white;overflow:hidden;}
 .lab-container{display:flex;flex-direction:column;height:100vh;padding:20px;gap:20px;}
 .header{display:flex;justify-content:space-between;align-items:center;}
 .title-group h2{font-size:24px;font-weight:900;color:#f8fafc;margin:0;}

@@ -140,8 +140,8 @@ def render_3d_landscape():
         
         <div class="ui-overlay">
             <div class="card">
-                <h1>Loss Explorer ⛰️</h1>
-                <p>A "Mountain" represents error. Lower altitude = Better AI.</p>
+                <h1>Objective Explorer ⛰️</h1>
+                <p>A "Mountain" represents a simplified objective value. Lower altitude = lower objective for this toy example.</p>
                 
                 <div class="control-group">
                     <div class="label-row"><span>Topography</span></div>
@@ -214,11 +214,11 @@ def render_3d_landscape():
         // Mathematical Surfaces
         function getLoss(x, z) {
             if (mode === 'convex') {
-                return (x*x + z*z) * 0.3 - 1.5;
+                return (x*x + z*z) * 0.3 + 0.5;
             } else {
                 return (x*x + z*z) * 0.2 + 
                        (Math.sin(x * 3) * Math.cos(z * 3)) * 0.8 + 
-                       (Math.cos(x * 1.5)) * 0.5 - 1.0;
+                       (Math.cos(x * 1.5)) * 0.5 + 1.0;
             }
         }
 
@@ -239,9 +239,8 @@ def render_3d_landscape():
             };
         }
 
-        function getColor(y) {
-            // Map y range (approx -2 to 3) to 0-1
-            const t = Math.max(0, Math.min(1, (y + 2) / 5));
+        function getColor(y, minY, maxY) {
+            const t = Math.max(0, Math.min(1, (y - minY) / Math.max(maxY - minY, 1e-9)));
             if (t < 0.3) {
                 // Deep blue to light blue
                 return `hsl(217, 91%, ${20 + t * 100}%)`;
@@ -262,6 +261,8 @@ def render_3d_landscape():
             const step = (2 * R) / N;
             
             const polygons = [];
+            let minY = Infinity;
+            let maxY = -Infinity;
             
             // Generate grid polygons
             for (let i = 0; i < N; i++) {
@@ -282,16 +283,20 @@ def render_3d_landscape():
                     const p11 = project(x1, y11, z1);
                     
                     const avgY = (y00 + y10 + y01 + y11) / 4;
+                    minY = Math.min(minY, y00, y10, y01, y11);
+                    maxY = Math.max(maxY, y00, y10, y01, y11);
                     const avgDepth = (p00.depth + p10.depth + p01.depth + p11.depth) / 4;
                     
                     polygons.push({
                         points: [p00, p10, p11, p01],
                         depth: avgDepth,
-                        color: getColor(avgY),
+                        color: null,
                         y: avgY
                     });
                 }
             }
+
+            polygons.forEach(p => { p.color = getColor(p.y, minY, maxY); });
             
             // Sort by depth (Painter's Algorithm)
             polygons.sort((a, b) => b.depth - a.depth);
@@ -342,7 +347,7 @@ def render_3d_landscape():
             // Update UI
             w1Val.textContent = w1.toFixed(2);
             w2Val.textContent = w2.toFixed(2);
-            lossVal.textContent = (l + 2).toFixed(2); // Offset to keep it positive for intuition
+            lossVal.textContent = l.toFixed(2);
             
             requestAnimationFrame(draw);
         }
@@ -434,7 +439,7 @@ def main():
         ### What is this?
         In AI, we don't just "calculate" the answer. We **search** for it.
         
-        Imagine every possible setting of your AI's weights ($w_1, w_2$) as a coordinate on a map. For every coordinate, we calculate the **Loss** (error). 
+        Imagine every possible setting of two model parameters ($w_1, w_2$) as a coordinate on a map. For each coordinate, this toy example assigns an objective value (a loss need not be identical to raw prediction error).
         
         - **Peaks (Red)**: High error. The model is guessing wildly.
         - **Valleys (Blue)**: Low error. The model is getting closer to the truth.
@@ -443,7 +448,7 @@ def main():
         Training an AI is like being a hiker lost in a foggy mountain range at night. You can't see the bottom, but you can feel the **slope** under your feet.
         """)
         
-        st.info("💡 **Try it:** Switch to 'Lumpy Terrain' to see why deep learning is hard! There are many 'fake' bottoms (local minima) that can trap your model.")
+        st.info("💡 **Try it:** Switch to 'Complex' to explore a non-convex toy objective with multiple dips. Non-convexity alone does not mean training must get trapped; real high-dimensional optimization can also be affected by saddle points and flat regions.")
 
     with col2:
         render_3d_landscape()
@@ -456,13 +461,13 @@ def main():
     with c1:
         st.markdown("### 🏹 The Global Minimum")
         st.markdown("""
-        This is the "Holy Grail." It's the lowest possible point on the entire landscape. If your model reaches this point, it has found the best possible weights for the data.
+        This is the lowest objective value on the entire landscape. Reaching it minimizes this specified objective; it does not necessarily give unique weights or guarantee the best generalization.
         """)
         
     with c2:
         st.markdown("### 🕳️ Local Minima")
         st.markdown("""
-        In complex models, the landscape is "lumpy." You might find a small valley that looks like the bottom, but there's a much deeper one elsewhere. Getting stuck here is a common AI problem.
+        A non-convex objective can contain several valleys, and an optimizer may settle in a local one. In high dimensions, saddle points and flat regions can also affect optimization.
         """)
         
     with c3:
@@ -480,13 +485,13 @@ def main():
     
     with col_a:
         st.markdown("""
-        In this visualization, we only have **2 Weights** ($w_1$ and $w_2$), so we can see it in 3D. 
+        This visualization uses only **2 parameters** ($w_1$ and $w_2$), so we can see its objective surface in 3D. The vertical offset is arbitrary; only differences in objective value affect the shape.
         
         But a modern LLM (like GPT-4) has **hundreds of billions** of weights. The "landscape" exists in a billion-dimensional space!
         """)
         
     with col_b:
-        st.warning("⚠️ **Reality Check**: We can't actually 'see' a billion-dimensional mountain. Instead, we use **Math (Gradients)** as our eyes to feel which way is 'down' in every direction simultaneously.")
+        st.warning("⚠️ **Reality Check**: We can't actually 'see' a billion-dimensional surface. Gradients give the local direction of steepest increase (so gradient descent steps in the opposite direction); they do not guarantee a global minimum.")
 
     st.markdown("---")
     st.markdown(

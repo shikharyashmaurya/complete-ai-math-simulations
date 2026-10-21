@@ -105,6 +105,11 @@ const xsl=document.getElementById('xsl'),ysl=document.getElementById('ysl');
 const xvl=document.getElementById('xvl'),yvl=document.getElementById('yvl');
 const R=3.2,PAD=40;
 
+function stopClimb() {
+ climbing=false;
+ if(climbAnim!==null){cancelAnimationFrame(climbAnim);climbAnim=null;}
+}
+
 function w2s(x,y){
  return{sx:PAD+(x+R)/(2*R)*(cvs.width-2*PAD),sy:PAD+(R-y)/(2*R)*(cvs.height-2*PAD)};
 }
@@ -147,9 +152,9 @@ function draw(){
   const target=mn+(mx-mn)*(l+1)/(levels+1);
   ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=.8;
   // marching squares simplified: scan rows
-  for(let py=PAD;py<H-PAD;py+=4){
-   for(let px=PAD;px<W-PAD;px+=4){
-    const{x,y}=s2w(px,py);const{x:x2,y:y2}=s2w(px+4,py);
+  for(let py=PAD;py<H-PAD;py+=8){
+   for(let px=PAD;px<W-PAD;px+=8){
+    const{x,y}=s2w(px,py);const{x:x2,y:y2}=s2w(px+8,py);
     const v1=fn.f(x,y),v2=fn.f(x2,y2);
     if((v1-target)*(v2-target)<0){
      ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(px,py,2,2);
@@ -283,17 +288,18 @@ function draw(){
 document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',e=>{
  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));
  e.currentTarget.classList.add('active');cur=e.currentTarget.dataset.f;
- trail=[];climbing=false;if(climbAnim)cancelAnimationFrame(climbAnim);draw();
+ trail=[];stopClimb();draw();
 }));
 document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',e=>{
  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('active'));
- e.currentTarget.classList.add('active');mode=e.currentTarget.dataset.m;draw();
+ e.currentTarget.classList.add('active');mode=e.currentTarget.dataset.m;stopClimb();draw();
 }));
-xsl.addEventListener('input',()=>{trail=[];draw();});
-ysl.addEventListener('input',()=>{trail=[];draw();});
+xsl.addEventListener('input',()=>{trail=[];stopClimb();draw();});
+ysl.addEventListener('input',()=>{trail=[];stopClimb();draw();});
 
 // Click on canvas to set point
 cvs.addEventListener('click',e=>{
+ stopClimb();
  const rect=cvs.getBoundingClientRect();
  const scaleX=cvs.width/rect.width,scaleY=cvs.height/rect.height;
  const cx=(e.clientX-rect.left)*scaleX,cy=(e.clientY-rect.top)*scaleY;
@@ -306,7 +312,7 @@ cvs.addEventListener('click',e=>{
 
 // Climber
 document.getElementById('climbBtn').addEventListener('click',()=>{
- if(climbing){climbing=false;return;}
+ if(climbing){stopClimb();draw();return;}
  const fn=F[cur];
  climbX=parseFloat(xsl.value);climbY=parseFloat(ysl.value);
  trail=[[climbX,climbY]];climbing=true;
@@ -315,7 +321,8 @@ document.getElementById('climbBtn').addEventListener('click',()=>{
  climbDir=climbDir>0?-1:1;
  let steps=0;
  function step(){
-  if(!climbing||steps>500)return;
+  if(!climbing)return;
+  if(steps>=500){stopClimb();draw();return;}
   const ddx=fn.dx(climbX,climbY),ddy=fn.dy(climbX,climbY);
   const mag=Math.sqrt(ddx*ddx+ddy*ddy);
   if(mag<.005){climbing=false;draw();return;}
@@ -330,6 +337,7 @@ document.getElementById('climbBtn').addEventListener('click',()=>{
  step();
 });
 
+window.addEventListener('pagehide',stopClimb);
 draw();
 </script>
 </body>

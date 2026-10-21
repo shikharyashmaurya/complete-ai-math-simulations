@@ -318,7 +318,7 @@ st.markdown(
         <p style="font-size: 1.1rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 12px;">
             In our last lesson, we built a single neuron. But did you notice something? 
             Without an activation function, stacking millions of neurons is just multiplying linear numbers. 
-            Mathematically, a 100-layer network of pure linear maps is completely equivalent to a single linear equation: 
+            Mathematically, a 100-layer network of affine maps is equivalent to a single affine map:
             <span class="cyan-highlight">y = Wx + b</span>. It has zero "bendability"!
         </p>
         <p style="font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 0;">
@@ -410,7 +410,7 @@ with tab_arena:
             paper_bgcolor="#070a13",
             hovermode="x unified",
             xaxis=dict(range=[-6.0, 6.0], showgrid=True, gridcolor="rgba(255,255,255,0.05)", zeroline=True, zerolinecolor="rgba(255,255,255,0.15)"),
-            yaxis=dict(range=[-2.1, 5.1], showgrid=True, gridcolor="rgba(255,255,255,0.05)", zeroline=True, zerolinecolor="rgba(255,255,255,0.15)"),
+            yaxis=dict(range=[min(np.min(y_sig), np.min(y_tanh), np.min(y_relu), np.min(y_leaky)) - 0.2, max(np.max(y_sig), np.max(y_tanh), np.max(y_relu), np.max(y_leaky)) + 0.2], showgrid=True, gridcolor="rgba(255,255,255,0.05)", zeroline=True, zerolinecolor="rgba(255,255,255,0.15)"),
             margin=dict(l=40, r=20, t=50, b=40),
             legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(13,19,33,0.7)")
         )
@@ -564,8 +564,8 @@ with tab_sandbox:
     elif wave_type == "Triangle Wave":
         raw_signal = wave_amp * (2.0 * np.abs(2.0 * (t * wave_freq / 10.0 - np.floor(t * wave_freq / 10.0 + 0.5))) - 1.0)
     else: # Random Noise
-        np.random.seed(42)
-        raw_signal = np.sin(wave_freq * t) * (wave_amp / 2) + np.random.normal(0, 0.4, len(t))
+        rng = np.random.default_rng(42)
+        raw_signal = np.sin(wave_freq * t) * (wave_amp / 2) + rng.normal(0, 0.4, len(t))
         
     # Process through activations
     sig_signal = sigmoid(raw_signal)
@@ -599,7 +599,7 @@ with tab_sandbox:
             paper_bgcolor="#070a13",
             margin=dict(l=30, r=20, t=40, b=30),
             xaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)"),
-            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)", range=[-4.5, 4.5])
+            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)", range=[float(np.min(raw_signal)) - 0.2, float(np.max(raw_signal)) + 0.2])
         )
         st.plotly_chart(fig_input, use_container_width=True)
         
@@ -628,7 +628,7 @@ with tab_sandbox:
             paper_bgcolor="#070a13",
             margin=dict(l=30, r=20, t=40, b=30),
             xaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)"),
-            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)", range=[-4.5, 4.5])
+            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.03)", range=[float(min(np.min(raw_signal), np.min(sig_signal), np.min(tanh_signal), np.min(relu_signal), np.min(leaky_signal))) - 0.2, float(max(np.max(raw_signal), np.max(sig_signal), np.max(tanh_signal), np.max(relu_signal), np.max(leaky_signal))) + 0.2])
         )
         st.plotly_chart(fig_output, use_container_width=True)
 
@@ -653,9 +653,9 @@ with tab_backprop:
         <h3>🏃‍♂️ Gradient Highway: Vanishing Gradient & Dead ReLU Visualized</h3>
         <p style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">
             Gradients are calculated during training using the <b>Chain Rule</b>. 
-            As we move backward through layers of a neural network, the error signal is multiplied by the <b>derivative of the activation function</b> at each neuron!
+            This demo is a <b>simplified scalar chain with every connection weight fixed at 1</b>, so each backward step multiplies the error signal by just the <b>activation derivative</b>.
             <br>
-            If these derivatives are small (like in Sigmoid/tanh saturation), the gradient shrinks exponentially until early layers receive virtually nothing!
+            In a general network, each step also multiplies by the corresponding layer weight (or weight matrix); small activation derivatives can still shrink gradients, but the diagram's derivative-only product is not the full gradient for arbitrary weights.
             Configure the test parameters in the <b>sidebar (Tab 3: Backprop Race)</b> to compare how error signals flow.
         </p>
     </div>
@@ -680,6 +680,8 @@ with tab_backprop:
         act_theme_color = "#f59e0b"
         act_theme_glow = "glow-amber"
         
+    # Simplified scalar chain: all inter-layer weights are fixed at 1.
+    # A general scalar chain also multiplies each step by its connection weight.
     # Flow logic:
     G3 = grad_init
     G2 = G3 * d3_act
@@ -859,6 +861,7 @@ with tab_backprop:
         <!-- FLOW DIRECTION INDICATORS (BACKWARD ARROWS ON TOP) -->
         <path d="M 450,40 L 400,40" stroke="#fef08a" stroke-width="2.5" fill="none" marker-end="url(#arrow)" />
         <text x="425" y="28" fill="#fef08a" font-size="11" font-weight="black" text-anchor="middle">ERROR FLOW DIRECTION (BACKPROP)</text>
+        <text x="425" y="282" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="middle">SIMPLIFIED SCALAR CHAIN · INTER-LAYER WEIGHTS FIXED AT 1</text>
         
         <defs>
             <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -879,7 +882,7 @@ with tab_backprop:
     with col_v1:
         st.markdown(f"""
         <div class="custom-card" style="height: 100%;">
-            <div class="card-title">🏁 Backprop Race Verdict</div>
+            <div class="card-title">🏁 Backprop Race Verdict · Unit-Weight Toy Chain</div>
             <table style="width:100%; font-size:1.0rem; border-collapse:collapse; text-align:left; color:#cbd5e1;">
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.1); font-weight:bold; color:#f8fafc;">
                     <th style="padding:10px 5px;">Metric</th>
@@ -898,10 +901,13 @@ with tab_backprop:
                     <td style="padding:10px 5px; color:#facc15; font-weight:700;">{clean_format(G0)}</td>
                 </tr>
                 <tr>
-                    <td style="padding:10px 5px; font-weight:600;">Gradient Transmission</td>
+                    <td style="padding:10px 5px; font-weight:600;">Gradient Transmission (weights = 1)</td>
                     <td style="padding:10px 5px; font-weight:700;">{(G0 / grad_init * 100.0):.2f}%</td>
                 </tr>
             </table>
+            <p style="margin:10px 5px 0; color:#94a3b8; font-size:0.9rem;">
+                Here G₂ = G₃ × f′(z₃), G₁ = G₂ × f′(z₂), and G₀ = G₁ × f′(z₁). A general network also multiplies each step by the corresponding connection weight (or weight matrix).
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -911,9 +917,9 @@ with tab_backprop:
             verdict_style = "border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.08);"
             verdict_badge = "<span style='background:#ef4444; color:#0b0f19; font-weight:800; padding:6px 12px; border-radius:30px; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); display:inline-block;'>⚠️ TOTAL GRADIENT BLOCK</span>"
             if backprop_act == "ReLU":
-                reason = "One of your layer inputs is <b>negative or zero</b>! Because ReLU's derivative is absolute zero for negative values, the gradient hit a brick wall at that layer. This is the notorious <b>Dead ReLU problem</b>! Once a ReLU node dies, it can never learn again!"
+                reason = "One of your layer inputs is <b>negative or zero</b>! ReLU's derivative is zero for negative inputs (and is conventionally set to zero at the kink), so the gradient can be blocked at that layer. This is the <b>Dead ReLU problem</b>; a unit may remain inactive if its inputs keep it in the negative region."
             elif backprop_act == "Leaky ReLU":
-                reason = "Wait! Even with Leaky ReLU, a small signal might be suppressed, but it should never be completely zero! Leaky ReLU preserves a 0.1 multiplier. Double check if inputs are extremely small."
+                reason = "Leaky ReLU passes a 0.1 gradient for negative inputs, helping avoid a zero-gradient region. Its output is still exactly zero at input zero, where this implementation chooses a 0.1 derivative."
             else:
                 reason = "Your neuron inputs are set in the <b>saturation zones</b> (deep positive or deep negative). The derivatives of Sigmoid/tanh are extremely close to zero here. Stacking 3 layers completely extinguished the signal. This is the classic <b>Vanishing Gradient Problem</b>!"
         elif G0 < 0.1:

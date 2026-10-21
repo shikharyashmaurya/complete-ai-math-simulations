@@ -59,12 +59,11 @@ def render_conveyor_belt(x_val, mid_val, out_val, f_name, g_name):
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body {{
             margin: 0;
             padding: 0;
             background-color: transparent;
-            font-family: 'Inter', sans-serif;
+            font-family: sans-serif;
             color: white;
             display: flex;
             justify-content: center;

@@ -61,7 +61,7 @@ st.markdown("""
 # Generate Data
 @st.cache_data
 def generate_curve_data(capacity, epochs=100):
-    np.random.seed(42) # Consistent noise
+    rng = np.random.default_rng(42) # Consistent noise without changing NumPy's global RNG.
     x = np.arange(1, epochs + 1)
     
     # Base dynamics based on capacity (1 to 10)
@@ -85,8 +85,8 @@ def generate_curve_data(capacity, epochs=100):
         val_loss += penalty
         
     # Add noise
-    train_loss += np.random.normal(0, 0.015, size=epochs)
-    val_loss += np.random.normal(0, 0.02, size=epochs)
+    train_loss += rng.normal(0, 0.015, size=epochs)
+    val_loss += rng.normal(0, 0.02, size=epochs)
     
     # Smooth them slightly for better visuals while keeping some noise
     train_loss = pd.Series(train_loss).rolling(window=3, min_periods=1).mean().values
@@ -101,6 +101,7 @@ def generate_curve_data(capacity, epochs=100):
 # Title Section
 st.markdown('<div class="main-header">📈 Learning Curves</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Training Loss vs Validation Loss: Spotting the Gap</div>', unsafe_allow_html=True)
+st.caption("These curves are synthetic illustrations of common patterns, not measurements from training a real model.")
 
 with st.container():
     st.markdown("""
@@ -110,10 +111,10 @@ with st.container():
         </p>
         <ul style="font-size: 16px; margin-bottom: 0px;">
             <li><strong style="color: #3b82f6;">Training Loss:</strong> Mistakes made on the data the model is actively learning from.</li>
-            <li><strong style="color: #ef4444;">Validation Loss:</strong> Mistakes made on <em>new, unseen</em> data. This is the true test!</li>
+            <li><strong style="color: #ef4444;">Validation Loss:</strong> Mistakes made on held-out data used to monitor and select a model. Keep a separate test set for a final evaluation.</li>
         </ul>
         <p style="margin-top: 10px; margin-bottom: 0px; font-size: 16px;">
-            A model's goal isn't just to memorize training data—it's to <strong>generalize</strong>. If training loss goes down but validation loss goes up, the model is memorizing noise (Overfitting).
+            A model's goal isn't just to memorize training data—it's to <strong>generalize</strong>. If training loss falls while validation loss rises, that can signal overfitting, though the curves alone do not prove the cause.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -127,7 +128,7 @@ with col1:
     capacity = st.slider(
         "🧠 Model Capacity",
         min_value=1, max_value=10, value=7,
-        help="1 = Very Simple Model (Underfits)\n10 = Very Complex Model (Overfits easily)"
+        help="1 = lower capacity (may underfit)\n10 = higher capacity (may overfit)"
     )
     
     if capacity <= 3:
@@ -185,7 +186,7 @@ with col2:
         status_msg = "🔄 Learning... Both losses are decreasing nicely."
     elif abs(current_epoch - min_val_epoch) <= 5:
         status = "sweetspot"
-        status_msg = "🎯 Sweet Spot! Validation loss is at its lowest. Best time to stop training!"
+        status_msg = "🎯 Validation loss is near its retrospective minimum in this simulation; this can inform early stopping."
     elif current_epoch > min_val_epoch + 5 and gap > 0.2:
         status = "overfit"
         status_msg = "🚨 OVERFITTING DETECTED! Training loss drops, but validation loss goes up. The gap is widening!"
@@ -197,6 +198,7 @@ with col2:
     st.write("") # Spacer
 
     # Plotly Chart
+    plot_y_max = max(3.5, float(np.max(train_loss)), float(np.max(val_loss))) * 1.08
     fig = go.Figure()
     
     # Train Loss Trace
@@ -233,11 +235,11 @@ with col2:
         fig.add_shape(
             type="line",
             x0=min_val_epoch, x1=min_val_epoch,
-            y0=0, y1=4,
+            y0=0,             y1=plot_y_max,
             line=dict(color="#166534", width=2, dash="dash"),
         )
         fig.add_annotation(
-            x=min_val_epoch, y=3.5,
+            x=min_val_epoch, y=plot_y_max * 0.9,
             text="Early Stopping Point",
             showarrow=True,
             arrowhead=2,
@@ -257,7 +259,7 @@ with col2:
         ),
         yaxis=dict(
             title="Loss (Error)",
-            range=[0, 3.5],
+            range=[0, plot_y_max],
             gridcolor='rgba(0,0,0,0.05)',
             zeroline=False,
             title_font=dict(size=14, family="Inter")
@@ -283,6 +285,6 @@ with col2:
 st.markdown("""
 ### 🧠 Intuition Check
 * **What is the "Gap"?** The area shaded in red between the two lines represents the generalization error. It shows how much worse the model performs on unseen data compared to the data it memorized.
-* **Early Stopping:** Notice the dashed green line when you increase the epochs on a high-capacity model? That's the ideal moment to stop training. Any further, and the model starts memorizing noise!
+* **Early Stopping:** The dashed green line marks the minimum validation loss over the full simulated curve. In practice, early stopping uses only validation results observed so far; later validation loss can fluctuate for reasons other than memorizing noise.
 * **Model Capacity:** Try setting the capacity to 2. Notice how neither loss ever gets very low? The model just isn't smart enough to learn the complex patterns in the data.
 """)

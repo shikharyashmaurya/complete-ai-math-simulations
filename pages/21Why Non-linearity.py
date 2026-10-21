@@ -63,12 +63,11 @@ def best_line_bruteforce(X: np.ndarray, y: np.ndarray, n_ang: int = 720, n_b: in
     best_w = np.array([1.0, 0.0])
     best_b = 0.0
     thetas = np.linspace(-np.pi, np.pi, n_ang, endpoint=False)
-    # bias candidates from projected range
-    proj = X @ np.array([1.0, 0.0])
-    bmin, bmax = float(np.min(proj)) - 1.0, float(np.max(proj)) + 1.0
-    bs = np.linspace(bmin, bmax, n_b)
     for th in thetas:
         w = np.array([np.cos(th), np.sin(th)])
+        proj = X @ w
+        bmin, bmax = -float(np.max(proj)) - 1.0, -float(np.min(proj)) + 1.0
+        bs = np.linspace(bmin, bmax, n_b)
         for bb in bs:
             pred = predict_linear(X, w, bb)
             err = int(np.sum(pred != y))
@@ -321,8 +320,8 @@ def main():
             st.markdown(
                 r"""
                 Label points in $\{\,0,1\,\}^2$ with XOR signs: **+1** on \((0,1)\) and \((1,0)\); **−1** on \((0,0)\) and \((1,1)\).
-                Any **linear** test \(w_1 x + w_2 y + b\) that scores the two **+** points as **positive** forces
-                \(b>0\), \(w_1+b>0\), \(w_2+b>0\), and \(w_1+w_2+b>0\) after the usual sign checks — but the two **−** corners then cannot **both** land strictly on the negative side without contradicting those inequalities.
+                For the score \(s(x,y)=w_1x+w_2y+b\), the two positive labels require \(s(1,0)>0\) and \(s(0,1)>0\), while the negative labels require \(s(0,0)<0\) and \(s(1,1)<0\).
+                But \(s(1,0)+s(0,1)=s(0,0)+s(1,1)=w_1+w_2+2b\), so the same sum would have to be both positive and negative — a contradiction.
                 Hence **no** single thresholded line separates all four — time to invite a **bendy** friend.
                 """
             )
@@ -340,4 +339,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

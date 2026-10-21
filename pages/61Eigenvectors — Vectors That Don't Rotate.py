@@ -262,6 +262,8 @@ canvas {
     cursor: crosshair;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     max-width: 100%;
+    width: 100%;
+    height: auto;
 }
 
 /* Auto sweep sweep button */
@@ -740,6 +742,7 @@ let eigenvectors = [];
 let isDragging = false;
 let sweepActive = false;
 let sweepAngle = 34;
+let sweepFrame = null;
 
 // Particle system
 let particles = [];
@@ -749,6 +752,9 @@ let lock1Locked = false;
 let lock2Locked = false;
 let lock1Progress = 0;
 let lock2Progress = 0;
+let challengeProgressTimer = null;
+let challengeProgressLastTime = null;
+let challengeProgressIndex = -1;
 
 // Canvas setup
 const canvas = document.getElementById('canvas');
@@ -767,6 +773,8 @@ function init() {
 }
 
 function setMode(mode) {
+    stopSweep();
+    stopChallengeProgress();
     document.getElementById('mode-explore').classList.remove('active');
     document.getElementById('mode-challenge').classList.remove('active');
     document.getElementById('explore-controls').style.display = 'none';
@@ -790,6 +798,7 @@ function setMode(mode) {
 }
 
 function loadChallenge() {
+    stopChallengeProgress();
     const chall = CHALLENGES[curChallengeIndex];
     document.getElementById('challenge-level').innerText = chall.label;
     
@@ -903,30 +912,116 @@ function onVectorSliderChange() {
 }
 
 function updateVectorFromCoordinates() {
-    let angleDeg = Math.round(Math.atan2(vy, vx) * 180 / Math.PI);
-    let mag = Math.sqrt(vx * vx + vy * vy);
+    const magInput = document.getElementById('vector-mag');
+    const rawMag = Math.hypot(vx, vy);
+    const minMag = parseFloat(magInput.min) || 0;
+    const maxMag = parseFloat(magInput.max) || 3.5;
+    const mag = Math.min(maxMag, Math.max(minMag, rawMag));
+    if (rawMag > 1e-9) {
+        vx *= mag / rawMag;
+        vy *= mag / rawMag;
+    } else {
+        vx = mag;
+        vy = 0;
+    }
+    const angleDeg = Math.round(Math.atan2(vy, vx) * 180 / Math.PI);
     
     document.getElementById('vector-angle').value = angleDeg;
     document.getElementById('vector-angle-val').innerText = angleDeg + '°';
     
-    document.getElementById('vector-mag').value = mag.toFixed(2);
+    magInput.value = mag.toFixed(2);
     document.getElementById('vector-mag-val').innerText = mag.toFixed(2);
 }
 
+function stopChallengeProgress() {
+    if (challengeProgressTimer !== null) {
+        clearInterval(challengeProgressTimer);
+        challengeProgressTimer = null;
+    }
+    challengeProgressLastTime = null;
+    challengeProgressIndex = -1;
+}
+
+function updateChallengeProgressBars() {
+    document.getElementById('bar-lock1').style.width = lock1Progress + '%';
+    document.getElementById('bar-lock2').style.width = lock2Progress + '%';
+    if (lock1Locked && lock2Locked) {
+        document.getElementById('success-screen').style.display = 'flex';
+    }
+}
+
+function syncChallengeProgress(alignedIndex) {
+    const alreadyLocked = alignedIndex === 0 ? lock1Locked : lock2Locked;
+    if (!isChallengeMode || alignedIndex < 0 || alreadyLocked || (lock1Locked && lock2Locked)) {
+        stopChallengeProgress();
+        return;
+    }
+    if (challengeProgressIndex !== alignedIndex || challengeProgressTimer === null) {
+        stopChallengeProgress();
+        challengeProgressIndex = alignedIndex;
+        challengeProgressLastTime = performance.now();
+        challengeProgressTimer = setInterval(advanceChallengeProgress, 100);
+    }
+}
+
+function advanceChallengeProgress() {
+    if (!isChallengeMode || challengeProgressIndex < 0) {
+        stopChallengeProgress();
+        return;
+    }
+
+    const alignedIndex = challengeProgressIndex;
+    const alreadyLocked = alignedIndex === 0 ? lock1Locked : lock2Locked;
+    if (alreadyLocked || (lock1Locked && lock2Locked)) {
+        stopChallengeProgress();
+        return;
+    }
+
+    const now = performance.now();
+    const elapsed = Math.min(250, Math.max(0, now - challengeProgressLastTime));
+    challengeProgressLastTime = now;
+    if (alignedIndex === 0) lock1Progress = Math.min(100, lock1Progress + elapsed * 0.1);
+    else lock2Progress = Math.min(100, lock2Progress + elapsed * 0.1);
+
+    const progress = alignedIndex === 0 ? lock1Progress : lock2Progress;
+    if (progress >= 100) {
+        if (alignedIndex === 0) lock1Locked = true;
+        else lock2Locked = true;
+        document.getElementById(`ind-lock${alignedIndex + 1}`).classList.add('locked');
+        updateChallengeProgressBars();
+        stopChallengeProgress();
+        return;
+    }
+    updateChallengeProgressBars();
+}
+
 function toggleSweep() {
-    sweepActive = !sweepActive;
-    const btn = document.getElementById('sweep-btn');
     if (sweepActive) {
-        btn.classList.add('active');
-        btn.innerText = '⏸ PAUSE SWEEP';
-        animateSweep();
-    } else {
+        stopSweep();
+        return;
+    }
+    sweepActive = true;
+    const btn = document.getElementById('sweep-btn');
+    btn.classList.add('active');
+    btn.innerText = '⏸ PAUSE SWEEP';
+    animateSweep();
+}
+
+function stopSweep() {
+    sweepActive = false;
+    if (sweepFrame !== null) {
+        cancelAnimationFrame(sweepFrame);
+        sweepFrame = null;
+    }
+    const btn = document.getElementById('sweep-btn');
+    if (btn) {
         btn.classList.remove('active');
         btn.innerText = '✨ AUTO-SWEEP MODE';
     }
 }
 
 function animateSweep() {
+    sweepFrame = null;
     if (!sweepActive) return;
     
     sweepAngle = (sweepAngle + 1) % 360;
@@ -936,7 +1031,7 @@ function animateSweep() {
     document.getElementById('vector-angle').value = sliderAngle;
     onVectorSliderChange();
     
-    requestAnimationFrame(animateSweep);
+    sweepFrame = requestAnimationFrame(animateSweep);
 }
 
 function updateEigenvectors() {
@@ -1052,8 +1147,8 @@ function setupInteraction() {
     // Mouse dragging
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const mx = (e.clientX - rect.left) * canvas.width / rect.width;
+        const my = (e.clientY - rect.top) * canvas.height / rect.height;
         
         const px = OX + vx * SCALE;
         const py = OY - vy * SCALE;
@@ -1061,25 +1156,23 @@ function setupInteraction() {
         const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
         if (dist < 25) {
             isDragging = true;
-            sweepActive = false; // Pause sweep on active drag
-            document.getElementById('sweep-btn').classList.remove('active');
-            document.getElementById('sweep-btn').innerText = '✨ AUTO-SWEEP MODE';
+            stopSweep();
         }
     });
 
     canvas.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const mx = (e.clientX - rect.left) * canvas.width / rect.width;
+        const my = (e.clientY - rect.top) * canvas.height / rect.height;
         
         let targetVx = (mx - OX) / SCALE;
         let targetVy = -(my - OY) / SCALE;
         
         const mag = Math.sqrt(targetVx * targetVx + targetVy * targetVy);
-        if (mag > 4.5) {
-            targetVx = (targetVx / mag) * 4.5;
-            targetVy = (targetVy / mag) * 4.5;
+        if (mag > 3.5) {
+            targetVx = (targetVx / mag) * 3.5;
+            targetVy = (targetVy / mag) * 3.5;
         } else if (mag < 0.1) {
             targetVx = 0.1;
             targetVy = 0.0;
@@ -1100,8 +1193,8 @@ function setupInteraction() {
     canvas.addEventListener('touchstart', (e) => {
         if (e.touches.length !== 1) return;
         const rect = canvas.getBoundingClientRect();
-        const mx = e.touches[0].clientX - rect.left;
-        const my = e.touches[0].clientY - rect.top;
+        const mx = (e.touches[0].clientX - rect.left) * canvas.width / rect.width;
+        const my = (e.touches[0].clientY - rect.top) * canvas.height / rect.height;
         
         const px = OX + vx * SCALE;
         const py = OY - vy * SCALE;
@@ -1109,7 +1202,7 @@ function setupInteraction() {
         const dist = Math.sqrt((mx - px)**2 + (my - py)**2);
         if (dist < 30) {
             isDragging = true;
-            sweepActive = false;
+            stopSweep();
             e.preventDefault();
         }
     });
@@ -1117,16 +1210,16 @@ function setupInteraction() {
     canvas.addEventListener('touchmove', (e) => {
         if (!isDragging || e.touches.length !== 1) return;
         const rect = canvas.getBoundingClientRect();
-        const mx = e.touches[0].clientX - rect.left;
-        const my = e.touches[0].clientY - rect.top;
+        const mx = (e.touches[0].clientX - rect.left) * canvas.width / rect.width;
+        const my = (e.touches[0].clientY - rect.top) * canvas.height / rect.height;
         
         let targetVx = (mx - OX) / SCALE;
         let targetVy = -(my - OY) / SCALE;
         
         const mag = Math.sqrt(targetVx * targetVx + targetVy * targetVy);
-        if (mag > 4.5) {
-            targetVx = (targetVx / mag) * 4.5;
-            targetVy = (targetVy / mag) * 4.5;
+        if (mag > 3.5) {
+            targetVx = (targetVx / mag) * 3.5;
+            targetVy = (targetVy / mag) * 3.5;
         } else if (mag < 0.1) {
             targetVx = 0.1;
             targetVy = 0.0;
@@ -1202,6 +1295,8 @@ function update() {
             break;
         }
     }
+
+    syncChallengeProgress(alignedWithIndex);
     
     const banner = document.getElementById('align-banner');
     
@@ -1213,47 +1308,16 @@ function update() {
         // Spawn particle ripples at arrow head
         spawnParticles(OX + vx * SCALE, OY - vy * SCALE, '#10b981');
         
-        // Challenge Mode locking logic
-        if (isChallengeMode) {
-            if (alignedWithIndex === 0 && !lock1Locked) {
-                lock1Progress += 2.0;
-                if (lock1Progress >= 100) {
-                    lock1Progress = 100;
-                    lock1Locked = true;
-                    document.getElementById('ind-lock1').classList.add('locked');
-                }
-            } else if (alignedWithIndex === 1 && !lock2Locked) {
-                lock2Progress += 2.0;
-                if (lock2Progress >= 100) {
-                    lock2Progress = 100;
-                    lock2Locked = true;
-                    document.getElementById('ind-lock2').classList.add('locked');
-                }
-            }
-            
-            // Check challenge win
-            if (lock1Locked && lock2Locked) {
-                document.getElementById('success-screen').style.display = 'flex';
-            }
-        }
     } else {
         banner.className = "alignment-status";
         banner.innerHTML = eigenvectors.length > 0 
             ? "🔍 Align the yellow vector along one of the green dashed lines..."
             : "⚠️ No real eigenvectors exist! Space is rotating completely.";
             
-        // Decelerate lock progresses if not aligned in challenge mode
-        if (isChallengeMode) {
-            if (!lock1Locked && lock1Progress > 0) lock1Progress = Math.max(0, lock1Progress - 1.5);
-            if (!lock2Locked && lock2Progress > 0) lock2Progress = Math.max(0, lock2Progress - 1.5);
-        }
     }
     
     // Update progress bars in Challenge Mode
-    if (isChallengeMode) {
-        document.getElementById('bar-lock1').style.width = lock1Progress + '%';
-        document.getElementById('bar-lock2').style.width = lock2Progress + '%';
-    }
+    if (isChallengeMode) updateChallengeProgressBars();
     
     // 4) Draw infinite eigenvector lines
     for (let idx = 0; idx < eigenvectors.length; idx++) {
@@ -1375,6 +1439,10 @@ function drawArrow(x1, y1, x2, y2, color, thickness, headLength) {
     ctx.restore();
 }
 
+window.addEventListener('pagehide', () => {
+    stopSweep();
+    stopChallengeProgress();
+});
 window.onload = init;
 </script>
 </body>

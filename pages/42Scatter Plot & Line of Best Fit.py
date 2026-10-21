@@ -9,8 +9,7 @@ def render_regression_lab():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
         .container { display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 1200px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         
         .controls { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
@@ -29,7 +28,7 @@ def render_regression_lab():
         .eq-display { font-family: monospace; font-size: 20px; color: #FFD166; text-align: center; margin-top: 10px; padding: 15px; background: rgba(255, 209, 102, 0.1); border: 1px solid rgba(255, 209, 102, 0.3); border-radius: 8px; font-weight: bold;}
         
         .btn-group { display: flex; gap: 15px; margin-top: 10px; }
-        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .btn-clear { background: rgba(255, 107, 107, 0.2); color: #FF6B6B; border: 1px solid rgba(255, 107, 107, 0.4); }
         .btn-clear:hover { background: rgba(255, 107, 107, 0.3); }
         .btn-toggle { background: rgba(78, 205, 196, 0.2); color: #4ECDC4; border: 1px solid rgba(78, 205, 196, 0.4); }
@@ -72,7 +71,7 @@ def render_regression_lab():
                     <button class="btn-toggle" id="btn-res">Show Errors (Residuals)</button>
                     <button class="btn-clear" id="btn-clear">Clear Points</button>
                 </div>
-                <div class="instruction">Click existing points to remove them.</div>
+                <div class="instruction">Click existing points to remove them. The latest 200 points are kept; adding another drops the oldest.</div>
             </div>
             
             <div class="viz">
@@ -94,6 +93,7 @@ def render_regression_lab():
             const eqBox = document.getElementById('eq-box');
             
             let points = [];
+            const MAX_POINTS = 200;
             let showResiduals = false;
             
             // Coordinate System Configuration
@@ -268,6 +268,7 @@ def render_regression_lab():
                 }
                 
                 if(!clickedExisting) {
+                    if(points.length >= MAX_POINTS) points.shift();
                     points.push(pData);
                 }
                 draw();

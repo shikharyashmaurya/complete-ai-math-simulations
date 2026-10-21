@@ -10,10 +10,9 @@ def render_surprise_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{
-  font-family:'Inter',sans-serif;
+  font-family:sans-serif;
   background:#0f172a;
   color:#f8fafc;
   overflow:hidden;

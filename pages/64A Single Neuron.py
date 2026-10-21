@@ -11,9 +11,8 @@ def render_neuron_lab():
 <head>
 <meta charset="utf-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:#f8fafc;padding:10px;overflow-x:hidden;}
+body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:10px;overflow-x:hidden;}
 .outer{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
 .title-card{background:rgba(30,41,59,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
 .title-card h2{font-size:22px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f472b6,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
@@ -380,7 +379,7 @@ function drawNeuronFlow(progress) {
 
   // Title
   ctx.fillStyle = '#64748b';
-  ctx.font = 'bold 11px Inter,sans-serif';
+  ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('FORWARD PASS', W/2, 28);
 
@@ -398,7 +397,7 @@ function drawNeuronFlow(progress) {
     ctx.fillText(label, x, y + 5);
     if (sub) {
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '600 10px Inter,sans-serif';
+      ctx.font = '600 10px sans-serif';
       ctx.fillText(sub, x, y + r + 16);
     }
   }
@@ -489,10 +488,10 @@ function drawNeuronFlow(progress) {
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#7dd3fc';
-  ctx.font = 'bold 12px Inter,sans-serif';
+  ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(actName(), actX, sumY - 6);
-  ctx.font = '10px Inter,sans-serif';
+  ctx.font = '10px sans-serif';
   ctx.fillStyle = '#94a3b8';
   ctx.fillText('activation', actX, sumY + 10);
 
@@ -511,7 +510,7 @@ function drawNeuronFlow(progress) {
     ctx.font = '11px monospace';
     ctx.fillText(`${dotSum().toFixed(2)} + b = ${z.toFixed(2)}`, 22, 88);
     ctx.fillStyle = '#64748b';
-    ctx.font = '10px Inter,sans-serif';
+    ctx.font = '10px sans-serif';
     ctx.fillText('Same as one row of', 22, 106);
     ctx.fillText('matrix × vector!', 22, 120);
   }
@@ -567,7 +566,7 @@ function drawActivationCurve() {
   ctxA.arc(px, py, 7, 0, Math.PI * 2);
   ctxA.fill();
   ctxA.fillStyle = '#94a3b8';
-  ctxA.font = '10px Inter,sans-serif';
+  ctxA.font = '10px sans-serif';
   ctxA.textAlign = 'center';
   ctxA.fillText('your z', px, py - 12);
 }
@@ -604,7 +603,7 @@ function drawMini() {
     arrow(ox, oy, ox + wv[0] * scale * 0.7, oy - wv[1] * scale * 0.7, COLORS.w, 'w');
     arrow(ox, oy, ox + proj[0] * scale * 0.7, oy - proj[1] * scale * 0.7, '#fde68a', 'proj');
     ctxM.fillStyle = '#94a3b8';
-    ctxM.font = '10px Inter,sans-serif';
+    ctxM.font = '10px sans-serif';
     ctxM.fillText('x₁,x₂ slice of dot product', pad, 18);
     return;
   }

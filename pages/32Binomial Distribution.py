@@ -7,11 +7,24 @@ from scipy.stats import binom
 
 st.set_page_config(page_title="Binomial Distribution", page_icon="🪙", layout="wide")
 
+MAX_STORED_TRIALS = 10_000
+
 def reset_sim():
     st.session_state['binom_results'] = []
+    st.session_state['binom_total_trials'] = 0
 
 if 'binom_results' not in st.session_state:
     st.session_state['binom_results'] = []
+if 'binom_total_trials' not in st.session_state:
+    st.session_state['binom_total_trials'] = len(st.session_state['binom_results'])
+st.session_state['binom_results'] = st.session_state['binom_results'][-MAX_STORED_TRIALS:]
+
+def record_results(results):
+    results = list(results)
+    st.session_state['binom_total_trials'] += len(results)
+    st.session_state['binom_results'] = (
+        st.session_state['binom_results'] + results
+    )[-MAX_STORED_TRIALS:]
 
 # Styling
 st.markdown("""
@@ -103,6 +116,7 @@ def render_coins(flips):
 
 def create_plot():
     results = st.session_state['binom_results']
+    total_trials = st.session_state['binom_total_trials']
     x = np.arange(0, n_flips + 1)
     theoretical_pmf = binom.pmf(x, n_flips, p_heads)
    
@@ -116,7 +130,8 @@ def create_plot():
            
         fig.add_trace(go.Bar(
             x=x, y=empirical_pmf,
-            name='Empirical (Simulation)',
+            name=('Empirical (latest stored trials)' if total_trials > len(results)
+                  else 'Empirical (Simulation)'),
             marker_color='#3498DB',
             opacity=0.8,
             hovertemplate="Heads: %{x}<br>Probability: %{y:.4f}<extra></extra>"
@@ -132,7 +147,7 @@ def create_plot():
     ))
 
     fig.update_layout(
-        title=f"Distribution of Heads in {n_flips} Flips (Trials Run: {len(results)})",
+        title=f"Distribution of Heads in {n_flips} Flips (Trials Run: {total_trials})",
         xaxis_title="Number of Heads (Successes)",
         yaxis_title="Probability",
         bargap=0.15,
@@ -160,44 +175,55 @@ with col_vis:
                 trial_vis_placeholder.markdown(render_coins(flips), unsafe_allow_html=True)
                 time.sleep(0.05)
             heads_count = sum(flips)
-            st.session_state['binom_results'].append(heads_count)
+            record_results([heads_count])
             trial_vis_placeholder.markdown(
                 render_coins(flips) + f"<div style='text-align:center; font-size: 22px; margin-top: 10px; color: #F5B041;'><b>Result: {heads_count} Heads</b></div>",
                 unsafe_allow_html=True
             )
         else:
             heads_count = np.random.binomial(n=n_flips, p=p_heads)
-            st.session_state['binom_results'].append(heads_count)
+            record_results([heads_count])
             trial_vis_placeholder.success(f"Quick Simulated 1 trial: Got {heads_count} Heads out of {n_flips}.")
            
         plot_placeholder.plotly_chart(create_plot(), use_container_width=True)
 
     elif btn_10:
         res = np.random.binomial(n=n_flips, p=p_heads, size=10)
-        st.session_state['binom_results'].extend(res)
+        record_results(res)
         plot_placeholder.plotly_chart(create_plot(), use_container_width=True)
         trial_vis_placeholder.info(f"Added 10 trials. Last result: {res[-1]} Heads.")
        
     elif btn_100:
         res = np.random.binomial(n=n_flips, p=p_heads, size=100)
-        st.session_state['binom_results'].extend(res)
+        record_results(res)
         plot_placeholder.plotly_chart(create_plot(), use_container_width=True)
         trial_vis_placeholder.info(f"Added 100 trials. Last result: {res[-1]} Heads.")
        
     elif btn_1000:
         res = np.random.binomial(n=n_flips, p=p_heads, size=1000)
-        st.session_state['binom_results'].extend(res)
+        record_results(res)
         plot_placeholder.plotly_chart(create_plot(), use_container_width=True)
         trial_vis_placeholder.info(f"Added 1000 trials.")
        
     elif btn_animate:
         for i in range(20): # 20 steps of 5 trials
             res = np.random.binomial(n=n_flips, p=p_heads, size=5)
-            st.session_state['binom_results'].extend(res)
+            record_results(res)
             plot_placeholder.plotly_chart(create_plot(), use_container_width=True)
-            trial_vis_placeholder.markdown(f"<div style='text-align:center; font-size: 18px; color: #3498DB;'>Animating... Trial {len(st.session_state['binom_results'])}</div>", unsafe_allow_html=True)
+            trial_vis_placeholder.markdown(f"<div style='text-align:center; font-size: 18px; color: #3498DB;'>Animating... Trial {st.session_state['binom_total_trials']}</div>", unsafe_allow_html=True)
             time.sleep(0.1)
         trial_vis_placeholder.success("Animation complete!")
+
+    total_trials = st.session_state['binom_total_trials']
+    retained_trials = len(st.session_state['binom_results'])
+    if total_trials > retained_trials:
+        st.caption(
+            f"Showing the latest {retained_trials:,} of {total_trials:,} trials; "
+            f"older trials are excluded from the empirical histogram. The limit is "
+            f"{MAX_STORED_TRIALS:,} retained trials."
+        )
+    else:
+        st.caption(f"Retaining all {retained_trials:,} simulated trials (limit {MAX_STORED_TRIALS:,}).")
 
 st.divider()
 
@@ -219,4 +245,3 @@ with math_col2:
     """)
 
 st.info("💡 **Notice:** As you increase the number of trials, the blue empirical histogram perfectly molds to the red theoretical dotted line. This is the **Law of Large Numbers** in action! Furthermore, as you increase $n$ (number of flips), the distribution shape becomes increasingly bell-like, hinting at the **Central Limit Theorem** (which connects Binomial to Normal Distribution!).")
-

@@ -10,10 +10,9 @@ def render_cross_entropy_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{
-  font-family:'Inter',sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:#0f172a;
   color:#f8fafc;
   overflow:hidden;
@@ -300,7 +299,7 @@ canvas {
           </div>
           <div class="preset-card" id="q-preset-infinite" onclick="setQPreset('infinite')">
             <span class="emoji">🌋</span>
-            <span class="name">Meltdown Limit</span>
+            <span class="name">Near-zero Limit</span>
             <span class="desc">Q(True) = 0.01%</span>
           </div>
         </div>
@@ -469,7 +468,7 @@ function switchPMode(mode) {
   
   if (mode === 'manual') {
     activePName = "Custom Reality 🎛️";
-    addLog("Reality editing unlocked. Watch how cross-entropy is always larger than Shannon Entropy!", "cyan");
+    addLog("Reality editing unlocked. Cross-entropy is at least Shannon entropy, with equality when P = Q.", "cyan");
   } else {
     // Re-trigger the active preset card
     const activeCard = document.querySelector('#p-presets .preset-card.active');
@@ -592,7 +591,7 @@ function setQPreset(type) {
     Q[targetWrong] = 0.9999;
     Q[maxIdx] = 0.0001; // 0.01%
     Q[otherWrong] = 0.0;
-    addLog("Model believes the true class has near-zero probability. Maximum stress explosion!", "warn");
+    addLog("Model assigns only 0.01% to the most likely true class; the visualizer floors smaller probabilities at this value.", "warn");
   }
   updateSlidersUI();
   updatePresetHighlights();
@@ -780,7 +779,7 @@ function drawGauge(cx, cy, r, ce, hp) {
   ctx.fillStyle = '#f1f5f9';
   ctx.font = '900 26px monospace';
   ctx.textAlign = 'center';
-  const displayVal = ce > 20.0 ? "Infinity 🌋" : ce.toFixed(3);
+  const displayVal = ce.toFixed(3);
   ctx.fillText(displayVal, cx, cy + 42);
   
   ctx.fillStyle = '#fb7185';
@@ -791,7 +790,7 @@ function drawGauge(cx, cy, r, ce, hp) {
   const klDiv = Math.max(0.0, ce - hp);
   ctx.fillStyle = '#94a3b8';
   ctx.font = '700 11px monospace';
-  ctx.fillText(`Entropy H(P): ${hp.toFixed(2)} | Waste (KL): ${klDiv > 20 ? "Inf" : klDiv.toFixed(2)} bits`, cx, cy + 70);
+  ctx.fillText(`Entropy H(P): ${hp.toFixed(2)} | Waste (KL): ${klDiv.toFixed(2)} bits`, cx, cy + 70);
   
   // Tag on top
   ctx.fillStyle = '#64748b';
@@ -1025,13 +1024,12 @@ function drawMathSection(ce) {
   // Final sum breakdown line
   ctx.font = '900 12px monospace';
   ctx.fillStyle = '#f1f5f9';
-  const displayCE = ce > 20.0 ? "Infinity (Meltdown!)" : `${ce.toFixed(2)} bits`;
+  const displayCE = `${ce.toFixed(2)} bits (visualizer floor: 0.01%)`;
   ctx.fillText(`Loss Total:  ${terms[0].contribVal} + ${terms[1].contribVal} + ${terms[2].contribVal} = ${displayCE}`, 300, 488);
 }
 
 function surpriseText(qVal) {
-  if (qVal <= 0.0001) return "Inf";
-  return (-log2(qVal)).toFixed(2);
+  return (-log2(Math.max(0.0001, qVal))).toFixed(2);
 }
 
 // MAIN RENDER LOOP
@@ -1147,7 +1145,7 @@ def main():
         st.subheader("Interactive Lessons & Warnings 🌋")
         st.success("🎯 **The Optimal Ideal (No Waste):** When your predictions $Q$ align *perfectly* with reality $P$ ($Q = P$), the waste drops to exactly zero ($D_{KL} = 0$). The Cross-Entropy is minimized and matches $H(P)$!")
         st.info("🤷 **The Naive Ignorance baseline:** If a model initializes as a uniform split (33% each for 3 classes), its Cross-Entropy is a moderate, predictable $1.585\text{ bits}$ regardless of the true label.")
-        st.error("💥 **The Confident Wrong Meltdown:** If you predict a class has near-zero probability (e.g. $Q(\text{Cat}) = 0.01\%$), but reality declares it is indeed a **Cat**, the surprise penalty $-\log_2(0.0001)$ explodes to **$13.29\text{ bits}$**! This heavily punishes overconfidence.")
+        st.error(r"💥 **The Confident Wrong Penalty:** If you predict a class has near-zero probability (e.g. $Q(\text{Cat}) = 0.01\%$), but reality declares it is indeed a **Cat**, the surprise penalty $-\log_2(0.0001)$ is about **$13.29\text{ bits}$**. The interactive display floors smaller probabilities at 0.01%; without that numerical floor, the mathematical loss is infinite when a positive target probability is assigned $Q=0$.")
 
     st.divider()
     st.markdown("### 🧪 The Cross-Entropy Meltdown Laboratory")
@@ -1155,7 +1153,7 @@ def main():
         "Experiment with reality $P$ and prediction $Q$ live! "
         "Use **Reality Mode** to select standard one-hot label states (like pure Cat) or soft targets (Label Smoothing). "
         "Drag the **Q sliders** to adjust model predictions. Watch how the **waste (KL Divergence)** region grows on the dial as predictions deviate, "
-        "and witness a literal **Meltdown** when the network is highly confident in the wrong outcome!"
+        "and see a visual **Meltdown** alert when the model assigns very little probability to the true outcome!"
     )
 
     render_cross_entropy_lab()

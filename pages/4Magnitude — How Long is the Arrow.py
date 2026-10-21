@@ -32,6 +32,7 @@ with col1:
 	ax.plot(x2, y2, 'o', color='orange')
 	plt.tight_layout()
 	st.pyplot(fig)
+	plt.close(fig)
 
 mag2 = np.sqrt(x2**2 + y2**2)
 st.latex(r"|\vec{v}| = \sqrt{x^2 + y^2} = \sqrt{{%.2f}^2 + {%.2f}^2} = %.2f" % (x2, y2, mag2))
@@ -66,6 +67,7 @@ with col3:
 	ax3.plot([x3, x3], [y3, y3], [0, z3], 'k:', lw=1)
 	ax3.view_init(elev=30, azim=45)
 	st.pyplot(fig3)
+	plt.close(fig3)
 
 mag3 = np.sqrt(x3**2 + y3**2 + z3**2)
 st.latex(r"|\vec{{v}}| = \sqrt{{x^2 + y^2 + z^2}} = \sqrt{{%.2f}^2 + {%.2f}^2 + {%.2f}^2} = %.2f" % (x3, y3, z3, mag3))
@@ -80,13 +82,22 @@ Type in a list of numbers (your vector), and see its magnitude instantly. Try 4D
 
 vec_str = st.text_input("Enter vector components, separated by commas", "3, 4, 12")
 try:
-	vec = np.array([float(x.strip()) for x in vec_str.split(",")])
+	if len(vec_str) > 2048:
+		raise ValueError("The vector input is too long.")
+	components = [float(x.strip()) for x in vec_str.split(",")]
+	if len(components) > 100:
+		raise ValueError("A vector can contain at most 100 components.")
+	if not np.isfinite(components).all():
+		raise ValueError("Vector components must be finite.")
+	vec = np.array(components)
 	magN = np.linalg.norm(vec)
+	if not np.isfinite(magN):
+		raise ValueError("The vector magnitude is outside the supported numeric range.")
 	st.latex(r"|\vec{{v}}| = \sqrt{{{}}} = {:.2f}".format(
 		' + '.join([f"{v:.2f}^2" for v in vec]), magN))
 	st.success(f"Magnitude: **{magN:.2f}** for vector {vec}")
-except Exception as e:
-	st.error("Please enter a valid list of numbers!")
+except ValueError:
+	st.error("Enter up to 100 finite numeric components separated by commas.")
 
 st.divider()
 

@@ -374,6 +374,7 @@ ys.addEventListener('input', ()=>{stopAuto();update();});
 function stopAuto(){
   if(autoInv){clearInterval(autoInv);autoInv=null;abtn.innerText='✨ AUTO-SWEEP';}
 }
+window.addEventListener('pagehide', stopAuto);
 abtn.addEventListener('click',()=>{
   if(autoInv){stopAuto();}
   else{

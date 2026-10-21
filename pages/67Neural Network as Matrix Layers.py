@@ -386,7 +386,7 @@ render_html("""
         and <b>Bias Vectors (b)</b>!
     </p>
     <p style="font-size: 1.05rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 0;">
-        A neural network layer is simply a <b>Linear Transformation</b> followed by an <b>Activation Function</b>: 
+        A neural network layer applies an <b>affine transformation</b> followed by an <b>Activation Function</b>:
         <span class="cyan-highlight">A = g(WX + b)</span>. 
         Stacking layers is just feeding the output of one matrix transformation directly into the next! Below, we visualize 
         exactly how mathematical variables flow through layers and geometrically warp space to make deep learning possible.
@@ -608,8 +608,7 @@ with tab_math:
         <div style="background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(34,197,94,0.2);">
             <span class="glow-badge-cyan">🪐 HABITABLE PLANET DETECTED!</span>
             <p style="margin-top: 12px; color: #d1fae5; font-size: 1.1rem; line-height: 1.6;">
-                The planetary forward pass returned a high score! The network is <b>{habitable_pct:.1f}%</b> confident that this world possesses the conditions 
-                conducive to extraterrestrial colonization! (Barren score was only {barren_pct:.1f}%).
+                Under the selected weights, softmax assigns <b>{habitable_pct:.1f}%</b> probability to the habitable class (and {barren_pct:.1f}% to barren). These illustrative outputs are not calibrated real-world confidence or evidence of habitability.
             </p>
         </div>
         """)
@@ -618,7 +617,7 @@ with tab_math:
         <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(239,68,68,0.2);">
             <span class="glow-badge-gold">💀 BARREN WASTELAND DETECTED!</span>
             <p style="margin-top: 12px; color: #fee2e2; font-size: 1.1rem; line-height: 1.6;">
-                The forward pass concludes this scanned planet is lethal. The network is <b>{barren_pct:.1f}%</b> confident that the surface is a hazardous wasteland (Habitable probability is just {habitable_pct:.1f}%). 
+                Under the selected weights, softmax assigns <b>{barren_pct:.1f}%</b> probability to the barren class (and {habitable_pct:.1f}% to habitable). These illustrative outputs are not calibrated real-world confidence or evidence about a planet.
             </p>
         </div>
         """)
@@ -795,10 +794,10 @@ with tab_warp:
     <div style="margin-top: 15px; margin-bottom: 25px;">
         <h3>🌀 Visualizing Space Warping: How Networks Untangle Data</h3>
         <p style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">
-            Here is the absolute magic of deep learning. In the 2D input space, the Goldilocks habitable zone represents a <b>complex, circular region (non-linear)</b> which a single straight line can never classify correctly. 
+            Here is one way deep learning can help. A circular region is generally not separable by one straight line in the original 2D input space.
             <br>
             But watch what happens! Our <b>Weight Matrix W¹ projects the flat grid into a 3D coordinate space</b>, and the <b>activation function bends and creases</b> this projected sheet. 
-            Because this sheet is now curved in 3D, a single flat slicing plane (linear divider) can cleanly cut between the Habitable (Gold) and Barren (Red) worlds!
+            A learned hidden representation can make classes easier to separate, but the currently selected weights do not guarantee that outcome. The colors below show this network's actual predictions on a finite grid.
         </p>
     </div>
     """)
@@ -866,7 +865,11 @@ with tab_warp:
             marker=dict(color="#22d3ee", size=12, symbol="diamond", line=dict(color="#ffffff", width=2)),
             name="Scanned Active Layer"
         ))
-        ax_range = [-0.1, 6.1] if st.session_state.act_func == "ReLU" else [-1.1, 1.1]
+        activations = np.concatenate([A1_grid.ravel(), A1])
+        activation_min = float(np.min(activations))
+        activation_max = float(np.max(activations))
+        activation_pad = max(0.1, (activation_max - activation_min) * 0.08)
+        ax_range = [activation_min - activation_pad, activation_max + activation_pad]
         fig_3d.update_layout(
             title=dict(text="📤 <b>Warped 3D Hidden Space (A¹ = g(W¹X+b¹))</b>", font=dict(color="#f8fafc", size=15)),
             template="plotly_dark", paper_bgcolor="#070a13",
@@ -885,7 +888,7 @@ render_html("""
 <div class="custom-card">
     <h3 style="color: #38bdf8; margin-top: 0;">💡 Lesson Recap: Non-Linearity</h3>
     <p>
-        If we removed the activation function, the network would collapse into a single linear map: 
+        If we removed the activation function, the network would collapse into a single affine map:
         <span class="gold-highlight">Z² = W_new · X + b_new</span>.
         <br><br>
         Without activation, space is stretched but remains perfectly flat. The 3D sheet would be rigid, and the data would remain entangled. 

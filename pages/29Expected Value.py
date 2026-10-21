@@ -184,9 +184,9 @@ def render_casino():
             
         st.markdown("<br>", unsafe_allow_html=True)
         if ev > 0:
-            st.success("✅ **Positive EV!** The player has the edge. The casino will go bankrupt offering this game.")
+            st.success("✅ **Positive EV!** The player has a positive expected return per play. That does not guarantee the casino will go bankrupt; outcomes and bankrolls vary.")
         elif ev < 0:
-            st.error("❌ **Negative EV!** The house has the edge. You will lose money in the long run. (This is how real casinos work!)")
+            st.error("❌ **Negative EV!** The house has the edge, so the player's expected return is negative over repeated plays. A player can still win in the short run. (This is how real casinos work!)")
         else:
             st.info("⚖️ **Zero EV!** A perfectly fair game. Nobody makes money in the long run.")
             

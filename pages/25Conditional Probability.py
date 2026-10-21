@@ -9,8 +9,7 @@ def render_conditional_probability_interactive():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: transparent; color: white; user-select: none; overflow: hidden; }
+        body { margin: 0; padding: 0; font-family: system-ui, sans-serif; background: transparent; color: white; user-select: none; overflow: hidden; }
         .container {
             background: #0f172a; border-radius: 16px; padding: 30px;
             border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 20px;
@@ -69,7 +68,7 @@ def render_conditional_probability_interactive():
         
         button {
             background: #1e293b; color: #cbd5e1; border: 1px solid #475569;
-            padding: 12px 24px; border-radius: 8px; font-family: 'Inter', sans-serif;
+            padding: 12px 24px; border-radius: 8px; font-family: system-ui, sans-serif;
             font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s;
         }
         button:hover { background: #334155; color: white; transform: translateY(-2px); }

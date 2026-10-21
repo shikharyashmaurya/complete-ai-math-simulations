@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # Custom Cyberpunk & Glassmorphic CSS Styling
-st.markdown("""
+st.markdown(r"""
 <style>
     /* Dark Theme Base Adjustments */
     .stApp {
@@ -307,8 +307,8 @@ st.markdown(
         <h3>👋 Welcome to the Neural Biome!</h3>
         <p style="font-size: 1.1rem; line-height: 1.6; color: #cbd5e1;">
             In computer science, we often talk about <b>vectors</b>, <b>dot products</b>, and <b>matrices</b> as abstract math.
-            But in artificial intelligence, these operations represent the mathematical code of a <b>biological cell</b>!
-            Every modern LLM, neural network, and vision model is built by stacking billions of these simple, beautiful computational units.
+            Artificial neurons use a simplified mathematical abstraction inspired by biological signaling; they are not a one-to-one model of a real cell.
+            Neural networks combine many such computations, often with additional operations such as attention.
         </p>
         <p style="font-size: 1.05rem; line-height: 1.6; color: #94a3b8; margin-bottom: 0;">
             Below, you will design a <b>Cat-Detector Neuron</b>. You will feed it physical animal characteristics (inputs),
@@ -326,7 +326,7 @@ with analogy_tab:
     st.markdown("""
     <div style="margin-top: 15px;">
         <p style="color: #cbd5e1; font-size: 1.05rem;">
-            Artificial neurons are modeled directly after the wiring of human brain cells. Here is the perfect 1-to-1 match:
+            Artificial neurons are loosely inspired by biological signaling, but this is an analogy rather than a one-to-one match:
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -353,14 +353,14 @@ with analogy_tab:
                 <li><b>Inputs (<span class="green-highlight">xᵢ</span>):</b> Floating-point numbers representing features (e.g., ears=1.0, barking=0.0).</li>
                 <li><b>Weights (<span class="purple-highlight">wᵢ</span>):</b> Multipliers representing synapse strength. Larger weight = more important feature.</li>
                 <li><b>Summation & Bias (<span class="math-highlight">Σ xᵢwᵢ + b</span>):</b> The dot product of inputs and weights, shifted by a threshold (bias).</li>
-                <li><b>Activation Function (<span class="math-highlight">f(z)</span>):</b> A function that scales the output (e.g., squash between 0 and 1).</li>
-                <li><b>Output (<span class="math-highlight">a</span>):</b> The final prediction score (e.g., 0.98 = 98% confidence of being a cat).</li>
+                <li><b>Activation Function (<span class="math-highlight">f(z)</span>):</b> A function that transforms the pre-activation value (for example, sigmoid squashes it between 0 and 1).</li>
+                <li><b>Output (<span class="math-highlight">a</span>):</b> The transformed score. A sigmoid output is probability-like, but a binary step is only 0/1 and a ReLU output is unbounded—not a confidence probability.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
 
 with math_tab:
-    st.markdown("""
+    st.markdown(r"""
     <div class="custom-card" style="margin-top: 15px;">
         <h4 style="color: #38bdf8; margin-top:0;">The Master Formula of AI</h4>
         <p style="font-size: 1.1rem; line-height: 1.6;">
@@ -523,7 +523,7 @@ with right_col:
     # Soma glowing state
     soma_glow = "rgba(100, 116, 139, 0.2)"
     soma_border = "rgb(71, 85, 105)"
-    if z >= 0:
+    if fires:
         soma_glow = "rgba(6, 182, 212, 0.25)"
         soma_border = "rgb(6, 182, 212)"
     else:
@@ -728,7 +728,7 @@ with col_act:
     st.markdown(f"""
     <div class="custom-card">
         <div class="card-title">⚡ Step 2: Applying Activation Function (a)</div>
-        <p style="margin-bottom: 8px;">The neuron feeds the integrated signal <span class="math-highlight">z = {z:.2f}</span> through the activation engine:</p>
+        <p style="margin-bottom: 8px;">The neuron feeds the integrated signal <span class="math-highlight">z = {z:.2f}</span> through the activation engine. Only sigmoid outputs are probability-like; ReLU scores are unbounded:</p>
         <div style="background: rgba(0,0,0,0.35); color: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 1rem; line-height: 1.8; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06);">
             Engine Selected: <strong style="color: #38bdf8;">{activation_name}</strong><br>
             Formula: <span style="color: #c084fc;">{activation_formula}</span><br>
@@ -742,7 +742,7 @@ with col_act:
 # Interactive Diagnostic Verdict
 st.markdown("### 📊 Diagnostic Verdict")
 if fires:
-    verdict_desc = f"🎉 <b>Success!</b> The integrated biological voltage crossed the firing threshold! The neuron is pulsing at an activated output level of <b>a = {a_formatted_2f}</b>. It has successfully classified the subject as a <b>CAT</b>! ⚡🐱"
+    verdict_desc = f"🎉 <b>Positive under this demo's decision rule.</b> The pre-activation crossed the firing threshold; output <b>a = {a_formatted_2f}</b> is not necessarily a probability or calibrated confidence."
     st.markdown(f"""
     <div style="background: rgba(234, 179, 8, 0.1); border: 2px solid #eab308; border-radius: 12px; padding: 20px;">
         <span class="fire-badge">⚡ FIRES: CAT DETECTED</span>
@@ -750,7 +750,7 @@ if fires:
     </div>
     """, unsafe_allow_html=True)
 else:
-    verdict_desc = f"💤 <b>Silent.</b> The integrated biological voltage did NOT reach the threshold needed to fire (final activated score <b>a = {a_formatted_2f}</b>). The neuron remains dormant and concludes that this animal is <b>NOT A CAT</b>!"
+    verdict_desc = f"💤 <b>Negative under this demo's decision rule.</b> The pre-activation did not reach the firing threshold (output <b>a = {a_formatted_2f}</b>). This toy rule is not a validated real-world cat classifier."
     st.markdown(f"""
     <div style="background: rgba(71, 85, 105, 0.15); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 20px;">
         <span class="quiet-badge">💤 SILENT: NOT A CAT</span>
@@ -775,7 +775,7 @@ st.markdown("""
         A score of <span class="math-highlight">+8.5</span> is extremely positive! The neuron would loudly claim the Bunny is a cat!
         To prevent this error, we adjust the <b>Bias ($b$)</b>. By setting a negative resting bias (e.g. <span class="pink-highlight">-5.0</span> or <span class="pink-highlight">-7.0</span>),
         we require the total traits to be exceptionally strong to overcome the negative "brake".
-        This is why bias represents a <b>decision threshold</b>: it shifts the activation curve left or right to make the neuron more strict or more eager!
+        This is why bias shifts the pre-activation score (and, for a monotone activation, the input threshold): it can make this demo's decision rule more selective or more permissive.
     </p>
 </div>
 """, unsafe_allow_html=True)

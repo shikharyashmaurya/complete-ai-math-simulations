@@ -9,9 +9,8 @@ def render_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:white;padding:10px;overflow-x:hidden;}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:white;padding:10px;overflow-x:hidden;}
 .outer{display:flex;flex-direction:column;gap:15px;width:100%;margin:0 auto;}
 .top{display:flex;flex-direction:row;gap:15px;flex-wrap:wrap;}
 .controls{flex:1;min-width:300px;display:flex;flex-direction:column;gap:12px;}
@@ -128,7 +127,7 @@ const landscapes = {
       const dy = (12/1.2)*(y-1.8)*e1 + (18/2.5)*(y+2)*e2 + 0.16*y;
       return {dx, dy};
     },
-    global: {x: -2, y: -2, z: 0.8}
+    global: {x: -1.956457, y: -1.956457, z: -0.373923}
   },
   bumps: {
     f: (x,y) => {
@@ -143,7 +142,7 @@ const landscapes = {
       const dy = (20/10)*y*e1 + 0.8*2.5*Math.sin(y*2.5) + 0.1*y;
       return {dx, dy};
     },
-    global: {x: 0, y: 0, z: 0.5}
+    global: {x: 0, y: 0, z: -0.6}
   },
   hidden: {
     f: (x,y) => {
@@ -159,7 +158,7 @@ const landscapes = {
       const dy = 14*(y+2.5)*e1 + (24/0.8)*(y-2.8)*e2 + 0.08*y;
       return {dx, dy};
     },
-    global: {x: -2.8, y: 2.8, z: 0.5}
+    global: {x: -2.792552, y: 2.792552, z: 0.625532}
   }
 };
 
@@ -272,12 +271,13 @@ function drawLoss() {
   
   const L = landscapes[curL];
   const losses = ball.path.map(p => L.f(p.x, p.y));
-  const maxL = Math.max(...losses, 15), minL = 0;
+  const maxL = Math.max(...losses), minL = Math.min(...losses);
+  const lossRange = Math.max(maxL - minL, 1e-9);
   
   ctxl.beginPath();
   for(let i=0; i<losses.length; i++) {
-    const sx = pad + (i/Math.max(losses.length-1, 50)) * (W-2*pad);
-    const sy = (H-pad) - (losses[i]-minL)/(maxL-minL) * (H-2*pad);
+    const sx = pad + (i/Math.max(losses.length-1, 1)) * (W-2*pad);
+    const sy = (H-pad) - (losses[i]-minL)/lossRange * (H-2*pad);
     i===0?ctxl.moveTo(sx, sy):ctxl.lineTo(sx, sy);
   }
   ctxl.strokeStyle='#a78bfa'; ctxl.lineWidth=2.5; ctxl.stroke();
@@ -293,7 +293,16 @@ function updateStatus() {
   const gradMag = Math.sqrt(grad.dx**2 + grad.dy**2);
 
   if(gradMag < 0.05) {
-    if(distToGlobal < 0.5) {
+    const h = 1e-3;
+    const f = L.f;
+    const dxx = (f(ball.x+h, ball.y) - 2*z + f(ball.x-h, ball.y)) / (h*h);
+    const dyy = (f(ball.x, ball.y+h) - 2*z + f(ball.x, ball.y-h)) / (h*h);
+    const dxy = (f(ball.x+h, ball.y+h) - f(ball.x+h, ball.y-h) - f(ball.x-h, ball.y+h) + f(ball.x-h, ball.y-h)) / (4*h*h);
+    const isMinimum = dxx > 1e-3 && dxx*dyy - dxy*dxy > 1e-5;
+    if(!isMinimum) {
+      outcomeBadge.innerText = "Stationary Point (not a minimum)";
+      outcomeBadge.className = "badge badge-stuck";
+    } else if(distToGlobal < 0.5) {
       outcomeBadge.innerText = "Global Minimum Found! 🎉";
       outcomeBadge.className = "badge badge-global";
     } else {
@@ -350,8 +359,8 @@ cvs2.onclick = (e) => {
   const rect = cvs2.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
   const R = 4.5;
-  ball.x = (mx/cvs2.width)*2*R - R;
-  ball.y = (1 - my/cvs2.height)*2*R - R;
+  ball.x = (mx/rect.width)*2*R - R;
+  ball.y = (1 - my/rect.height)*2*R - R;
   ball.path = [{x: ball.x, y: ball.y}];
   isRunning = false; runBtn.innerText = "▶ RUN DESCENT";
   draw3D(); draw2D(); drawLoss(); updateStatus();
@@ -383,10 +392,10 @@ def main():
 
     st.markdown(
         """
-        In a perfect world, our loss function would be a nice, smooth bowl (convex). No matter where you start, you'd always roll straight to the bottom.
+        In an ideal convex bowl, gradient descent with a suitable step size can reach a global minimum from any starting point.
 
-        But real-world AI models are **messy**. Their loss landscapes are full of bumps, ridges, and multiple valleys.
-        This introduces a major headache: **The Local Minimum.**
+        Many AI objectives are **non-convex**, with bumps, ridges, and multiple valleys. Local minima are one possible challenge, alongside saddle points, flat regions, and unstable step sizes.
+        This page shows those ideas with simplified toy surfaces.
         """
     )
 
@@ -402,7 +411,7 @@ def main():
         st.info("**The Starting Point Matters!** Depending on where you initialize your weights (the ball), you might get trapped in a local dip forever.")
 
         st.markdown("### How to escape?")
-        st.write("1. **Higher Learning Rate:** Might 'jump' over small bumps.")
+        st.write("1. **Higher Learning Rate:** Can jump over small bumps, but may also overshoot or diverge.")
         st.write("2. **Momentum:** Like a real ball, it uses speed to roll uphill briefly.")
         st.write("3. **Better Initialization:** Start closer to the 'right' valley.")
 
@@ -420,11 +429,11 @@ def main():
 
     with c2:
         st.markdown("#### 2. Saddle Points")
-        st.write("In high dimensions (AI has millions), true local minima are actually rare! Instead, we often hit **Saddle Points**—flat areas that are minima in one direction but maxima in another.")
+        st.write("In many high-dimensional neural-network settings, **Saddle Points** and flat regions can matter more during optimization than poor local minima. A saddle is a point that is a minimum in some directions and a maximum in others.")
 
     with c3:
         st.markdown("#### 3. Why convexity is a luxury")
-        st.write("Simple Linear Regression is convex (guaranteed best answer). Deep Neural Networks are non-convex. We trade the guarantee of the 'perfect' answer for the power to learn complex patterns.")
+        st.write("Ordinary least-squares linear regression has a convex objective, so every local minimum is global (though the solution need not be unique). Neural-network objectives are generally non-convex.")
 
     st.divider()
     st.markdown(

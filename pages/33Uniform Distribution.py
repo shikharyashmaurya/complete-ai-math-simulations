@@ -9,10 +9,8 @@ st.set_page_config(page_title="Uniform Distribution", layout="wide", initial_sid
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: system-ui, sans-serif;
     }
 
     .hero-box {
@@ -186,10 +184,10 @@ def render_hero():
     <div class="hero-box">
         <div class="hero-title">📏 Page 33: The Uniform Distribution</div>
         <div class="hero-sub">
-            The baseline of all randomness. <strong>Every outcome is equally likely.</strong>
+            The baseline of all randomness. <strong>Every equal-sized interval is equally likely.</strong>
             Before we introduce complex curves, bell shapes, and biases, we start here.
             Whether you're rolling a perfectly fair die or picking a random number between A and B,
-            the uniform distribution treats every single possibility with exact equality.
+            each discrete outcome or equal-width interval has the same probability.
             <br><br>
             It's the ultimate state of <strong>maximum uncertainty</strong> when you know the boundaries but nothing else.
         </div>
@@ -361,8 +359,8 @@ def render_simulation(mode, a, b, n):
     )
    
     if st.button("🚀 Draw Samples!", use_container_width=True):
-        if mode == "Discrete":
-            samples = np.random.randint(1, n + 1, n_samples)
+        if mode.startswith("Discrete"):
+            samples = np.random.default_rng().integers(1, n + 1, n_samples)
             fig = go.Figure()
             # Count frequencies
             unique, counts = np.unique(samples, return_counts=True)
@@ -397,7 +395,7 @@ def render_simulation(mode, a, b, n):
             st.plotly_chart(fig, use_container_width=True)
            
         else:
-            samples = np.random.uniform(a, b, n_samples)
+            samples = np.random.default_rng().uniform(a, b, n_samples)
             fig = go.Figure()
             fig.add_trace(go.Histogram(
                 x=samples,
@@ -450,7 +448,7 @@ def main():
     mode = st.sidebar.radio("Distribution Type", ["Discrete (Dice/Coins)", "Continuous (Ranges)"])
    
     st.sidebar.markdown("---")
-    if mode == "Discrete":
+    if mode.startswith("Discrete"):
         st.sidebar.markdown("**Discrete Parameters**")
         n = st.sidebar.slider("Number of Outcomes (N)", min_value=2, max_value=20, value=6, step=1, help="Like an N-sided die. Outcomes will be 1 to N.")
        
@@ -499,4 +497,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -10,10 +10,9 @@ def render_entropy_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{
-  font-family:'Inter',sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:#0f172a;
   color:#f8fafc;
   overflow:hidden;
@@ -366,9 +365,12 @@ const weatherColors = ['#facc15', '#3b82f6', '#06b6d4', '#a78bfa'];
 const weatherLabels = ['Sunny ☀️', 'Rainy 🌧️', 'Cloudy ☁️', 'Snowy ❄️'];
 
 // Law of Large Numbers Stats
-let coinFlips = []; // list of outcomes: 1 for Heads, 0 for Tails
+const MAX_CHART_POINTS = 500;
+let coinSampleCount = 0;
+let coinCumulativeSurprise = 0;
+let weatherSampleCount = 0;
+let weatherCumulativeSurprise = 0;
 let runningAverageSurprise = [];
-let weatherDraws = []; // list of indices 0-3
 let weatherRunningAvgSurprise = [];
 
 // Simulation animations
@@ -385,7 +387,7 @@ let autoInterval = null;
 
 // safe math helper
 function log2(p) {
-  if (p <= 0.000001) return 0;
+  if (p <= 0) return 0;
   return Math.log2(p);
 }
 
@@ -397,11 +399,16 @@ function getBinaryEntropy(p) {
 function getWeatherEntropy() {
   let ent = 0;
   for (let i = 0; i < 4; i++) {
-    if (weatherP[i] > 0.000001) {
+    if (weatherP[i] > 0) {
       ent -= weatherP[i] * log2(weatherP[i]);
     }
   }
   return ent;
+}
+
+function appendChartPoint(history, value) {
+  history.push(value);
+  if (history.length > MAX_CHART_POINTS) history.shift();
 }
 
 // Particle Class for visual effects inside Storm Chamber
@@ -696,17 +703,9 @@ function triggerSimulation() {
     // Log details
     const pOut = coinResult === 1 ? coinP : (1 - coinP);
     const surprise = pOut <= 0 ? 0 : -log2(pOut);
-    coinFlips.push(coinResult);
-    
-    // Calculate running average surprise
-    let totalSurprise = 0;
-    for (let i = 0; i < coinFlips.length; i++) {
-      const outcome = coinFlips[i];
-      const p = outcome === 1 ? coinP : (1 - coinP);
-      totalSurprise += p <= 0 ? 0 : -log2(p);
-    }
-    const avg = totalSurprise / coinFlips.length;
-    runningAverageSurprise.push(avg);
+    coinCumulativeSurprise += surprise;
+    coinSampleCount++;
+    appendChartPoint(runningAverageSurprise, coinCumulativeSurprise / coinSampleCount);
     
   } else {
     // Setup weather storm chamber activation
@@ -725,7 +724,6 @@ function triggerSimulation() {
       }
     }
     weatherResultIdx = chosenIdx;
-    weatherDraws.push(chosenIdx);
     
     // Spawn corresponding chamber particles
     activeParticles = [];
@@ -744,15 +742,9 @@ function triggerSimulation() {
     // Log details
     const pOut = weatherP[chosenIdx];
     const surprise = pOut <= 0 ? 0 : -log2(pOut);
-    
-    let totalSurprise = 0;
-    for (let i = 0; i < weatherDraws.length; i++) {
-      const idx = weatherDraws[i];
-      const p = weatherP[idx];
-      totalSurprise += p <= 0 ? 0 : -log2(p);
-    }
-    const avg = totalSurprise / weatherDraws.length;
-    weatherRunningAvgSurprise.push(avg);
+    weatherCumulativeSurprise += surprise;
+    weatherSampleCount++;
+    appendChartPoint(weatherRunningAvgSurprise, weatherCumulativeSurprise / weatherSampleCount);
     
     // Print to retro log
     const typeLabel = weatherLabels[chosenIdx];
@@ -1006,7 +998,7 @@ function draw() {
     
     ctx.fillStyle = '#64748b';
     ctx.font = '9px sans-serif';
-    ctx.fillText("Notice how the running average surprise (green) smooths out and locks onto the true Entropy (dashed purple)!", gxMin, gyMin - 11);
+    ctx.fillText(`Showing latest ${runningAverageSurprise.length} of ${coinSampleCount} trials; running mean uses all trials.`, gxMin, gyMin - 11);
 
     drawGrid(gxMin, gxMax, gyMin, gyMax, 5, 2);
     drawAxes(gxMin, gxMax, gyMin, gyMax);
@@ -1014,9 +1006,9 @@ function draw() {
     ctx.fillStyle = '#64748b';
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText("Trial #1", gxMin, gyMax + 12);
+    ctx.fillText(`Trial #${coinSampleCount ? coinSampleCount - runningAverageSurprise.length + 1 : 1}`, gxMin, gyMax + 12);
     ctx.textAlign = 'right';
-    ctx.fillText(`Trial #${Math.max(10, runningAverageSurprise.length)}`, gxMax, gyMax + 12);
+    ctx.fillText(`Trial #${Math.max(10, coinSampleCount)}`, gxMax, gyMax + 12);
     
     ctx.textBaseline = 'middle';
     ctx.fillText("1.0", gxMin - 8, gyMin);
@@ -1230,7 +1222,7 @@ function draw() {
     
     ctx.fillStyle = '#64748b';
     ctx.font = '9px sans-serif';
-    ctx.fillText("As more samples are drawn, the average of individual surprises converges to the mathematical entropy (dashed purple)!", wgxMin, wgyMin - 11);
+    ctx.fillText(`Showing latest ${weatherRunningAvgSurprise.length} of ${weatherSampleCount} trials; running mean uses all trials.`, wgxMin, wgyMin - 11);
 
     drawGrid(wgxMin, wgxMax, wgyMin, wgyMax, 5, 2);
     drawAxes(wgxMin, wgxMax, wgyMin, wgyMax);
@@ -1238,9 +1230,9 @@ function draw() {
     ctx.fillStyle = '#64748b';
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText("Trial #1", wgxMin, wgyMax + 12);
+    ctx.fillText(`Trial #${weatherSampleCount ? weatherSampleCount - weatherRunningAvgSurprise.length + 1 : 1}`, wgxMin, wgyMax + 12);
     ctx.textAlign = 'right';
-    ctx.fillText(`Trial #${Math.max(10, weatherRunningAvgSurprise.length)}`, wgxMax, wgyMax + 12);
+    ctx.fillText(`Trial #${Math.max(10, weatherSampleCount)}`, wgxMax, wgyMax + 12);
     
     ctx.textBaseline = 'middle';
     ctx.fillText("4.0", wgxMin - 8, wgyMin);
@@ -1287,12 +1279,17 @@ function draw() {
     }
   }
 
-  requestAnimationFrame(draw);
+  drawAnimationFrameId = requestAnimationFrame(draw);
 }
 
 // Initialization
+let drawAnimationFrameId;
 buildSliders();
 draw();
+window.addEventListener('pagehide', () => {
+  stopAuto();
+  cancelAnimationFrame(drawAnimationFrameId);
+}, { once: true });
 
 </script>
 </body>

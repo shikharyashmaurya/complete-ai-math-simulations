@@ -18,11 +18,10 @@ html_code = """
 <!DOCTYPE html>
 <html>
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: system-ui, sans-serif;
             background: transparent;
             color: #E0E0E0;
         }
@@ -391,6 +390,7 @@ html_code = """
     <div class="log-container" id="logBox">
         <div style="color:#666; font-style: italic;">Log history will appear here...</div>
     </div>
+    <div style="text-align:center; font-size:12px; color:#888;">Log keeps the latest 100 events; older entries are removed.</div>
 </div>
 
 <script>
@@ -405,6 +405,17 @@ html_code = """
         sun_tshirt: 0, sun_coat: 0,
         rain_tshirt: 0, rain_coat: 0
     };
+    let activeTimeouts = [];
+    const MAX_LOG_ENTRIES = 100;
+
+    function scheduleTimeout(callback, delay) {
+        let timeoutId;
+        timeoutId = setTimeout(() => {
+            activeTimeouts = activeTimeouts.filter(id => id !== timeoutId);
+            callback();
+        }, delay);
+        activeTimeouts.push(timeoutId);
+    }
     
     const ui = {
         modeToggle: document.getElementById('modeToggle'),
@@ -473,6 +484,9 @@ html_code = """
         div.className = 'log-entry';
         div.innerHTML = msg;
         ui.logBox.prepend(div);
+        while (ui.logBox.children.length > MAX_LOG_ENTRIES) {
+            ui.logBox.removeChild(ui.logBox.lastChild);
+        }
     }
     
     function updateStats() {
@@ -521,7 +535,7 @@ html_code = """
             ui.spinner1.style.transition = 'transform 2.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
             ui.spinner1.style.transform = `rotate(${rot1}deg)`;
             
-            setTimeout(() => {
+            scheduleTimeout(() => {
                 ui.outcome1.innerHTML = isSun ? '<span class="highlight-sun">☀️ Sunny</span>' : '<span class="highlight-rain">🌧️ Rainy</span>';
                 
                 let tshirtPct = 50;
@@ -531,7 +545,7 @@ html_code = """
                 }
                 
                 // Wait for slice animation if dependent
-                setTimeout(() => {
+                scheduleTimeout(() => {
                     ui.outcome2.innerText = 'Spinning...';
                     
                     const isTshirt = Math.random() < (tshirtPct / 100);
@@ -550,7 +564,7 @@ html_code = """
                     ui.spinner2.style.transition = 'transform 2.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
                     ui.spinner2.style.transform = `rotate(${rot2}deg)`;
                     
-                    setTimeout(() => {
+                    scheduleTimeout(() => {
                         ui.outcome2.innerHTML = isTshirt ? '<span class="highlight-tshirt">👕 T-Shirt</span>' : '<span class="highlight-coat">🧥 Coat</span>';
                         recordStat(isSun, isTshirt);
                         
@@ -613,6 +627,9 @@ html_code = """
     ui.btnSpin100.addEventListener('click', () => runSim(100, false));
     
     ui.btnReset.addEventListener('click', () => {
+        activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        activeTimeouts = [];
+        setButtonsDisabled(false);
         stats = {
             total: 0, sun: 0, rain: 0, tshirt: 0, coat: 0,
             sun_tshirt: 0, sun_coat: 0, rain_tshirt: 0, rain_coat: 0

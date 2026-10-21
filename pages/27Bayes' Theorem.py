@@ -107,7 +107,7 @@ def render_intro():
         <div class="narrative-box">
         <h3>The Medical Test Paradox 🏥</h3>
         You go to the doctor for a routine checkup and take a test for a rare disease. <br><br>
-        The doctor says: <i>"The disease affects 1% of the population. Our test is 90% accurate."</i><br>
+        The doctor explains the test's <b>sensitivity</b>: how often it detects people who have the disease.<br>
         A few days later, the doctor calls: <b>You tested POSITIVE.</b><br><br>
         Panic sets in. But wait... what are the <i>actual</i> chances you have the disease?
         The answer is completely unintuitive until you visualize it. Welcome to <b>Bayes' Theorem</b>.
@@ -139,16 +139,16 @@ def main():
         help="If someone is HEALTHY, what is the chance the test is incorrectly POSITIVE?"
     )
    
-    population_size = 1000
+    population_size = 10000
 
-    # Calculate exact integer counts for the simulation
-    total_sick = int((prevalence_pct / 100) * population_size)
+    # Round expected counts to whole people for the population visualization.
+    total_sick = round((prevalence_pct / 100) * population_size)
     total_healthy = population_size - total_sick
    
-    true_positives = int((sensitivity_pct / 100) * total_sick)
+    true_positives = round((sensitivity_pct / 100) * total_sick)
     false_negatives = total_sick - true_positives
    
-    false_positives = int((fpr_pct / 100) * total_healthy)
+    false_positives = round((fpr_pct / 100) * total_healthy)
     true_negatives = total_healthy - false_positives
    
     total_positives = true_positives + false_positives
@@ -172,8 +172,7 @@ def main():
         population.append({"status": "healthy", "test": "neg"})
        
     # Shuffle predictably
-    random.seed(42)
-    random.shuffle(population)
+    random.Random(42).shuffle(population)
 
     st.markdown("---")
     step = st.radio(
@@ -245,7 +244,7 @@ def main():
         col3.markdown(f"<div class='metric-box' style='border-top-color: {result_color}; background: rgba(16, 185, 129, 0.1);'><div class='metric-val' style='color:{result_color};'>{posterior_prob:.1f}%</div><div class='metric-label'>Chance you are sick<br>P(Sick | Positive)</div></div>", unsafe_allow_html=True)
        
         if posterior_prob < 50:
-            st.success(f"**The Paradox:** Even though the test is {sensitivity_pct}% accurate, you only have a {posterior_prob:.1f}% chance of being sick! Why? Because false positives outnumber true positives.")
+            st.success(f"**The Paradox:** Even though the test detects {sensitivity_pct}% of people who are sick, you only have a {posterior_prob:.1f}% chance of being sick! Why? Because false positives outnumber true positives.")
         else:
             st.warning(f"You have a {posterior_prob:.1f}% chance of being sick. The high prevalence makes the positive result much more likely to be true.")
 
@@ -277,4 +276,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

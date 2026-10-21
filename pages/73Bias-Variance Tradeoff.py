@@ -4,17 +4,17 @@ import plotly.graph_objects as go
 
 def draw_dartboard(bias, variance, num_darts=30, seed_val=None, show_labels=True):
     """Draws a dartboard with darts scattered based on bias and variance."""
-    if seed_val is not None:
-        np.random.seed(seed_val)
+    rng = np.random.default_rng(seed_val)
         
     # Angle for the bias offset (fixed to top-right for consistent visualization)
     angle = np.pi / 4
     center_x = bias * np.cos(angle)
     center_y = bias * np.sin(angle)
+    std_dev = np.sqrt(variance)
     
     # Generate dart coordinates
-    darts_x = np.random.normal(center_x, variance, num_darts)
-    darts_y = np.random.normal(center_y, variance, num_darts)
+    darts_x = rng.normal(center_x, std_dev, num_darts)
+    darts_y = rng.normal(center_y, std_dev, num_darts)
     
     fig = go.Figure()
     
@@ -89,8 +89,8 @@ def draw_dartboard(bias, variance, num_darts=30, seed_val=None, show_labels=True
         # Variance circle (indicating the spread)
         fig.add_shape(
             type="circle",
-            x0=center_x - variance*1.5, y0=center_y - variance*1.5,
-            x1=center_x + variance*1.5, y1=center_y + variance*1.5,
+            x0=center_x - std_dev*1.5, y0=center_y - std_dev*1.5,
+            x1=center_x + std_dev*1.5, y1=center_y + std_dev*1.5,
             fillcolor="rgba(0,0,0,0)",
             line_color="#3498DB",
             line_width=3,
@@ -98,16 +98,17 @@ def draw_dartboard(bias, variance, num_darts=30, seed_val=None, show_labels=True
             opacity=0.8
         )
         fig.add_annotation(
-            x=center_x, y=center_y + variance*1.5,
+            x=center_x, y=center_y + std_dev*1.5,
             text="Variance",
             showarrow=False,
             font=dict(color="#3498DB", size=16, weight="bold"),
             yshift=15
         )
 
+    board_limit = max(13, 10, abs(center_x) + 3 * std_dev, abs(center_y) + 3 * std_dev, float(np.max(np.abs(darts_x))) + 1, float(np.max(np.abs(darts_y))) + 1)
     fig.update_layout(
-        xaxis=dict(range=[-13, 13], showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(range=[-13, 13], showgrid=False, zeroline=False, showticklabels=False),
+        xaxis=dict(range=[-board_limit, board_limit], showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(range=[-board_limit, board_limit], showgrid=False, zeroline=False, showticklabels=False),
         showlegend=False,
         margin=dict(l=10, r=10, t=10, b=10),
         plot_bgcolor="rgba(0,0,0,0)",
@@ -239,7 +240,7 @@ with tab1:
                             help="Higher variance means the darts are scattered everywhere.")
         
         if st.button("🎲 Throw New Darts!", use_container_width=True):
-            st.session_state.dart_seed = np.random.randint(0, 100000)
+            st.session_state.dart_seed = int(np.random.default_rng().integers(0, 100000))
             
         st.markdown("---")
         
@@ -259,7 +260,7 @@ with tab1:
         st.plotly_chart(fig1, use_container_width=True)
 
 with tab2:
-    st.markdown("In real life, you can't just set Bias and Variance independently. As you make a model more complex (adding more layers, fitting higher polynomials), **Bias decreases but Variance increases**.")
+    st.markdown("In many model-selection settings, increasing complexity tends to reduce bias while increasing variance, but this is a common tradeoff—not a universal law or a strict rule that the two must change together. The curve below is illustrative.")
     
     complexity = st.slider("⚙️ Model Complexity", min_value=1.0, max_value=10.0, value=5.0, step=0.1,
                            help="1 = Very Simple (e.g., straight line). 10 = Very Complex (e.g., squiggly polynomial).")

@@ -382,12 +382,19 @@ const logBox = document.getElementById('log-box');
 const canvasWrap = document.getElementById('canvas-wrap');
 
 // High-DPI / Retina Canvas Scaling
-const dpr = window.devicePixelRatio || 1;
-canvas.style.width = '620px';
-canvas.style.height = '520px';
-canvas.width = 620 * dpr;
-canvas.height = 520 * dpr;
+const CANVAS_WIDTH = 620;
+const CANVAS_HEIGHT = 520;
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+canvas.style.width = '100%';
+canvas.style.height = 'auto';
+canvas.width = CANVAS_WIDTH * dpr;
+canvas.height = CANVAS_HEIGHT * dpr;
 ctx.scale(dpr, dpr);
+let animationFrame = null;
+
+function requestDraw() {
+  if (animationFrame === null) animationFrame = requestAnimationFrame(draw);
+}
 
 // State Variables
 let muP = 0.0;
@@ -438,8 +445,13 @@ function addLog(text, type = 'info') {
 }
 
 // Math Utility Functions
+function gaussianLogPdf(x, mu, sigma) {
+  const z = (x - mu) / sigma;
+  return -0.5 * z * z - Math.log(sigma) - 0.5 * Math.log(2 * Math.PI);
+}
+
 function gaussianPdf(x, mu, sigma) {
-  return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2)));
+  return Math.exp(gaussianLogPdf(x, mu, sigma));
 }
 
 function getKlDivergence(mu1, sigma1, mu2, sigma2) {
@@ -456,16 +468,15 @@ function getKlDivergence(mu1, sigma1, mu2, sigma2) {
 function getIntegrand(x, mu1, sigma1, mu2, sigma2) {
   // If simulation is Forward: P(x) * log2(P(x) / Q(x))
   // If simulation is Reverse: Q(x) * log2(Q(x) / P(x))
-  const p = gaussianPdf(x, muP, sigmaP);
-  const q = Math.max(1e-12, gaussianPdf(x, muQ, sigmaQ));
-  
-  if (simulationMode === 'forward') {
-    if (p <= 1e-12) return 0;
-    return p * Math.log2(p / q);
-  } else {
-    if (q <= 1e-12) return 0;
-    return q * Math.log2(q / p);
-  }
+  const logP = gaussianLogPdf(x, muP, sigmaP);
+  const logQ = gaussianLogPdf(x, muQ, sigmaQ);
+  const logDensity = simulationMode === 'forward' ? logP : logQ;
+  const density = Math.exp(logDensity);
+  if (density === 0 || !Number.isFinite(density)) return 0;
+
+  const logRatio = simulationMode === 'forward' ? logP - logQ : logQ - logP;
+  if (!Number.isFinite(logRatio)) return 0;
+  return density * logRatio / Math.LN2;
 }
 
 // Box-Muller Transform for Sampling
@@ -653,6 +664,7 @@ function setPreset(name) {
   
   updateSlidersUI();
   updatePresetHighlights();
+  requestDraw();
 }
 
 // Manual Sliders State Synchronizers
@@ -661,24 +673,28 @@ function onMuPChange(val) {
   sampleHistory = [];
   document.getElementById('muP-val').innerText = muP.toFixed(1);
   updatePresetHighlights();
+  requestDraw();
 }
 function onSigmaPChange(val) {
   sigmaP = parseFloat(val);
   sampleHistory = [];
   document.getElementById('sigmaP-val').innerText = sigmaP.toFixed(2);
   updatePresetHighlights();
+  requestDraw();
 }
 function onMuQChange(val) {
   muQ = parseFloat(val);
   sampleHistory = [];
   document.getElementById('muQ-val').innerText = muQ.toFixed(1);
   updatePresetHighlights();
+  requestDraw();
 }
 function onSigmaQChange(val) {
   sigmaQ = parseFloat(val);
   sampleHistory = [];
   document.getElementById('sigmaQ-val').innerText = sigmaQ.toFixed(2);
   updatePresetHighlights();
+  requestDraw();
 }
 
 function updateSlidersUI() {
@@ -723,12 +739,14 @@ function setSimulationMode(mode) {
   btnR.classList.toggle('reverse-kl', mode === 'reverse');
   
   addLog(`Switched to ${mode === 'forward' ? 'Forward' : 'Reverse'} KL. Sampling active distribution...`, 'cyan');
+  requestDraw();
 }
 
 function onRateChange(val) {
   dropRate = val;
   sampleHistory = [];
   addLog(`Droplet drop rate changed to: ${val}`, 'cyan');
+  requestDraw();
 }
 
 // Spark explosion
@@ -1065,6 +1083,7 @@ function drawDetailsPanel(klPQ, klQP) {
 
 // MAIN 60FPS GRAPHICS LOOP
 function draw() {
+  animationFrame = null;
   tick++;
   
   const klPQ = getKlDivergence(muP, sigmaP, muQ, sigmaQ);
@@ -1073,11 +1092,11 @@ function draw() {
   
   // Screen shake if meltdown active
   const isMeltdown = activeKL > 5.5;
-  canvasWrap.classList.toggle('shake-heavy', isMeltdown && activeKL > 7.0);
+  canvasWrap.classList.toggle('shake-heavy', dropRate !== 'none' && isMeltdown && activeKL > 7.0);
   
   // 1. Clear Screen
   ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   
   // Draw sci-fi connector line linking plots
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
@@ -1110,22 +1129,17 @@ function draw() {
         xSampled = sampleGaussian(muQ, sigmaQ);
       }
       
-      // Keep inside bounds
-      xSampled = Math.max(-5.9, Math.min(5.9, xSampled));
-      
       const pVal = gaussianPdf(xSampled, muP, sigmaP);
       const qVal = gaussianPdf(xSampled, muQ, sigmaQ);
       
       // Surprise bits
-      let bits = 0;
-      if (simulationMode === 'forward') {
-        bits = Math.log2(pVal / Math.max(1e-12, qVal));
-      } else {
-        bits = Math.log2(qVal / Math.max(1e-12, pVal));
-      }
+      const logP = gaussianLogPdf(xSampled, muP, sigmaP);
+      const logQ = gaussianLogPdf(xSampled, muQ, sigmaQ);
+      const bits = (simulationMode === 'forward' ? logP - logQ : logQ - logP) / Math.LN2;
       
       // Spawn drop at correct curve height
-      const cx = mapX(xSampled);
+      const visualX = Math.max(-5.9, Math.min(5.9, xSampled));
+      const cx = mapX(visualX);
       const cy = mapYPdf(simulationMode === 'forward' ? pVal : qVal);
       droplets.push(new Droplet(cx, cy, xSampled, bits));
     }
@@ -1184,7 +1198,7 @@ function draw() {
   // 5. Warning & Overlay Panel
   if (isMeltdown && tick % 32 < 16) {
     ctx.fillStyle = 'rgba(239, 68, 68, 0.04)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     
     ctx.fillStyle = '#ef4444';
     ctx.font = 'bold 9px sans-serif';
@@ -1205,12 +1219,16 @@ function draw() {
   ctx.fillStyle = '#10b981';
   ctx.fillText("■ SURPLUS SURPRISE SAVING", plotXMin + 340, 252);
   
-  requestAnimationFrame(draw);
+  if (dropRate !== 'none' || droplets.length || bubbles.length || sparks.length) requestDraw();
 }
 
 // Start visualizer
 setPreset('drift');
-draw();
+window.addEventListener('pagehide', () => {
+  if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+  animationFrame = null;
+  canvasWrap.classList.remove('shake-heavy');
+});
 
 </script>
 </body>

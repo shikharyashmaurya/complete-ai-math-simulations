@@ -8,10 +8,8 @@ st.set_page_config(page_title="Variance & Standard Deviation", layout="wide")
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: system-ui, sans-serif;
     }
 
     .hero-box {
@@ -136,7 +134,7 @@ def render_interactive_distribution():
 
     with left:
         st.markdown('<div class="section-header">🎛️ Control the Spread</div>', unsafe_allow_html=True)
-        st.markdown("""
+        st.markdown(r"""
         Use the sliders to adjust the true mean ($\mu$) and the true standard deviation ($\sigma$) of the distribution.
         """)
        
@@ -179,15 +177,17 @@ def render_interactive_distribution():
 
     with right:
         # Generate data for the bell curve (PDF)
-        x = np.linspace(-15, 15, 1000)
+        x_min = min(-15, mu - 4 * sigma)
+        x_max = max(15, mu + 4 * sigma)
+        x = np.linspace(x_min, x_max, 1000)
         y = norm.pdf(x, mu, sigma)
        
         # Generate random sample points to visually show "data points"
-        np.random.seed(42) # For stability in animation/slider movement
+        rng = np.random.default_rng(42)
         sample_size = 150
-        sample_x = np.random.normal(mu, sigma, sample_size)
+        sample_x = rng.normal(mu, sigma, sample_size)
         # Random y jitter just to spread the dots out vertically a little bit below the curve
-        sample_y = np.random.uniform(-0.05, -0.01, sample_size)
+        sample_y = rng.uniform(-0.05, -0.01, sample_size)
 
         fig = go.Figure()
 
@@ -255,7 +255,7 @@ def render_interactive_distribution():
             title="Normal Distribution: Stretching with σ",
             xaxis=dict(
                 title="Data Value",
-                range=[-15, 15],
+                range=[x_min, x_max],
                 gridcolor='rgba(51,65,85,0.4)',
                 title_font=dict(color="#cbd5e1"),
                 zerolinecolor='rgba(148,163,184,0.4)',
@@ -350,4 +350,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

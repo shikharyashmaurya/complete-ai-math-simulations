@@ -9,8 +9,7 @@ def render_chain_rule_lab():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        body { margin: 0; font-family: sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
         .container { display: flex; flex-direction: row; gap: 30px; width: 100%; max-width: 1200px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         
         .controls { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; }
@@ -177,8 +176,8 @@ def render_chain_rule_lab():
             funcBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     funcBtns.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentType = e.target.dataset.type;
+                    e.currentTarget.classList.add('active');
+                    currentType = e.currentTarget.dataset.type;
                     updateEq();
                     draw();
                 });
@@ -202,6 +201,7 @@ def render_chain_rule_lab():
                     autoBtn.innerText = "✨ Auto-Sweep";
                 }
             }
+            window.addEventListener('pagehide', stopAuto);
             
             autoBtn.addEventListener('click', () => {
                 if (autoInterval) {

@@ -5,7 +5,7 @@ st.set_page_config(page_title="Covariance", layout="wide", page_icon="📈")
 
 st.title("📈 40. Covariance")
 st.markdown("### How Do Two Variables Move Together?")
-st.write("Covariance measures the **joint variability** of two variables. It tells us whether they tend to move in the same direction, opposite directions, or independently.")
+st.write("Covariance measures the **joint variability** of two variables. It tells us whether they tend to move in the same direction, opposite directions, or have zero linear co-variation. Zero covariance alone does not imply independence.")
 st.markdown("#### The Formula")
 st.markdown("**Population Covariance:**")
 st.latex(r"\text{Cov}(X, Y) = \frac{1}{N} \sum_{i=1}^{N} (x_i - \mu_X)(y_i - \mu_Y)")
@@ -209,16 +209,18 @@ html_code = """
     let cy = canvas.height / 2;
     let scale = 50; // Pixels per unit
    
-    // Draw Quadrants
+    // Draw contribution quadrants relative to the sample means
+    let meanCx = Math.max(0, Math.min(canvas.width, cx + meanX * scale));
+    let meanCy = Math.max(0, Math.min(canvas.height, cy - meanY * scale));
     // Top-Right & Bottom-Left (Positive Contribution)
     ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
-    ctx.fillRect(cx, 0, canvas.width/2, cy); // TR
-    ctx.fillRect(0, cy, cx, canvas.height/2); // BL
+    ctx.fillRect(meanCx, 0, canvas.width - meanCx, meanCy); // TR
+    ctx.fillRect(0, meanCy, meanCx, canvas.height - meanCy); // BL
    
     // Top-Left & Bottom-Right (Negative Contribution)
     ctx.fillStyle = 'rgba(239, 68, 68, 0.08)';
-    ctx.fillRect(0, 0, cx, cy); // TL
-    ctx.fillRect(cx, cy, canvas.width/2, canvas.height/2); // BR
+    ctx.fillRect(0, 0, meanCx, meanCy); // TL
+    ctx.fillRect(meanCx, meanCy, canvas.width - meanCx, canvas.height - meanCy); // BR
    
     // Draw Axes
     ctx.beginPath();
@@ -241,9 +243,10 @@ html_code = """
       let px = cx + p.x * scale;
       let py = cy - p.y * scale; // Invert Y for canvas
      
-      // Determine color based on which quadrant it's in (relative to mean 0,0)
+      // Covariance contributions depend on deviations from both sample means.
       let color = '';
-      if ((p.x > 0 && p.y > 0) || (p.x < 0 && p.y < 0)) {
+      if (((p.x - meanX) > 0 && (p.y - meanY) > 0) ||
+          ((p.x - meanX) < 0 && (p.y - meanY) < 0)) {
          color = 'rgba(16, 185, 129, 0.9)'; // Greenish for positive contribution
       } else {
          color = 'rgba(239, 68, 68, 0.9)'; // Reddish for negative contribution
@@ -278,8 +281,8 @@ html_code = """
     if (Math.abs(cov) > 0.5) {
       let slope = cov / varX;
       let x1 = -5, x2 = 5;
-      let y1 = slope * x1;
-      let y2 = slope * x2;
+      let y1 = meanY + slope * (x1 - meanX);
+      let y2 = meanY + slope * (x2 - meanX);
      
       ctx.beginPath();
       ctx.moveTo(cx + x1 * scale, cy - y1 * scale);
@@ -301,4 +304,3 @@ html_code = """
 """
 
 components.html(html_code, height=650)
-

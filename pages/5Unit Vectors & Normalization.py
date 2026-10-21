@@ -45,32 +45,30 @@ def plot_vector(ax, vec, color, label, alpha=1.0, zorder=1, width=0.08, head=0.2
 								 mutation_scale=20, alpha=alpha, zorder=zorder))
 	ax.text(vec[0]*1.1, vec[1]*1.1, label, color=color, fontsize=14, weight='bold', zorder=zorder+1)
 
-def make_animation_frames(vec, unit_vec, mag, frames=30):
-	imgs = []
-	for i in range(frames+1):
-		t = i / frames
-		interp = interpolate_vec(vec, unit_vec, t)
-		interp_mag = np.linalg.norm(interp)
-		fig, ax = plt.subplots(figsize=(4,4))
-		ax.set_xlim(-11, 11)
-		ax.set_ylim(-11, 11)
-		ax.axhline(0, color='grey', lw=1)
-		ax.axvline(0, color='grey', lw=1)
-		plot_vector(ax, vec, 'tab:blue', 'Original', alpha=0.3, zorder=1)
-		plot_vector(ax, interp, 'tab:orange', 'Shrinking', alpha=0.9, zorder=2)
-		plot_vector(ax, unit_vec, 'tab:green', 'Unit', alpha=0.5, zorder=0)
-		ax.set_aspect('equal')
-		ax.set_xticks([])
-		ax.set_yticks([])
-		ax.set_title(f"Length: {interp_mag:.2f}")
-		fig.tight_layout()
-		imgs.append(fig)
-	return imgs
+def make_animation_frame(vec, unit_vec, step, frames=30):
+	t = step / frames
+	interp = interpolate_vec(vec, unit_vec, t)
+	interp_mag = np.linalg.norm(interp)
+	fig, ax = plt.subplots(figsize=(4,4))
+	ax.set_xlim(-11, 11)
+	ax.set_ylim(-11, 11)
+	ax.axhline(0, color='grey', lw=1)
+	ax.axvline(0, color='grey', lw=1)
+	plot_vector(ax, vec, 'tab:blue', 'Original', alpha=0.3, zorder=1)
+	plot_vector(ax, interp, 'tab:orange', 'Shrinking', alpha=0.9, zorder=2)
+	plot_vector(ax, unit_vec, 'tab:green', 'Unit', alpha=0.5, zorder=0)
+	ax.set_aspect('equal')
+	ax.set_xticks([])
+	ax.set_yticks([])
+	ax.set_title(f"Length: {interp_mag:.2f}")
+	fig.tight_layout()
+	return fig
 
 if mag > 0:
-	imgs = make_animation_frames(vec, unit_vec, mag, frames)
 	step = st.slider("Animation Step", 0, frames, 0)
-	st.pyplot(imgs[step])
+	fig = make_animation_frame(vec, unit_vec, step, frames)
+	st.pyplot(fig)
+	plt.close(fig)
 	st.caption("Move the slider to watch your vector shrink (or grow) to length 1!")
 else:
 	st.warning("Pick a non-zero vector to see normalization in action!")

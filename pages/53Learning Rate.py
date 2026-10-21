@@ -137,8 +137,8 @@ const RANGE = 6;
 const PAD = 50;
 
 function resize() {
-  cvs.width = cvs.clientWidth;
-  cvs.height = cvs.clientHeight;
+  cvs.width = Math.min(cvs.clientWidth, 1200);
+  cvs.height = Math.min(cvs.clientHeight, 450);
   draw();
 }
 
@@ -235,7 +235,24 @@ function draw() {
   stepValEl.innerText = steps;
 }
 
+let stepTimeout = null;
+let stepFrame = null;
+let statusTimeout = null;
+
+function stopRace() {
+  running = false;
+  if (stepTimeout !== null) {
+    clearTimeout(stepTimeout);
+    stepTimeout = null;
+  }
+  if (stepFrame !== null) {
+    cancelAnimationFrame(stepFrame);
+    stepFrame = null;
+  }
+}
+
 function step() {
+  stepFrame = null;
   if (!running || diverged) return;
 
   path.push(ballX);
@@ -255,26 +272,38 @@ function step() {
   }
 
   draw();
-  if (running) setTimeout(() => requestAnimationFrame(step), 100);
+  if (running) stepTimeout = setTimeout(() => {
+    stepTimeout = null;
+    stepFrame = requestAnimationFrame(step);
+  }, 100);
 }
 
 function showStatus(txt, cls) {
   statusMsg.innerText = txt;
   statusMsg.className = cls;
   statusMsg.style.opacity = 1;
-  setTimeout(() => statusMsg.style.opacity = 0, 3000);
+  if (statusTimeout !== null) clearTimeout(statusTimeout);
+  statusTimeout = setTimeout(() => {
+    statusMsg.style.opacity = 0;
+    statusTimeout = null;
+  }, 3000);
 }
 
 runBtn.addEventListener('click', () => {
   if (diverged) {
     reset();
   }
-  running = !running;
+  if (running) {
+    stopRace();
+  } else {
+    running = true;
+  }
   runBtn.innerText = running ? "⏸ PAUSE" : "▶ START RACE";
   if (running) step();
 });
 
 function reset() {
+  stopRace();
   ballX = -4.0 + (Math.random() * 2);
   path = [];
   steps = 0;
@@ -305,6 +334,8 @@ document.querySelectorAll('.pbtn').forEach(btn => {
 });
 
 cvs.addEventListener('mousedown', (e) => {
+  stopRace();
+  runBtn.innerText = "▶ START RACE";
   const rect = cvs.getBoundingClientRect();
   const {x} = s2w(e.clientX - rect.left, e.clientY - rect.top);
   ballX = Math.max(-RANGE, Math.min(RANGE, x));
@@ -315,6 +346,10 @@ cvs.addEventListener('mousedown', (e) => {
 });
 
 window.addEventListener('resize', resize);
+window.addEventListener('pagehide', () => {
+  stopRace();
+  if (statusTimeout !== null) clearTimeout(statusTimeout);
+});
 resize();
 </script>
 </body>

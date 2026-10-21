@@ -159,10 +159,13 @@ with col2:
             marker=dict(color='#00F0FF', size=12, line=dict(color='white', width=1))
         ))
         
+        square_x = np.concatenate([x, x + np.abs(y - y_pred)])
+        plot_min = min(0.0, float(np.min(y)), float(np.min(y_pred)), float(np.min(line_y))) - 1.0
+        plot_max = max(15.0, float(np.max(square_x)), float(np.max(y)), float(np.max(y_pred)), float(np.max(line_y))) + 1.0
         fig.update_layout(
-            xaxis=dict(range=[0, 15], title="X", showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False),
+            xaxis=dict(range=[min(0.0, float(np.min(x))) - 1.0, plot_max], title="X", showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False),
             yaxis=dict(
-                range=[0, 15], title="Y",
+                range=[plot_min, plot_max], title="Y",
                 scaleanchor="x", scaleratio=1,
                 showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False
             ),
@@ -185,12 +188,12 @@ col_text, col_plot = st.columns([1.5, 1])
 
 with col_text:
     st.markdown("""
-    In Machine Learning, **Mean Squared Error (MSE)** is the most popular loss function for regression. 
+    In Machine Learning, **Mean Squared Error (MSE)** is a common loss function for regression.
     But why not just measure the straight line distance (**Mean Absolute Error - MAE**)?
     
     1. **The Outlier Penalty 🧨**: 
-       Look at the graph on the right. If your model makes a small mistake, both MSE and MAE give a similar penalty. 
-       But if the model makes a huge mistake, **MSE penalizes it exponentially!** 
+       Look at the graph on the right. For errors smaller than one unit, MSE is smaller than MAE; beyond one unit, the squared penalty grows faster.
+       But if the model makes a huge mistake, **MSE penalizes it quadratically** (the error is squared)!
        MSE acts like an alarm system that screams loudly if there is even one massive error.
        
     2. **Try the Outlier Checkbox 👆**: 

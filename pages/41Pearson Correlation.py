@@ -9,8 +9,7 @@ def render_correlation_lab():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        body { margin: 0; font-family: system-ui, sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
         .container { display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 1100px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         
         .controls { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 25px; }
@@ -41,12 +40,12 @@ def render_correlation_lab():
             <div class="controls">
                 <div>
                     <div class="title">The Correlation Morph 🧪</div>
-                    <div class="desc">Move the slider to smoothly shift the relationship between X and Y. Notice how the shape squashes into a perfect straight line as the correlation approaches +1.0 or -1.0.</div>
+                    <div class="desc">Move the slider to change the target population correlation between X and Y. The finite sample's measured correlation may differ slightly. At +1.0 or -1.0, the points lie on a straight line.</div>
                 </div>
                 
                 <div class="slider-group">
                     <div class="slider-label">
-                        <span>Pearson r</span>
+                        <span>Target Pearson r</span>
                         <span id="r-val" class="val-display">0.00</span>
                     </div>
                     <input type="range" id="r-slider" min="-1" max="1" step="0.01" value="0">
@@ -202,8 +201,7 @@ def render_anscombe_gotcha():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background: transparent; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center;}
+        body { margin: 0; font-family: system-ui, sans-serif; background: transparent; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center;}
         .container { display: flex; flex-direction: row; gap: 40px; background: rgba(30, 41, 59, 0.5); padding: 30px 40px; border-radius: 20px; border: 1px solid rgba(251, 113, 133, 0.3); align-items: center; max-width: 800px;}
         .text-box { flex: 1; display: flex; flex-direction: column; justify-content: center;}
         .title { color: #fb7185; font-weight: 900; font-size: 22px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
@@ -217,9 +215,9 @@ def render_anscombe_gotcha():
             <div class="text-box">
                 <div class="title">⚠️ The "Linear" Blindspot</div>
                 <div class="desc">
-                    Pearson Correlation <strong>only measures straight lines</strong>.<br><br>
-                    Look at the graph. X and Y are perfectly related (it's a beautiful U-shape curve). If you know X, you can predict Y exactly.<br><br>
-                    But the Pearson Correlation is <span class="highlight">exactly 0.00</span>. It looks at the curve, tries to draw a straight line, fails, and gives up. Never trust <code>r</code> without looking at your data!
+                Pearson Correlation <strong>only measures linear association</strong>.<br><br>
+                Look at the graph. X and Y are perfectly related by a U-shaped curve, so X determines Y exactly.<br><br>
+                Yet their Pearson Correlation is <span class="highlight">exactly 0.00</span>, because the symmetric curve has no linear trend. Never trust <code>r</code> without looking at your data!
                 </div>
             </div>
             <div>
@@ -232,10 +230,10 @@ def render_anscombe_gotcha():
             
             const numPoints = 120;
             const points = [];
-            for(let i=0; i<numPoints; i++) {
+            for(let i=0; i<numPoints / 2; i++) {
                 const x = (Math.random() - 0.5) * 5.5; // -2.75 to 2.75
-                const y = 0.5 * x * x - 2 + (Math.random() - 0.5) * 0.5;
-                points.push({x, y});
+                const y = 0.5 * x * x - 2;
+                points.push({x, y}, {x: -x, y});
             }
             
             const cx = cvs.width / 2;

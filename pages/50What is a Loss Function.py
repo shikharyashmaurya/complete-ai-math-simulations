@@ -36,7 +36,7 @@ h2{font-size:22px;font-weight:900;color:#f8fafc;margin-bottom:4px;display:flex;a
 input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;margin-bottom:12px;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#6366f1;cursor:pointer;box-shadow:0 0 10px rgba(99, 102, 241, 0.5);}
 
-canvas{border-radius:12px;cursor:crosshair;touch-action:none;}
+canvas{border-radius:12px;cursor:crosshair;touch-action:none;display:block;max-width:100%;}
 .badge{background:rgba(99, 102, 241, 0.15);color:#818cf8;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;border:1px solid rgba(99, 102, 241, 0.3);}
 
 .hint{font-size:11px;color:#64748b;margin-top:8px;font-style:italic;}
@@ -115,15 +115,27 @@ let width, height;
 function init() {
     resize();
     createPoints();
-    requestAnimationFrame(loop);
+    render();
 }
 
 function resize() {
     const parent = canvas.parentElement;
-    width = parent.clientWidth - 30;
+    const oldWidth = width;
+    const oldHeight = height;
+    width = Math.max(1, Math.min(parent.clientWidth - 30, 1200));
     height = 420;
     canvas.width = width;
     canvas.height = height;
+    canvas.style.width = width + 'px';
+    if (points.length && oldWidth && oldHeight) {
+        points.forEach(p => {
+            p.x = p.x / oldWidth * width;
+            p.y = p.y / oldHeight * height;
+        });
+    } else if (points.length) {
+        createPoints();
+    }
+    if (points.length) render();
 }
 
 function createPoints() {
@@ -140,11 +152,13 @@ function createPoints() {
 
 function resetPoints() {
     createPoints();
+    render();
 }
 
 function solveBestFit() {
     // Linear regression formula
     let n = points.length;
+    if (!n) return;
     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
     points.forEach(p => {
         let x = p.x - width/2;
@@ -152,11 +166,15 @@ function solveBestFit() {
         sumX += x; sumY += y;
         sumXY += x * y; sumXX += x * x;
     });
-    let w = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const denominator = n * sumXX - sumX * sumX;
+    let w = Math.abs(denominator) > 1e-9
+        ? (n * sumXY - sumX * sumY) / denominator
+        : 0;
     let b = (sumY - w * sumX) / n;
     
     wRange.value = w.toFixed(2);
     bRange.value = b.toFixed(0);
+    render();
 }
 
 canvas.onmousedown = (e) => {
@@ -176,17 +194,24 @@ window.onmousemove = (e) => {
     const rect = canvas.getBoundingClientRect();
     draggingPoint.x = e.clientX - rect.left;
     draggingPoint.y = e.clientY - rect.top;
+    render();
 };
 
 window.onmouseup = () => draggingPoint = null;
-
-function loop() {
+function render() {
     update();
     draw();
-    requestAnimationFrame(loop);
 }
 
 let totalLoss = 0;
+
+wRange.addEventListener('input', render);
+bRange.addEventListener('input', render);
+window.addEventListener('resize', resize);
+window.addEventListener('pagehide', () => {
+    window.onmousemove = null;
+    window.onmouseup = null;
+});
 
 function update() {
     wvDisplay.innerText = parseFloat(wRange.value).toFixed(2);

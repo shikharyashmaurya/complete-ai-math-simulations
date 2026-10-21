@@ -9,8 +9,7 @@ def render_stitch_lab():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background: #0f172a; color: white; }
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; }
         #canvas-container { width: 100%; height: 750px; position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         #ui-layer {
             position: absolute; top: 20px; right: 20px; bottom: 20px;
@@ -297,8 +296,9 @@ def render_stitch_lab():
         
         // Animation Loop
         const clock = new THREE.Clock();
+        let animationFrameId;
         function animate() {
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
             controls.update();
             const time = clock.getElapsedTime();
             probeGlow.scale.setScalar(1 + 0.15 * Math.sin(time * 6));
@@ -306,11 +306,35 @@ def render_stitch_lab():
         }
         animate();
         
-        window.addEventListener('resize', () => {
+        function handleResize() {
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
-        });
+        }
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('pagehide', () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', handleResize);
+            const disposedGeometries = new Set();
+            const disposedMaterials = new Set();
+            controls.dispose();
+            scene.traverse(object => {
+                if (object.geometry && !disposedGeometries.has(object.geometry)) {
+                    disposedGeometries.add(object.geometry);
+                    object.geometry.dispose();
+                }
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
+                materials.forEach(material => {
+                    if (material && !disposedMaterials.has(material)) {
+                        disposedMaterials.add(material);
+                        material.dispose();
+                    }
+                });
+            });
+            renderer.dispose();
+            renderer.forceContextLoss();
+            renderer.domElement.remove();
+        }, { once: true });
     </script>
     </body>
     </html>
@@ -323,8 +347,7 @@ def render_relu_visualizer():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; color: white;}
+        body { margin: 0; padding: 0; background: transparent; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; justify-content: center; align-items: center; color: white;}
         
         .container {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -338,7 +361,7 @@ def render_relu_visualizer():
         
         button {
             background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-weight: bold; cursor: pointer; transition: all 0.2s;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: bold; cursor: pointer; transition: all 0.2s;
         }
         button:hover { background: #334155; color: white; }
         button.active { background: #4ade80; color: #0f172a; border-color: #4ade80; }
@@ -512,8 +535,7 @@ def render_xor_piecewise_lab():
     <html>
     <head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; }
+        body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box; gap: 15px;}
         .vis-row { display: flex; gap: 20px; flex: 1; min-height: 0; justify-content: center; align-items: flex-start; }
         .panel { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; width: 220px;}

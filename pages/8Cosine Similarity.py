@@ -53,6 +53,7 @@ ax.legend()
 ax.set_aspect('equal')
 
 st.pyplot(fig)
+plt.close(fig)
 
 st.write("**Formula:**")
 st.latex(r"\text{Cosine Similarity} = \frac{\mathbf{v}_1 \cdot \mathbf{v}_2}{\|\mathbf{v}_1\|\,\|\mathbf{v}_2\|}")

@@ -9,9 +9,8 @@ def render_gd_lab():
 <html>
 <head>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:#fff;padding:16px;overflow-x:hidden;}
+body{font-family:sans-serif;background:#0f172a;color:#fff;padding:16px;overflow-x:hidden;}
 .wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
 .row{display:flex;gap:16px;}
 .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;}
@@ -367,9 +366,8 @@ draw();
 def main():
     st.markdown("""
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
             .main-header {
-                font-family: 'Inter', sans-serif;
+                font-family: sans-serif;
                 background: linear-gradient(90deg, #38bdf8, #10b981);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
@@ -378,7 +376,7 @@ def main():
                 margin-bottom: 0;
             }
             .sub-header {
-                font-family: 'Inter', sans-serif;
+                font-family: sans-serif;
                 font-size: 1.2rem;
                 color: #94a3b8;
                 margin-bottom: 1.5rem;

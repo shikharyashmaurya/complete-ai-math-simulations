@@ -286,6 +286,7 @@ html_code = """
     const axisRect = axis.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
     const width = axisRect.width;
+    if (width === 0) return MIN_VAL;
     const leftOffset = axisRect.left - canvasRect.left;
     let val = MIN_VAL + ((x - leftOffset) / width) * (MAX_VAL - MIN_VAL);
     return Math.max(MIN_VAL, Math.min(MAX_VAL, Math.round(val)));
@@ -328,13 +329,20 @@ html_code = """
       }
     });
    
-    el.addEventListener('pointerup', (e) => {
+    function finishDrag(e, releaseCapture) {
+      if (!point.isDragging) return;
       point.isDragging = false;
       el.classList.remove('dragging');
-      el.releasePointerCapture(e.pointerId);
       el.style.zIndex = 5;
+      if (releaseCapture && el.hasPointerCapture(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId);
+      }
       updateStatsAndLayout();
-    });
+    }
+
+    el.addEventListener('pointerup', (e) => finishDrag(e, true));
+    el.addEventListener('pointercancel', (e) => finishDrag(e, false));
+    el.addEventListener('lostpointercapture', (e) => finishDrag(e, false));
   });
  
   // 4. Core Logic: Math & Layout
@@ -430,4 +438,3 @@ html_code = """
 """
 
 components.html(html_code, height=620)
-

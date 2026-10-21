@@ -8,8 +8,6 @@ st.set_page_config(page_title="Normal (Gaussian) Distribution", layout="wide")
 def local_css():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
@@ -104,7 +102,7 @@ def render_hero():
         <div class="hero-title">🔔 Page 34: Normal (Gaussian) Distribution</div>
         <div class="hero-sub">
             Meet the <strong>Bell Curve</strong>. It is the most important probability distribution in all of statistics and AI.
-            Why? Because of the <em>Central Limit Theorem</em>—when you add many independent random things together, their sum naturally forms this beautiful bell shape!
+            Why? Under suitable conditions, the <em>Central Limit Theorem</em> says that sums of many independent random variables become approximately bell-shaped when standardized.
             <br><br>
             It has two knobs: <strong>Mean (μ)</strong> to shift it left or right, and <strong>Standard Deviation (σ)</strong> to make it fat or thin.
         </div>
@@ -150,7 +148,9 @@ def render_interactive_distribution():
         """, unsafe_allow_html=True)
 
     with right:
-        x = np.linspace(-15, 15, 1000)
+        x_min = mu - 4 * sigma
+        x_max = mu + 4 * sigma
+        x = np.linspace(x_min, x_max, 1000)
         y = norm.pdf(x, mu, sigma)
        
         fig = go.Figure()
@@ -208,7 +208,7 @@ def render_interactive_distribution():
             title="The Gaussian Bell Curve",
             xaxis=dict(
                 title="Value (x)",
-                range=[-15, 15],
+                range=[x_min, x_max],
                 gridcolor='rgba(51,65,85,0.4)',
                 zerolinecolor='rgba(148,163,184,0.4)',
                 zerolinewidth=2
@@ -294,4 +294,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
