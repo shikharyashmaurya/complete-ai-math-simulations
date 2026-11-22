@@ -86,34 +86,3 @@ st.write("""
 In reality, these live in much higher dimensions (e.g., 784 for images), but PCA squishes them into 3D for visualization. 
 Notice how similar items cluster together in this space!
 """)
-
-# Interactive part: Let user add a custom vector
-st.header("Try It Yourself!")
-st.write("Add your own 'data point' as a vector and see where it lands in space.")
-
-user_vector = st.text_input("Enter a vector (comma-separated numbers, e.g., 1,2,3,4,5)", "4.5,3.2,4.8,2.1,5.0")
-if user_vector:
-    try:
-        vec = np.array([float(x.strip()) for x in user_vector.split(",")])
-        # Pad or truncate to match dimensions (simplified, assume 5D for demo)
-        if len(vec) < 5:
-            vec = np.pad(vec, (0, 5 - len(vec)), constant_values=0)
-        elif len(vec) > 5:
-            vec = vec[:5]
-        reduced_vec = pca_movies.transform(vec.reshape(1, -1))
-        reduced_vec = normalize(reduced_vec)
-        st.write(f"Your vector in 3D space: {reduced_vec[0]}")
-        # Add to plot
-        fig.add_trace(go.Scatter3d(
-            x=[reduced_vec[0, 0]],
-            y=[reduced_vec[0, 1]],
-            z=[reduced_vec[0, 2]],
-            mode='markers+text',
-            text=["Your Point"],
-            textposition="top center",
-            name="Your Data",
-            marker=dict(size=10, color="yellow", symbol="diamond")
-        ))
-        st.plotly_chart(fig)
-    except ValueError:
-        st.error("Please enter valid numbers separated by commas.")

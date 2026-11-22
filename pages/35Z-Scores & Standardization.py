@@ -111,31 +111,41 @@ def render_interactive_ruler():
     st.markdown('<div class="section-header">⚖️ The Visual Ruler</div>', unsafe_allow_html=True)
    
     st.markdown("""
-    Imagine you took a test with an average score of **70** and a standard deviation of **10**.
-    You scored an **85**. Is that good? Let's use the Z-score ruler to find out!
+    Explore how a data point relates to the average by adjusting the distribution parameters below.
+    For example, imagine a test with average score μ = 70 and standard deviation σ = 10, where you scored x = 85.
+    Watch how the Z-score and step-by-step calculations respond in real-time as you move each slider!
     """)
    
     left, right = st.columns([1, 2], gap="large")
 
     with left:
         st.markdown("### 🎛️ Customize Your Distribution")
-        mu = st.slider("Mean (μ) — The Average", min_value=0.0, max_value=100.0, value=70.0, step=1.0)
-        sigma = st.slider("Std Deviation (σ) — The Spread", min_value=1.0, max_value=30.0, value=10.0, step=1.0)
+        mu = st.slider("Mean (μ) — The Average", min_value=0.0, max_value=100.0, value=70.0, step=1.0, key="z_mean")
+        sigma = st.slider("Std Deviation (σ) — The Spread", min_value=1.0, max_value=30.0, value=10.0, step=1.0, key="z_sigma")
        
         st.markdown("### 🎯 Pick Your Data Point")
-        x_val = st.slider("Data Point (x)", min_value=mu - 4*sigma, max_value=mu + 4*sigma, value=mu + 1.5*sigma, step=0.1)
+        x_val = st.slider("Data Point (x)", min_value=-20.0, max_value=160.0, value=85.0, step=0.5, key="z_x_val")
        
         # Calculate Z-score
-        z_score = (x_val - mu) / sigma
+        diff = x_val - mu
+        z_score = diff / sigma
+        percentile = norm.cdf(z_score) * 100
        
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
         <div class="stat-card" style="border-top-color: #34d399;">
-            <div class="stat-label" style="color: #34d399;">Calculated Z-Score</div>
-            <div class="stat-val" style="color: #10b981;">{z_score:.2f}</div>
-            <div style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px;">
+            <div class="stat-label" style="color: #34d399;">Step-by-Step Calculation</div>
+            <div style="font-family: monospace; font-size: 1.05rem; color: #f8fafc; margin: 12px 0; background: rgba(15,23,42,0.7); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(52,211,153,0.3); text-align: left;">
+                Z = (x - μ) / σ<br>
+                Z = ({x_val:.1f} - {mu:.1f}) / {sigma:.1f}<br>
+                Z = {diff:+.1f} / {sigma:.1f} = <strong style="color: #34d399;">{z_score:+.2f}</strong>
+            </div>
+            <div class="stat-label" style="color: #94a3b8;">Final Z-Score</div>
+            <div class="stat-val" style="color: #10b981;">{z_score:+.2f}</div>
+            <div style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px; line-height: 1.5;">
                 Your point is exactly <strong>{abs(z_score):.2f} standard deviations</strong>
-                {'above' if z_score >= 0 else 'below'} the mean.
+                {'above' if z_score >= 0 else 'below'} the mean.<br>
+                <span style="color: #94a3b8; font-size: 0.85rem;">Percentile: <strong>{percentile:.1f}%</strong> (higher than {percentile:.1f}% of values)</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -146,7 +156,9 @@ def render_interactive_ruler():
        
         with tab1:
             # Raw Distribution Plot
-            x_raw = np.linspace(mu - 4*sigma, mu + 4*sigma, 500)
+            x_min_plot = min(mu - 4*sigma, x_val - 0.5*sigma)
+            x_max_plot = max(mu + 4*sigma, x_val + 0.5*sigma)
+            x_raw = np.linspace(x_min_plot, x_max_plot, 500)
             y_raw = norm.pdf(x_raw, mu, sigma)
            
             fig_raw = go.Figure()
@@ -159,12 +171,13 @@ def render_interactive_ruler():
             # Fill Area up to x_val to show percentile
             x_fill = x_raw[x_raw <= x_val]
             y_fill = y_raw[x_raw <= x_val]
-            fig_raw.add_trace(go.Scatter(
-                x=np.concatenate([x_fill, [x_val, x_raw[0]]]),
-                y=np.concatenate([y_fill, [0, 0]]),
-                fill='toself', fillcolor='rgba(99, 102, 241, 0.2)', line=dict(color='rgba(255,255,255,0)'),
-                name=f'Percentile Area'
-            ))
+            if len(x_fill) > 0:
+                fig_raw.add_trace(go.Scatter(
+                    x=np.concatenate([x_fill, [x_val, x_fill[0]]]),
+                    y=np.concatenate([y_fill, [0, 0]]),
+                    fill='toself', fillcolor='rgba(99, 102, 241, 0.2)', line=dict(color='rgba(255,255,255,0)'),
+                    name='Percentile Area'
+                ))
            
             # Mean Line
             fig_raw.add_vline(x=mu, line_dash="dash", line_color="#94a3b8", line_width=2, annotation_text="Mean (μ)", annotation_position="top right")
@@ -173,14 +186,14 @@ def render_interactive_ruler():
             fig_raw.add_vline(x=x_val, line_color="#10b981", line_width=3)
             fig_raw.add_annotation(
                 x=x_val, y=max(y_raw)*0.5,
-                text=f"x = {x_val:.1f}", showarrow=True, arrowhead=2, ax=50 if x_val > mu else -50, ay=0,
+                text=f"x = {x_val:.1f}", showarrow=True, arrowhead=2, ax=50 if x_val >= mu else -50, ay=0,
                 font=dict(color="#10b981", size=14, family="sans-serif")
             )
            
             # Draw Sigma Ruler arrows
             current_x = mu
-            step = sigma if x_val > mu else -sigma
-            num_full_steps = int(abs((x_val - mu) / sigma))
+            step = sigma if x_val >= mu else -sigma
+            num_full_steps = min(int(abs((x_val - mu) / sigma)), 6)
            
             for i in range(num_full_steps):
                 fig_raw.add_annotation(
@@ -195,7 +208,7 @@ def render_interactive_ruler():
                 current_x += step
                
             # Remaining fraction
-            if abs(x_val - current_x) > 0.01:
+            if abs(x_val - current_x) > 0.01 and num_full_steps < 6:
                 fig_raw.add_shape(
                     type="line", x0=current_x, y0=max(y_raw)*0.08, x1=x_val, y1=max(y_raw)*0.08,
                     line=dict(color="#f8fafc", width=2), opacity=0.5
@@ -204,17 +217,19 @@ def render_interactive_ruler():
                 fig_raw.add_shape(type="line", x0=x_val, y0=max(y_raw)*0.07, x1=x_val, y1=max(y_raw)*0.09, line=dict(color="#f8fafc", width=2), opacity=0.5)
 
             fig_raw.update_layout(
-                title="The Raw Data",
+                title=f"The Raw Data (μ = {mu:.1f}, σ = {sigma:.1f}, x = {x_val:.1f})",
                 xaxis=dict(title="Original Value (x)", gridcolor='rgba(51,65,85,0.4)'),
                 yaxis=dict(title="Density", gridcolor='rgba(51,65,85,0.4)'),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#f8fafc'), margin=dict(t=40, b=40), height=400, showlegend=False
             )
-            st.plotly_chart(fig_raw, use_container_width=True)
+            st.plotly_chart(fig_raw, width="stretch")
            
         with tab2:
             # Standardized Plot
-            x_std = np.linspace(-4, 4, 500)
+            z_min_plot = min(-4.0, z_score - 0.5)
+            z_max_plot = max(4.0, z_score + 0.5)
+            x_std = np.linspace(z_min_plot, z_max_plot, 500)
             y_std = norm.pdf(x_std, 0, 1)
            
             fig_std = go.Figure()
@@ -226,11 +241,12 @@ def render_interactive_ruler():
             # Fill Area
             x_fill_std = x_std[x_std <= z_score]
             y_fill_std = y_std[x_std <= z_score]
-            fig_std.add_trace(go.Scatter(
-                x=np.concatenate([x_fill_std, [z_score, x_std[0]]]),
-                y=np.concatenate([y_fill_std, [0, 0]]),
-                fill='toself', fillcolor='rgba(236, 72, 153, 0.2)', line=dict(color='rgba(255,255,255,0)')
-            ))
+            if len(x_fill_std) > 0:
+                fig_std.add_trace(go.Scatter(
+                    x=np.concatenate([x_fill_std, [z_score, x_fill_std[0]]]),
+                    y=np.concatenate([y_fill_std, [0, 0]]),
+                    fill='toself', fillcolor='rgba(236, 72, 153, 0.2)', line=dict(color='rgba(255,255,255,0)')
+                ))
            
             # Mean Line (0)
             fig_std.add_vline(x=0, line_dash="dash", line_color="#94a3b8", line_width=2, annotation_text="μ = 0", annotation_position="top right")
@@ -239,22 +255,24 @@ def render_interactive_ruler():
             fig_std.add_vline(x=z_score, line_color="#34d399", line_width=3)
             fig_std.add_annotation(
                 x=z_score, y=max(y_std)*0.5,
-                text=f"z = {z_score:.2f}", showarrow=True, arrowhead=2, ax=50 if z_score > 0 else -50, ay=0,
+                text=f"z = {z_score:+.2f}", showarrow=True, arrowhead=2, ax=50 if z_score >= 0 else -50, ay=0,
                 font=dict(color="#34d399", size=14, family="sans-serif")
             )
            
             # Ruler marks
-            for i in range(-3, 4):
+            r_min = max(-6, int(np.floor(z_min_plot)))
+            r_max = min(6, int(np.ceil(z_max_plot)))
+            for i in range(r_min, r_max + 1):
                 fig_std.add_annotation(x=i, y=-0.02, text=str(i), showarrow=False, font=dict(color="#94a3b8", size=12))
                
             fig_std.update_layout(
-                title="Standard Normal Distribution",
-                xaxis=dict(title="Z-Score (Standard Deviations from Mean)", gridcolor='rgba(51,65,85,0.4)', range=[-4, 4]),
+                title=f"Standard Normal Distribution (Z = {z_score:+.2f})",
+                xaxis=dict(title="Z-Score (Standard Deviations from Mean)", gridcolor='rgba(51,65,85,0.4)', range=[z_min_plot, z_max_plot]),
                 yaxis=dict(title="Density", gridcolor='rgba(51,65,85,0.4)'),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#f8fafc'), margin=dict(t=40, b=40), height=400, showlegend=False
             )
-            st.plotly_chart(fig_std, use_container_width=True)
+            st.plotly_chart(fig_std, width="stretch")
 
     st.markdown("""
     <div class="insight-box">
@@ -264,34 +282,42 @@ def render_interactive_ruler():
     </p>
     </div>
     """, unsafe_allow_html=True)
+    return x_val, mu, sigma, z_score
 
 
-def render_math_breakdown():
+def render_math_breakdown(x_val: float, mu: float, sigma: float, z_score: float):
+    diff = x_val - mu
     st.markdown('<div class="section-header">🧮 The Formula: Shift & Scale</div>', unsafe_allow_html=True)
    
     st.markdown("The Z-score formula performs two geometric operations on our data:")
    
-    st.latex(r"Z = \frac{x - \mu}{\sigma}")
+    st.latex(rf"Z = \frac{{x - \mu}}{{\sigma}} = \frac{{{x_val:.1f} - {mu:.1f}}}{{{sigma:.1f}}} = \frac{{{diff:+.1f}}}{{{sigma:.1f}}} = \mathbf{{{z_score:+.2f}}}")
    
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(r"""
+        st.markdown(f"""
         <div class="stat-card" style="border-top-color:#f59e0b;">
             <div class="stat-label" style="color:#f59e0b;">Step 1: Shift (Center to 0)</div>
-            <div style="font-size:1.8rem; margin:10px 0; color:#f8fafc;"><i>Numerator: (x - μ)</i></div>
-            <div style="color:#cbd5e1; font-size:0.95rem; text-align: left;">
-                By subtracting the mean from our data point, we calculate the absolute distance. If everyone does this, the new mean becomes exactly 0.
-                <br><br><strong>Geometric View:</strong> We slide the entire bell curve left or right until its peak rests perfectly on the y-axis.
+            <div style="font-size:1.5rem; margin:8px 0; color:#f8fafc;"><i>Numerator: (x - μ)</i></div>
+            <div style="background: rgba(15,23,42,0.7); padding: 8px 12px; border-radius: 8px; font-family: monospace; font-size: 1.05rem; color: #fbbf24; margin: 10px 0; border: 1px solid rgba(245,158,11,0.3);">
+                {x_val:.1f} - {mu:.1f} = <strong>{diff:+.1f}</strong>
+            </div>
+            <div style="color:#cbd5e1; font-size:0.95rem; text-align: left; line-height: 1.6;">
+                By subtracting the mean ({mu:.1f}) from our data point ({x_val:.1f}), we calculate the signed distance ({diff:+.1f}). If everyone does this, the new mean becomes exactly 0.
+                <br><br><strong>Geometric View:</strong> We slide the entire bell curve horizontally until its peak rests perfectly on the y-axis (center 0).
             </div>
         </div>""", unsafe_allow_html=True)
        
     with c2:
-        st.markdown(r"""
+        st.markdown(f"""
         <div class="stat-card" style="border-top-color:#0ea5e9;">
             <div class="stat-label" style="color:#0ea5e9;">Step 2: Scale (Standardize Spread)</div>
-            <div style="font-size:1.8rem; margin:10px 0; color:#f8fafc;"><i>Denominator: ÷ σ</i></div>
-            <div style="color:#cbd5e1; font-size:0.95rem; text-align: left;">
-                By dividing by the standard deviation, we are changing our unit of measurement. Instead of measuring in "points" or "meters," we measure in "standard deviations."
+            <div style="font-size:1.5rem; margin:8px 0; color:#f8fafc;"><i>Denominator: ÷ σ</i></div>
+            <div style="background: rgba(15,23,42,0.7); padding: 8px 12px; border-radius: 8px; font-family: monospace; font-size: 1.05rem; color: #38bdf8; margin: 10px 0; border: 1px solid rgba(14,165,233,0.3);">
+                {diff:+.1f} ÷ {sigma:.1f} = <strong>{z_score:+.2f}</strong>
+            </div>
+            <div style="color:#cbd5e1; font-size:0.95rem; text-align: left; line-height: 1.6;">
+                By dividing by the standard deviation ({sigma:.1f}), we change our unit of measurement. Instead of measuring in raw units, we measure in "standard deviations".
                 <br><br><strong>Geometric View:</strong> We pinch or stretch the bell curve until its standard deviation is exactly 1 unit wide.
             </div>
         </div>""", unsafe_allow_html=True)
@@ -322,10 +348,10 @@ def main():
     render_hero()
    
     st.divider()
-    render_interactive_ruler()
+    x_val, mu, sigma, z_score = render_interactive_ruler()
    
     st.divider()
-    render_math_breakdown()
+    render_math_breakdown(x_val, mu, sigma, z_score)
    
     st.divider()
     render_ai_context()

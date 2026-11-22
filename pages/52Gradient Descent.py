@@ -381,13 +381,6 @@ def main():
                 color: #94a3b8;
                 margin-bottom: 1.5rem;
             }
-            .glass-card {
-                background: rgba(255, 255, 255, 0.03);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 14px;
-                padding: 1.2rem;
-                margin-bottom: 1rem;
-            }
             .highlight-yellow { color: #FFD166; font-weight: 700; }
             .highlight-teal { color: #4ECDC4; font-weight: 700; }
             .highlight-orange { color: #fb923c; font-weight: 700; }
@@ -400,23 +393,21 @@ def main():
     col1, col2 = st.columns([1, 2.5])
 
     with col1:
-        st.markdown(r"""
-        <div class="glass-card">
-        <h3>🧭 The "Negative" Compass</h3>
-        On Page 48, you saw the Gradient (∇f) — it points directly <b>uphill</b>. 
-        <br><br>
-        <b>Gradient Descent</b> is simply the <span style="color:#10b981; font-weight:800;">Negative</span> of the gradient ($-\nabla f$). By walking the opposite direction, we are guaranteed to go downhill toward the minimum.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(r"""
-        <div class="glass-card">
-        <h3>📐 The Descent Step</h3>
-        Every training iteration, we update the weights:
-        $$\mathbf{w}_{next} = \mathbf{w}_{old} - \eta \cdot \nabla f$$
-        Where $\eta$ is the <b>Learning Rate</b> — your stride length.
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("### 🧭 The Negative Compass")
+            st.markdown(
+                r"On Page 48, you saw the Gradient ($\nabla f$) — it points directly **uphill**."
+            )
+            st.markdown(
+                r"**Gradient Descent** is simply the :green[**Negative**] of the gradient ($-\nabla f$). "
+                r"By walking the opposite direction, we are guaranteed to go downhill toward the minimum."
+            )
+
+        with st.container(border=True):
+            st.markdown("### 📐 The Descent Step")
+            st.markdown("Every training iteration, we update the weights:")
+            st.latex(r"\mathbf{w}_{next} = \mathbf{w}_{old} - \eta \cdot \nabla f")
+            st.markdown(r"Where $\eta$ is the **Learning Rate** — your stride length.")
         
         st.info("💡 **Interactive:** Click anywhere on the **Topographic Map** to teleport the ball to a new starting position. Notice how it always seeks the deepest blue!")
 
@@ -430,12 +421,12 @@ def main():
     
     with c1:
         st.markdown("### 🏹 Vector Components")
-        st.markdown(f"""
+        st.markdown(r"""
         The gradient isn't just one arrow; it's the sum of two partial derivatives.
         - <span class="highlight-yellow">Yellow Dash</span>: Slope in $w_1$
         - <span class="highlight-teal">Teal Dash</span>: Slope in $w_2$
         - <span class="highlight-orange">Orange Arrow</span>: Combined steepest direction.
-        """)
+        """, unsafe_allow_html=True)
         
     with c2:
         st.markdown("### 👟 Fixed Learning Rate η")
