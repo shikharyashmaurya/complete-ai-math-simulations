@@ -1,617 +1,22 @@
+import sys
+from pathlib import Path
+
 import streamlit as st
-import streamlit.components.v1 as components
+
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common.assets import load_lab  # noqa: E402
+from common.nav import safe_page_link  # noqa: E402
 
 st.set_page_config(page_title="PCA Intuition — Finding the Best Angle", layout="wide")
 
 
 def render_pca_lab():
-    html_code = """
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:#f8fafc;padding:10px;overflow-x:hidden;}
-.outer{max-width:1220px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
-.title-card{background:rgba(30,41,59,0.5);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-.title-card h2{font-size:22px;font-weight:800;background:linear-gradient(135deg,#34d399,#38bdf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.mode-toggle{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:4px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;}
-.mbtn{background:transparent;color:#94a3b8;border:none;padding:8px 12px;font-size:11px;font-weight:700;border-radius:8px;cursor:pointer;transition:.2s;}
-.mbtn:hover{color:#e2e8f0;}
-.mbtn.active{background:#1e293b;color:#34d399;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:1px solid rgba(52,211,153,0.25);}
-.mbtn[data-m="pca"].active{color:#a78bfa;border-color:rgba(167,139,250,0.3);}
-.mbtn[data-m="squash"].active{color:#f472b6;border-color:rgba(244,114,182,0.3);}
-.main-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:20px;}
-@media(max-width:920px){.main-grid{grid-template-columns:1fr;}}
-.panel{background:rgba(30,41,59,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;}
-.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:4px;}
-.cloud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.cbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#cbd5e1;padding:10px 8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;line-height:1.35;}
-.cbtn:hover{background:rgba(255,255,255,0.08);}
-.cbtn.active{background:rgba(52,211,153,0.12);border-color:#34d399;color:#6ee7b7;box-shadow:0 0 14px rgba(52,211,153,0.2);}
-.slider-box{background:rgba(0,0,0,0.18);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04);}
-.srow{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:6px;}
-.srow .val{font-family:monospace;font-weight:900;font-size:16px;color:#38bdf8;}
-input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#38bdf8;box-shadow:0 0 10px #38bdf8;cursor:pointer;}
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.metric{background:rgba(0,0,0,0.22);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.04);}
-.metric.full{grid-column:1/-1;}
-.metric .mt{font-size:10px;font-weight:800;text-transform:uppercase;color:#64748b;letter-spacing:1px;}
-.metric .mv{font-size:24px;font-weight:900;font-family:monospace;margin-top:4px;}
-.metric .ms{font-size:11px;color:#94a3b8;margin-top:2px;}
-.var-bar-wrap{margin-top:4px;}
-.var-bar{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;}
-.var-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#38bdf8,#34d399);transition:width .15s ease;}
-.peak-tag{font-size:10px;font-weight:800;color:#34d399;margin-top:6px;text-align:center;opacity:0;transition:opacity .3s;}
-.peak-tag.on{opacity:1;}
-.chk-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#cbd5e1;cursor:pointer;}
-.chk-row input{width:16px;height:16px;accent-color:#34d399;}
-.action-btn{width:100%;background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.35);padding:11px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s;}
-.action-btn:hover{background:rgba(52,211,153,0.22);}
-.action-btn.pc{background:rgba(167,139,250,0.12);color:#c4b5fd;border-color:rgba(167,139,250,0.35);}
-.action-btn.pc:hover{background:rgba(167,139,250,0.22);}
-.action-btn.on{background:rgba(244,114,182,0.12);color:#f472b6;border-color:rgba(244,114,182,0.4);}
-.canvas-col{display:flex;flex-direction:column;gap:10px;}
-.status-banner{text-align:center;padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);color:#94a3b8;transition:.25s;line-height:1.45;}
-.status-banner.hot{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.35);color:#6ee7b7;}
-.status-banner.pca-on{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.35);color:#c4b5fd;}
-canvas{background:#090d16;border:2px solid rgba(255,255,255,0.08);border-radius:16px;display:block;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.35);}
-.mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.mini-lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:4px;text-align:center;}
-.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:11px;padding:8px 12px;border-radius:20px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.04);}
-.leg{display:flex;align-items:center;gap:6px;}
-.leg-line{width:18px;height:3px;border-radius:2px;}
-</style>
-</head>
-<body>
-<div class="outer">
-  <div class="title-card" style="display:flex">
-    <h2>📐 PCA ANGLE FINDER — Find the Best View</h2>
-    <div class="mode-toggle">
-      <button class="mbtn active" data-m="sweep" onclick="setMode('sweep')">🔄 Sweep Angle</button>
-      <button class="mbtn" data-m="pca" onclick="setMode('pca')">✨ True PCA Axes</button>
-      <button class="mbtn" data-m="squash" onclick="setMode('squash')">🗜️ Squash to 1D</button>
-    </div>
-  </div>
-
-  <div class="main-grid">
-    <div class="panel">
-      <div>
-        <div class="lbl">Point Cloud Shape</div>
-        <div class="cloud-grid" id="cloud-btns">
-          <button class="cbtn active" onclick="setCloud('diagonal',this)">Diagonal Blob<br><small>classic PCA</small></button>
-          <button class="cbtn" onclick="setCloud('horizontal',this)">Horizontal<br><small>wide & flat</small></button>
-          <button class="cbtn" onclick="setCloud('vertical',this)">Vertical<br><small>tall & thin</small></button>
-          <button class="cbtn" onclick="setCloud('circle',this)">Round Cloud<br><small>no clear winner</small></button>
-        </div>
-      </div>
-
-      <div class="slider-box" id="angle-box">
-        <div class="srow"><span>Axis angle θ</span><span class="val" id="ang-val">0°</span></div>
-        <input type="range" id="ang-sl" min="0" max="179" step="1" value="32" oninput="onAngleInput()">
-        <div class="peak-tag" id="peak-tag">🎯 You're at maximum spread!</div>
-      </div>
-
-      <div class="metric-grid">
-        <div class="metric">
-          <div class="mt">Spread along axis</div>
-          <div class="mv" id="var-val" style="color:#38bdf8">0.00</div>
-          <div class="ms">sample variance</div>
-        </div>
-        <div class="metric">
-          <div class="mt">vs. worst angle</div>
-          <div class="mv" id="ratio-val" style="color:#34d399">1.00×</div>
-          <div class="ms">how much better</div>
-        </div>
-        <div class="metric full" id="pca-metric" style="display:none">
-          <div class="mt">PC1 explains</div>
-          <div class="mv" id="explained-val" style="color:#a78bfa">0%</div>
-          <div class="var-bar-wrap"><div class="var-bar"><div class="var-fill" id="explained-bar" style="width:0%"></div></div></div>
-          <div class="ms">of total 2D variance (λ₁ / (λ₁+λ₂))</div>
-        </div>
-      </div>
-
-      <label class="chk-row"><input type="checkbox" id="chk-proj" checked onchange="draw()"> Show projection lines</label>
-      <label class="chk-row"><input type="checkbox" id="chk-ghost" onchange="draw()"> Show original positions (squash mode)</label>
-
-      <button class="action-btn" id="sweep-btn" onclick="toggleSweep()">▶ AUTO-SWEEP ANGLES</button>
-      <button class="action-btn pc" id="snap-btn" onclick="snapToPCA()">✨ SNAP TO BEST ANGLE (PC1)</button>
-    </div>
-
-    <div class="canvas-col">
-      <div class="status-banner" id="banner">Rotate the axis. Watch spread peak when the line hugs the long direction of the cloud!</div>
-      <canvas id="main-cvs" width="700" height="480"></canvas>
-      <div class="legend">
-        <div class="leg"><div class="leg-line" style="background:#67e8f9"></div> Data points</div>
-        <div class="leg"><div class="leg-line" style="background:#38bdf8"></div> Your axis</div>
-        <div class="leg"><div class="leg-line" style="background:#34d399"></div> PC1 (max spread)</div>
-        <div class="leg"><div class="leg-line" style="background:#a78bfa"></div> PC2 (min spread)</div>
-      </div>
-      <div class="mini-row">
-        <div>
-          <div class="mini-lbl">Spread vs. angle (0° – 180°)</div>
-          <canvas id="curve-cvs" width="340" height="130"></canvas>
-        </div>
-        <div>
-          <div class="mini-lbl">1D projection on current axis</div>
-          <canvas id="strip-cvs" width="340" height="130"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const cvs = document.getElementById('main-cvs');
-const ctx = cvs.getContext('2d');
-const cCurve = document.getElementById('curve-cvs');
-const ctxC = cCurve.getContext('2d');
-const cStrip = document.getElementById('strip-cvs');
-const ctxS = cStrip.getContext('2d');
-
-const OX = cvs.width / 2, OY = cvs.height / 2 + 10;
-const SCALE = 38;
-
-let mode = 'sweep';
-let cloudType = 'diagonal';
-let rawPts = [];
-let pts = [];
-let theta = 32 * Math.PI / 180;
-let sweepTimer = null;
-let squashT = 0;
-let squashAnim = null;
-let pcaInfo = { l1: 0, l2: 0, v1x: 1, v1y: 0, v2x: 0, v2y: 1, angle: 0 };
-let varCurve = [];
-let maxVar = 1, minVar = 0;
-
-function randn() {
-  let u = 0, v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
-
-function generateCloud(type) {
-  const out = [];
-  const n = 90;
-  for (let i = 0; i < n; i++) {
-    let x, y;
-    const a = randn(), b = randn();
-    if (type === 'diagonal') {
-      x = a * 2.4 + b * 0.35;
-      y = a * 0.9 + b * 0.35;
-    } else if (type === 'horizontal') {
-      x = a * 2.8 + b * 0.25;
-      y = b * 0.45;
-    } else if (type === 'vertical') {
-      x = b * 0.45;
-      y = a * 2.8 + b * 0.25;
-    } else {
-      x = a * 1.1;
-      y = b * 1.1;
-    }
-    out.push({ x, y, ox: x, oy: y });
-  }
-  return out;
-}
-
-function centerCloud(list) {
-  const mx = list.reduce((s, p) => s + p.x, 0) / list.length;
-  const my = list.reduce((s, p) => s + p.y, 0) / list.length;
-  return list.map(p => {
-    const x = p.x - mx, y = p.y - my;
-    return { x, y, ox: x, oy: y };
-  });
-}
-
-function covMatrix(list) {
-  const n = list.length;
-  let cxx = 0, cyy = 0, cxy = 0;
-  list.forEach(p => {
-    cxx += p.x * p.x;
-    cyy += p.y * p.y;
-    cxy += p.x * p.y;
-  });
-  const f = 1 / (n - 1);
-  return { a: cxx * f, b: cxy * f, d: cyy * f };
-}
-
-function eigenSymmetric2x2(a, b, d) {
-  const tr = a + d;
-  const det = a * d - b * b;
-  const disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
-  let l1 = tr / 2 + disc;
-  let l2 = tr / 2 - disc;
-  if (l2 > l1) { const t = l1; l1 = l2; l2 = t; }
-
-  let v1x, v1y;
-  if (Math.abs(b) > 1e-9) {
-    v1x = l1 - d;
-    v1y = b;
-  } else {
-    v1x = a >= d ? 1 : 0;
-    v1y = a >= d ? 0 : 1;
-  }
-  let len = Math.hypot(v1x, v1y);
-  if (len < 1e-9) { v1x = 1; v1y = 0; len = 1; }
-  v1x /= len; v1y /= len;
-  return { l1, l2, v1x, v1y, v2x: -v1y, v2y: v1x };
-}
-
-function varianceAlong(list, ux, uy) {
-  const n = list.length;
-  let s = 0;
-  list.forEach(p => {
-    const proj = p.x * ux + p.y * uy;
-    s += proj * proj;
-  });
-  return s / (n - 1);
-}
-
-function buildVarCurve() {
-  varCurve = [];
-  maxVar = 0;
-  minVar = Infinity;
-  for (let deg = 0; deg < 180; deg++) {
-    const t = deg * Math.PI / 180;
-    const v = varianceAlong(pts, Math.cos(t), Math.sin(t));
-    varCurve.push(v);
-    if (v > maxVar) maxVar = v;
-    if (v < minVar) minVar = v;
-  }
-}
-
-function recomputePCA() {
-  const C = covMatrix(pts);
-  pcaInfo = eigenSymmetric2x2(C.a, C.b, C.d);
-  pcaInfo.angle = Math.atan2(pcaInfo.v1y, pcaInfo.v1x);
-  buildVarCurve();
-}
-
-function w2s(x, y) {
-  return { px: OX + x * SCALE, py: OY - y * SCALE };
-}
-
-function setCloud(type, btn) {
-  cloudType = type;
-  document.querySelectorAll('.cbtn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  rawPts = generateCloud(type);
-  pts = centerCloud(rawPts);
-  recomputePCA();
-  const deg = Math.round(pcaInfo.angle * 180 / Math.PI);
-  document.getElementById('ang-sl').value = ((deg % 180) + 180) % 180;
-  onAngleInput(false);
-  if (mode === 'squash') startSquashAnim();
-}
-
-function setMode(m) {
-  stopSweep();
-  mode = m;
-  document.querySelectorAll('.mbtn').forEach(b => {
-    b.classList.toggle('active', b.dataset.m === m);
-  });
-  const banner = document.getElementById('banner');
-  const angleBox = document.getElementById('angle-box');
-  const pcaMetric = document.getElementById('pca-metric');
-  const snapBtn = document.getElementById('snap-btn');
-
-  if (m === 'sweep') {
-    banner.className = 'status-banner';
-    banner.textContent = 'Rotate the axis. Spread peaks when your line aligns with the long direction of the cloud!';
-    angleBox.style.display = 'block';
-    pcaMetric.style.display = 'none';
-    snapBtn.style.display = 'block';
-    squashT = 0;
-    if (squashAnim) { clearInterval(squashAnim); squashAnim = null; }
-  } else if (m === 'pca') {
-    banner.className = 'status-banner pca-on';
-    banner.textContent = 'Green = PC1 (most variance). Purple = PC2 (perpendicular, least). They come from the covariance matrix eigenvectors!';
-    angleBox.style.display = 'none';
-    pcaMetric.style.display = 'block';
-    snapBtn.style.display = 'none';
-    theta = pcaInfo.angle;
-    squashT = 0;
-    if (squashAnim) { clearInterval(squashAnim); squashAnim = null; }
-  } else {
-    banner.className = 'status-banner';
-    banner.textContent = 'Watch every point collapse onto PC1 — that 1D shadow is your compressed data. Information along PC2 is thrown away.';
-    angleBox.style.display = 'none';
-    pcaMetric.style.display = 'block';
-    snapBtn.style.display = 'none';
-    theta = pcaInfo.angle;
-    startSquashAnim();
-  }
-  draw();
-}
-
-function onAngleInput(updateSl = true) {
-  const sl = document.getElementById('ang-sl');
-  const deg = parseInt(sl.value, 10);
-  theta = deg * Math.PI / 180;
-  document.getElementById('ang-val').textContent = deg + '°';
-  if (updateSl) draw();
-  else draw();
-}
-
-function snapToPCA() {
-  let deg = Math.round(pcaInfo.angle * 180 / Math.PI);
-  deg = ((deg % 180) + 180) % 180;
-  document.getElementById('ang-sl').value = deg;
-  onAngleInput();
-}
-
-function toggleSweep() {
-  const btn = document.getElementById('sweep-btn');
-  if (sweepTimer) {
-    stopSweep();
-    return;
-  }
-  btn.textContent = '⏸ PAUSE SWEEP';
-  btn.classList.add('on');
-  sweepTimer = setInterval(() => {
-    const sl = document.getElementById('ang-sl');
-    let v = parseInt(sl.value, 10) + 1;
-    if (v >= 180) v = 0;
-    sl.value = v;
-    onAngleInput();
-  }, 45);
-}
-
-function stopSweep() {
-  if (sweepTimer) {
-    clearInterval(sweepTimer);
-    sweepTimer = null;
-  }
-  const btn = document.getElementById('sweep-btn');
-  if (btn) {
-    btn.textContent = '▶ AUTO-SWEEP ANGLES';
-    btn.classList.remove('on');
-  }
-}
-
-function startSquashAnim() {
-  squashT = 0;
-  if (squashAnim) clearInterval(squashAnim);
-  squashAnim = setInterval(() => {
-    squashT += 0.04;
-    if (squashT >= 1) { squashT = 1; clearInterval(squashAnim); squashAnim = null; }
-    draw();
-  }, 30);
-}
-
-window.addEventListener('pagehide', () => {
-  stopSweep();
-  if (squashAnim) {
-    clearInterval(squashAnim);
-    squashAnim = null;
-  }
-});
-
-function currentAxis() {
-  if (mode === 'pca' || mode === 'squash') {
-    return { ux: pcaInfo.v1x, uy: pcaInfo.v1y };
-  }
-  return { ux: Math.cos(theta), uy: Math.sin(theta) };
-}
-
-function drawGrid() {
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  for (let i = -8; i <= 8; i++) {
-    const a = w2s(i, -8), b = w2s(i, 8);
-    ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(b.px, b.py); ctx.stroke();
-    const c = w2s(-8, i), d = w2s(8, i);
-    ctx.beginPath(); ctx.moveTo(c.px, c.py); ctx.lineTo(d.px, d.py); ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.beginPath();
-  const h1 = w2s(-9, 0), h2 = w2s(9, 0);
-  ctx.moveTo(h1.px, h1.py); ctx.lineTo(h2.px, h2.py);
-  const v1 = w2s(0, -9), v2 = w2s(0, 9);
-  ctx.moveTo(v1.px, v1.py); ctx.lineTo(v2.px, v2.py);
-  ctx.stroke();
-}
-
-function drawAxisLine(ux, uy, color, width, dash, label) {
-  const L = 5.5;
-  const a = w2s(-ux * L, -uy * L);
-  const b = w2s(ux * L, uy * L);
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  if (dash) ctx.setLineDash(dash);
-  ctx.beginPath();
-  ctx.moveTo(a.px, a.py);
-  ctx.lineTo(b.px, b.py);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  if (label) {
-    const tip = w2s(ux * (L + 0.35), uy * (L + 0.35));
-    ctx.fillStyle = color;
-    ctx.font = 'bold 11px Inter,sans-serif';
-    ctx.fillText(label, tip.px + 6, tip.py - 4);
-  }
-  ctx.restore();
-}
-
-function draw() {
-  const { ux, uy } = currentAxis();
-  const curVar = varianceAlong(pts, ux, uy);
-  const ratio = curVar / Math.max(minVar, 1e-9);
-
-  document.getElementById('var-val').textContent = curVar.toFixed(2);
-  document.getElementById('ratio-val').textContent = ratio.toFixed(2) + '×';
-
-  const nearPeak = Math.abs(curVar - maxVar) < maxVar * 0.02;
-  document.getElementById('peak-tag').classList.toggle('on', nearPeak && mode === 'sweep');
-
-  const totalVar = pcaInfo.l1 + pcaInfo.l2;
-  const pct = totalVar > 0 ? (pcaInfo.l1 / totalVar) * 100 : 50;
-  document.getElementById('explained-val').textContent = pct.toFixed(0) + '%';
-  document.getElementById('explained-bar').style.width = pct + '%';
-
-  ctx.fillStyle = '#090d16';
-  ctx.fillRect(0, 0, cvs.width, cvs.height);
-  drawGrid();
-
-  const showProj = document.getElementById('chk-proj').checked;
-  const showGhost = document.getElementById('chk-ghost').checked;
-
-  if (mode === 'pca') {
-    drawAxisLine(pcaInfo.v2x, pcaInfo.v2y, 'rgba(167,139,250,0.55)', 2, [6, 6], 'PC2');
-    drawAxisLine(pcaInfo.v1x, pcaInfo.v1y, 'rgba(52,211,153,0.95)', 3.5, null, 'PC1');
-  } else if (mode === 'squash') {
-    drawAxisLine(pcaInfo.v1x, pcaInfo.v1y, 'rgba(52,211,153,0.7)', 2.5, null, 'PC1');
-  } else {
-    drawAxisLine(ux, uy, nearPeak ? '#34d399' : '#38bdf8', nearPeak ? 3.5 : 2.5, null, nearPeak ? 'BEST!' : '');
-  }
-
-  const ux2 = mode === 'squash' ? pcaInfo.v1x : ux;
-  const uy2 = mode === 'squash' ? pcaInfo.v1y : uy;
-
-  pts.forEach(p => {
-    let x = p.x, y = p.y;
-    if (mode === 'squash') {
-      const proj = p.x * ux2 + p.y * uy2;
-      const px = ux2 * proj, py = uy2 * proj;
-      if (showGhost) {
-        const g = w2s(p.x, p.y);
-        ctx.fillStyle = 'rgba(103,232,249,0.15)';
-        ctx.beginPath(); ctx.arc(g.px, g.py, 3, 0, Math.PI * 2); ctx.fill();
-      }
-      x = p.x + (px - p.x) * squashT;
-      y = p.y + (py - p.y) * squashT;
-    }
-
-    const proj = x * ux2 + y * uy2;
-    const footX = ux2 * proj, footY = uy2 * proj;
-    const s = w2s(x, y);
-    const f = w2s(footX, footY);
-
-    if (showProj && mode !== 'squash') {
-      ctx.strokeStyle = 'rgba(56,189,248,0.2)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(s.px, s.py);
-      ctx.lineTo(f.px, f.py);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(56,189,248,0.5)';
-      ctx.beginPath(); ctx.arc(f.px, f.py, 3, 0, Math.PI * 2); ctx.fill();
-    }
-
-    ctx.fillStyle = mode === 'squash' ? '#f472b6' : '#67e8f9';
-    ctx.beginPath();
-    ctx.arc(s.px, s.py, mode === 'squash' ? 4 : 4.5, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  const meanDot = w2s(0, 0);
-  ctx.fillStyle = '#fbbf24';
-  ctx.beginPath(); ctx.arc(meanDot.px, meanDot.py, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '10px Inter,sans-serif';
-  ctx.fillText('mean', meanDot.px + 8, meanDot.py + 4);
-
-  drawCurveCanvas();
-  drawStripCanvas(ux2, uy2);
-}
-
-function drawCurveCanvas() {
-  const w = cCurve.width, h = cCurve.height;
-  ctxC.fillStyle = '#0c1220';
-  ctxC.fillRect(0, 0, w, h);
-
-  const pad = { l: 28, r: 10, t: 12, b: 22 };
-  const gw = w - pad.l - pad.r, gh = h - pad.t - pad.b;
-
-  ctxC.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctxC.beginPath();
-  ctxC.moveTo(pad.l, pad.t + gh);
-  ctxC.lineTo(pad.l + gw, pad.t + gh);
-  ctxC.stroke();
-
-  if (!varCurve.length) return;
-
-  ctxC.beginPath();
-  varCurve.forEach((v, i) => {
-    const x = pad.l + (i / 179) * gw;
-    const y = pad.t + gh - (v / maxVar) * gh * 0.92;
-    if (i === 0) ctxC.moveTo(x, y);
-    else ctxC.lineTo(x, y);
-  });
-  ctxC.strokeStyle = '#38bdf8';
-  ctxC.lineWidth = 2;
-  ctxC.stroke();
-
-  const pcDeg = ((Math.round(pcaInfo.angle * 180 / Math.PI) % 180) + 180) % 180;
-  const peakX = pad.l + (pcDeg / 179) * gw;
-  const peakY = pad.t + gh - (maxVar / maxVar) * gh * 0.92;
-  ctxC.fillStyle = '#34d399';
-  ctxC.beginPath(); ctxC.arc(peakX, peakY, 5, 0, Math.PI * 2); ctxC.fill();
-  ctxC.font = '9px Inter,sans-serif';
-  ctxC.fillStyle = '#34d399';
-  ctxC.fillText('PC1 peak', peakX + 6, peakY - 4);
-
-  let curDeg;
-  if (mode === 'pca' || mode === 'squash') curDeg = pcDeg;
-  else curDeg = parseInt(document.getElementById('ang-sl').value, 10);
-
-  const curV = varCurve[curDeg] || 0;
-  const dotX = pad.l + (curDeg / 179) * gw;
-  const dotY = pad.t + gh - (curV / maxVar) * gh * 0.92;
-  ctxC.fillStyle = mode === 'sweep' ? '#fbbf24' : '#a78bfa';
-  ctxC.beginPath(); ctxC.arc(dotX, dotY, 5, 0, Math.PI * 2); ctxC.fill();
-
-  ctxC.fillStyle = '#64748b';
-  ctxC.font = '9px Inter,sans-serif';
-  ctxC.fillText('0°', pad.l, h - 4);
-  ctxC.fillText('180°', pad.l + gw - 18, h - 4);
-}
-
-function drawStripCanvas(ux, uy) {
-  const w = cStrip.width, h = cStrip.height;
-  ctxS.fillStyle = '#0c1220';
-  ctxS.fillRect(0, 0, w, h);
-
-  const midY = h / 2;
-  ctxS.strokeStyle = 'rgba(255,255,255,0.1)';
-  ctxS.beginPath();
-  ctxS.moveTo(20, midY);
-  ctxS.lineTo(w - 20, midY);
-  ctxS.stroke();
-
-  const projs = pts.map(p => p.x * ux + p.y * uy);
-  const maxP = Math.max(...projs.map(Math.abs), 0.1);
-  const scaleX = (w - 60) / (2 * maxP);
-
-  projs.forEach((pr, i) => {
-    const x = w / 2 + pr * scaleX;
-    const t = i / projs.length;
-    const col = `hsl(${190 + t * 80}, 75%, 62%)`;
-    ctxS.fillStyle = col;
-    ctxS.beginPath();
-    ctxS.arc(x, midY, 5, 0, Math.PI * 2);
-    ctxS.fill();
-  });
-
-  ctxS.fillStyle = '#94a3b8';
-  ctxS.font = '10px Inter,sans-serif';
-  ctxS.textAlign = 'center';
-  ctxS.fillText('1D coordinates after projection', w / 2, 14);
-  ctxS.textAlign = 'left';
-}
-
-setCloud('diagonal', document.querySelector('.cbtn.active'));
-draw();
-</script>
-</body>
-</html>
-"""
-    components.html(html_code, height=900, scrolling=False)
+    html_code = load_lab("p63_pca")
+    st.iframe(html_code, height="content")
 
 
 def main():
@@ -634,9 +39,10 @@ def main():
     st.divider()
     st.markdown("### 1) The PCA Angle Finder Lab 🔄")
     st.markdown(
-        "Use **Sweep Angle** to rotate an axis and watch the spread meter rise and fall. "
+        "Use **Sweep Angle** to rotate an axis and watch the spread meter rise and fall — the ruler starts 60° away from the best angle, so you have to hunt for the peak. "
         "Hit **Snap to Best Angle** when you're close — or switch to **True PCA Axes** to see the eigen-directions from the covariance matrix. "
-        "Then try **Squash to 1D** and watch the cloud collapse onto PC1."
+        "Then try **Squash to 1D** and watch the cloud collapse onto PC1 (the lab reports how much variance is lost). "
+        "**🎲 New random sample** draws a fresh cloud of the same shape."
     )
     render_pca_lab()
     st.divider()
@@ -676,6 +82,9 @@ Solve $\mathbf{C}\mathbf{v} = \lambda \mathbf{v}$:
 | $\mathbf{v}_2$ (smallest $\lambda_2$) | **PC2** — min spread |
 
 **% explained by PC1** $= \dfrac{\lambda_1}{\lambda_1 + \lambda_2}$ (in 2D; generalizes in higher dimensions)
+
+**What squashing costs:** projecting onto PC1 throws away the PC2 coordinate, so the lost variance is exactly $\lambda_2$.
+The mean squared reconstruction error is $\frac{1}{n}\sum_i (\mathbf{x}_i \cdot \mathbf{v}_2)^2 = \frac{n-1}{n}\lambda_2$ — shown live in the lab.
 """
         )
 
@@ -688,13 +97,17 @@ Solve $\mathbf{C}\mathbf{v} = \lambda \mathbf{v}$:
         st.markdown("#### 🔄 Auto-Sweep")
         st.write(
             "Press **Auto-Sweep** and watch the yellow dot ride the variance curve. "
-            "It peaks twice per full rotation (axis lines are undirected) — both peaks point along PC1."
+            "The sweep only needs 0°–180°: a line at θ and at θ+180° is the same line, "
+            "so a full 360° turn would just show the same PC1 peak twice."
         )
     with c2:
         st.markdown("#### ⭕ Round Cloud")
         st.write(
-            "Switch to **Round Cloud**. Spread is almost the same at every angle — "
-            "no dominant direction. PCA still works, but compression wins little."
+            "Switch to **Round Cloud**. The *true* spread is equal in every direction, "
+            "but with only 90 random points the measured spread still varies — typically the best angle has "
+            "about 1.3× the spread of the worst (sometimes 1.7×). That 'winner' is pure sampling noise: "
+            "press **🎲 New random sample** and PC1 jumps to a completely different angle. "
+            "PCA still runs, but squashing to 1D throws away almost half the variance."
         )
     with c3:
         st.markdown("#### 🗜️ Squash")
@@ -718,7 +131,8 @@ Solve $\mathbf{C}\mathbf{v} = \lambda \mathbf{v}$:
         st.markdown("#### 🧬 Feature Decorrelation")
         st.write(
             "Correlated inputs confuse some models. "
-            "PCA produces uncorrelated components (orthogonal axes), "
+            "PCA produces uncorrelated components: in the PC coordinates the covariance matrix is diagonal "
+            "(uncorrelated is weaker than independent — PCA only removes linear correlation), "
             "often making downstream learning easier."
         )
     with a3:
@@ -737,6 +151,11 @@ Solve $\mathbf{C}\mathbf{v} = \lambda \mathbf{v}$:
         "</div>",
         unsafe_allow_html=True,
     )
+    rel_col, next_col = st.columns(2)
+    with rel_col:
+        safe_page_link("pages/78SVD — Rotate, Stretch, Rotate.py", "Related: 78 · SVD — how PCA is computed in practice", icon="🔗")
+    with next_col:
+        safe_page_link("pages/64A Single Neuron.py", "Next: 64 · A Single Neuron", icon="➡️")
 
 
 if __name__ == "__main__":

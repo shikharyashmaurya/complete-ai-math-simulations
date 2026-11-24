@@ -1,0 +1,145 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; padding: 0; font-family: system-ui, sans-serif; background: transparent; color: white; user-select: none; }
+        .container {
+            background: #0f172a; border-radius: 16px; padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+        
+        .header { display: flex; gap: 20px; align-items: center; justify-content: space-between; width: 100%; max-width: 600px;}
+        .slider-container { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #fbbf24; }
+        
+        .stat-box {
+            background: #1e293b; padding: 15px 25px; border-radius: 12px; border: 1px solid #334155;
+            display: flex; flex-direction: column; align-items: center; min-width: 150px;
+        }
+        .stat-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-val { font-size: 24px; font-weight: 900; color: #fbbf24; }
+
+        .grid-container {
+            display: grid; grid-template-columns: auto repeat(6, 50px); grid-template-rows: auto repeat(6, 50px);
+            gap: 4px; align-items: center; justify-items: center;
+        }
+        
+        .axis-label { color: #94a3b8; font-weight: bold; font-size: 18px; }
+        .axis-y { writing-mode: vertical-rl; grid-row: 2 / span 6; grid-column: 1; margin-right: 10px; color: #38bdf8; }
+        .axis-x { grid-column: 2 / span 6; grid-row: 1; margin-bottom: 10px; color: #f472b6; }
+        
+        .cell {
+            width: 100%; height: 100%; background: #1e293b; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: #64748b; font-size: 18px; transition: all 0.2s;
+            border: 1px solid transparent; cursor: pointer; position: relative;
+        }
+        
+        .cell:hover { background: #334155; color: white; border-color: #94a3b8; transform: scale(1.1); z-index: 10; }
+        
+        /* Heatmap by number of ways (sums equally far from 7 share a color): brighter = more ways = more likely */
+        .c-2, .c-12 { background: #4a044e; color: #fdf4ff; }
+        .c-3, .c-11 { background: #701a75; color: #fdf4ff; }
+        .c-4, .c-10 { background: #a21caf; color: #fdf4ff; }
+        .c-5, .c-9 { background: #d946ef; color: #fdf4ff; }
+        .c-6, .c-8 { background: #f0abfc; color: #4a044e; }
+        .c-7 { background: #fdf4ff; color: #4a044e; }
+        .heat-note { color: #94a3b8; font-size: 13px; }
+        
+        .cell.highlight {
+            border-color: #fbbf24; border-width: 3px; box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+            transform: scale(1.1); z-index: 5;
+        }
+        .cell.dimmed { opacity: 0.2; filter: grayscale(100%); }
+        
+        /* Tooltip */
+        .tooltip {
+            position: absolute; bottom: 110%; background: black; color: white; padding: 4px 8px;
+            border-radius: 4px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+            white-space: nowrap; z-index: 20;
+        }
+        .cell:hover .tooltip { opacity: 1; }
+
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="slider-container">
+                    <div style="display:flex; justify-content:space-between; color:#cbd5e1; font-weight:bold;">
+                        <span>Highlight Sum: <span id="sum-val" style="color:#fbbf24;font-size:20px;">7</span></span>
+                    </div>
+                    <input type="range" id="sum-slider" min="2" max="12" value="7" oninput="updateGrid()">
+                </div>
+                
+                <div class="stat-box">
+                    <span class="stat-label">Ways to make sum</span>
+                    <span class="stat-val" id="ways-val">6</span>
+                </div>
+                
+                <div class="stat-box">
+                    <span class="stat-label">Probability</span>
+                    <span class="stat-val" id="prob-val" style="color:#4ade80;">6/36 = 16.67%</span>
+                </div>
+            </div>
+            
+            <div class="grid-container" id="grid">
+                <div class="axis-label axis-y">Die 1 (rows, blue) →</div>
+                <div class="axis-label axis-x">Die 2 (columns, pink) →</div>
+                <!-- Generated via JS -->
+            </div>
+            <div class="heat-note">Cell color = how many of the 36 pairs share that sum (brighter = more ways = more likely).</div>
+        </div>
+
+        <script>
+            const grid = document.getElementById('grid');
+            
+            // Generate Grid
+            for (let i = 1; i <= 6; i++) {
+                for (let j = 1; j <= 6; j++) {
+                    const sum = i + j;
+                    const cell = document.createElement('div');
+                    cell.className = `cell c-${sum}`;
+                    cell.innerText = sum;
+                    cell.setAttribute('data-sum', sum);
+                    cell.style.gridRow = i + 1;
+                    cell.style.gridColumn = j + 1;
+                    
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip';
+                    tooltip.innerHTML = `(${i}, ${j}) = ${sum}`;
+                    cell.appendChild(tooltip);
+                    
+                    grid.appendChild(cell);
+                }
+            }
+            
+            function updateGrid() {
+                const targetSum = parseInt(document.getElementById('sum-slider').value);
+                document.getElementById('sum-val').innerText = targetSum;
+                
+                let ways = 0;
+                document.querySelectorAll('.cell').forEach(cell => {
+                    const s = parseInt(cell.getAttribute('data-sum'));
+                    if (s === targetSum) {
+                        cell.classList.add('highlight');
+                        cell.classList.remove('dimmed');
+                        ways++;
+                    } else {
+                        cell.classList.remove('highlight');
+                        cell.classList.add('dimmed');
+                    }
+                });
+                
+                document.getElementById('ways-val').innerText = ways;
+                const prob = (ways / 36) * 100;
+                document.getElementById('prob-val').innerText = ways + '/36 = ' + prob.toFixed(2) + '%';
+            }
+            
+            // Init
+            updateGrid();
+        </script>
+    </body>
+    </html>
+    

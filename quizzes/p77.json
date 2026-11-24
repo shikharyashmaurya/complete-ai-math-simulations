@@ -1,0 +1,18 @@
+{"page": 77, "questions": [
+  {"q": "Project $b = (1.5, 2.5)$ onto the line through $a = (3, 1)$. What is the projection $p$?",
+   "options": ["$(2.1, 0.7)$", "$(1.5, 0.5)$", "$(7, 7/3)$", "$(0.7, 0.7)$"],
+   "answer": 0,
+   "explain": "$a\\cdot b = 4.5 + 2.5 = 7$, $a\\cdot a = 10$, so $p = 0.7\\,a = (2.1, 0.7)$. Forgetting to divide by $a\\cdot a$ gives $(21, 7)$; the scalar 0.7 alone is the coefficient, not the vector."},
+  {"q": "$P$ is the orthogonal projection matrix onto a plane. Which pair of properties must it satisfy?",
+   "options": ["$P^2 = P$ and $P^\\top = P$", "$P^2 = I$ and $P^\\top = P^{-1}$", "$\\det P = 1$ and $P^\\top = -P$", "$P^2 = 0$ and $P$ invertible"],
+   "answer": 0,
+   "explain": "Projecting twice changes nothing ($P^2 = P$), and an orthogonal (not oblique) projection is symmetric. Its eigenvalues are only 0 and 1, so a projection onto a plane in $\\mathbb{R}^3$ is not invertible ($\\det P = 0$)."},
+  {"q": "In least squares $\\hat y = X\\theta$ with $X = [\\mathbf 1\\; x]$, why do the residuals $r = y - \\hat y$ sum to zero?",
+   "options": ["Because the noise has mean zero", "Because $\\hat y$ is the projection of $y$ onto the column space of $X$, so $r \\perp$ every column, including $\\mathbf 1$: $\\mathbf 1^\\top r = 0$", "Because the slope is always positive", "They only sum to zero when $n = 3$"],
+   "answer": 1,
+   "explain": "The normal equations $X^\\top r = 0$ say the residual is orthogonal to each column. The column of ones gives $\\sum r_i = 0$ and the $x$ column gives $\\sum x_i r_i = 0$ — exactly, for any data, not just on average."},
+  {"q": "The columns of $A$ are dependent ($a_2 = 2a_1$). What happens to $P = A(A^\\top A)^{-1}A^\\top$?",
+   "options": ["Nothing, the formula still works", "$A^\\top A$ is singular so the inverse does not exist; use the pseudo-inverse $P = AA^{+}$, which projects onto the line the columns actually span", "$P$ becomes the identity", "The projection of every $b$ is $b$ itself"],
+   "answer": 1,
+   "explain": "Dependent columns make $A^\\top A$ singular. The column space is still well defined (here a line), and $AA^{+}$ is the orthogonal projection onto it; Gram–Schmidt likewise skips the redundant column."}
+]}

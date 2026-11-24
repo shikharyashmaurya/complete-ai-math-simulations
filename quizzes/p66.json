@@ -1,0 +1,49 @@
+{
+  "page": 66,
+  "questions": [
+    {
+      "q": "Two linear layers compute $y = W^2(W^1x + b^1) + b^2$. Which single layer gives exactly the same output for every $x$?",
+      "options": [
+        "$y = (W^1W^2)x + (b^1 + b^2)$",
+        "$y = (W^2W^1)x + (W^2b^1 + b^2)$",
+        "$y = (W^2 + W^1)x + b^2$",
+        "No single layer can — two layers are strictly more expressive"
+      ],
+      "answer": 1,
+      "explain": "Distribute $W^2$: $W^2W^1x + W^2b^1 + b^2$. The order matters ($W^2W^1$, not $W^1W^2$) and the first bias is also multiplied by $W^2$."
+    },
+    {
+      "q": "In Lab 1 you stack 8 linear layers whose hidden width is 1 (2 → 1 → … → 1 → 2), with no activation. What does the output grid look like?",
+      "options": [
+        "A rotated and stretched but still 2-D grid",
+        "A folded, bent grid",
+        "All points lie on a single line, because $\\operatorname{rank}(W_\\text{eff}) \\le 1$",
+        "It depends on how many layers there are"
+      ],
+      "answer": 2,
+      "explain": "The rank of a product is at most the smallest rank of its factors. A width-1 layer has rank ≤ 1, so the collapsed 2×2 map has rank ≤ 1 and squeezes the plane onto a line — no amount of depth can undo it."
+    },
+    {
+      "q": "Why can a 10-layer network with **no** activation functions not solve XOR?",
+      "options": [
+        "It collapses to $W_\\text{eff}x + b_\\text{eff}$, whose decision boundary is a single straight line",
+        "It has too few parameters",
+        "Gradient descent cannot train networks deeper than 2 layers",
+        "XOR needs a sigmoid output; linear nets have none"
+      ],
+      "answer": 0,
+      "explain": "However many parameters the stack has, the function equals one linear layer, and no straight line separates the XOR corners. One hidden ReLU layer can carve out the needed band."
+    },
+    {
+      "q": "LoRA fine-tunes a frozen weight $W$ with a low-rank update $BA$ ($B$: $d\\times r$, $A$: $r\\times d$). Why is there no extra inference cost after training?",
+      "options": [
+        "$A$ and $B$ are discarded after training",
+        "$B(Ax)$ is a stack of linear maps with no activation, so it merges into one matrix $W' = W + BA$",
+        "LoRA adds a ReLU that is cheap to compute",
+        "The rank $r$ is always 1"
+      ],
+      "answer": 1,
+      "explain": "This is the collapse used on purpose: $Wx + B(Ax) = (W + BA)x$. The adapter is a deliberately low-rank linear factorization that can be folded back into $W$."
+    }
+  ]
+}

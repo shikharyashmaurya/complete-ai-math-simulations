@@ -63,3 +63,7 @@ cover/
 .idea/
 *.swp
 *.swo
+
+# Local agent skills (symlinks into a developer's .venv)
+.agents/
+.claude/

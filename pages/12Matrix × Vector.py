@@ -1,49 +1,30 @@
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
+
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common import matrix_display  # noqa: E402
+from common.mathutils import fmt_factor  # noqa: E402
 
 
 st.set_page_config(page_title="Matrix x Vector", layout="wide")
 
+CARD_STYLE = dict(theme="lab", cell_style="fill", precision=2, font_size=19, cell_padding="8px 12px")
+
 
 def matrix_html(matrix, title, highlight=None, color="#38bdf8"):
-    rows, cols = matrix.shape
-    highlight = highlight or []
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:19px;">
-    """
-    for i in range(rows):
-        html += "<tr>"
-        for j in range(cols):
-            bg = color if (i, j) in highlight else "transparent"
-            html += (
-                f"<td style='border:1px solid #475569;padding:8px 12px;text-align:center;"
-                f"min-width:42px;background:{bg};'>{matrix[i, j]:.2f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
+    return matrix_display.matrix_html(matrix, title, highlight, color, min_width=42, **CARD_STYLE)
 
 
 def vector_html(vector, title, highlight=None, color="#f97316"):
-    highlight = highlight or []
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:19px;">
-    """
-    for i, value in enumerate(vector):
-        bg = color if i in highlight else "transparent"
-        html += (
-            "<tr>"
-            f"<td style='border:1px solid #475569;padding:8px 12px;text-align:center;"
-            f"min-width:72px;background:{bg};'>{value:.2f}</td>"
-            "</tr>"
-        )
-    html += "</table></div>"
-    return html
+    return matrix_display.vector_html(vector, title, highlight, color, min_width=72, **CARD_STYLE)
 
 
 def row_dot_product_steps(A, x, reveal_rows):
@@ -54,12 +35,12 @@ def row_dot_product_steps(A, x, reveal_rows):
     return y, shown
 
 
-def make_matrix(rows, cols):
-    return np.random.randint(-4, 6, size=(rows, cols)).astype(float)
+def make_matrix(rows, cols, seed):
+    return np.random.default_rng(seed).integers(-4, 6, size=(rows, cols)).astype(float)
 
 
-def make_vector(size):
-    return np.random.randint(-4, 6, size=(size,)).astype(float)
+def make_vector(size, seed):
+    return np.random.default_rng(seed).integers(-4, 6, size=(size,)).astype(float)
 
 
 def render_intro():
@@ -83,16 +64,15 @@ def render_intro():
 def render_main_visual(A, x):
     st.header("1) Fire the Vector Through the Matrix")
     rows, cols = A.shape
-    y = A @ x
 
     reveal_rows = st.slider(
         "Reveal output rows solved so far",
         min_value=0,
         max_value=rows,
         value=min(1, rows),
+        key="p12_reveal_rows",
     )
     y_full, y_partial = row_dot_product_steps(A, x, reveal_rows)
-    shown = np.where(np.isnan(y_partial), 0.0, y_partial)
 
     left, mid, right = st.columns([1.4, 0.6, 1.0], vertical_alignment="top")
     with left:
@@ -107,26 +87,28 @@ def render_main_visual(A, x):
         st.markdown("<div style='text-align:center;font-size:36px;padding:12px;'>→</div>", unsafe_allow_html=True)
     with right:
         hi = [reveal_rows - 1] if reveal_rows > 0 else []
-        st.markdown(vector_html(shown, "Output Vector y = A x", hi, "#a78bfa"), unsafe_allow_html=True)
+        st.markdown(vector_html(y_partial, "Output Vector y = A x (? = not solved yet)", hi, "#a78bfa"),
+                    unsafe_allow_html=True)
 
     if reveal_rows == 0:
         st.info("Move the slider to solve each output entry one row at a time.")
         return
 
     i = reveal_rows - 1
-    terms = [f"({A[i, j]:.2f}*{x[j]:.2f})" for j in range(cols)]
+    # Use × (not *): pairs of * would be swallowed by Markdown as italics
+    terms = [f"({fmt_factor(A[i, j])} × {fmt_factor(x[j])})" for j in range(cols)]
     explanation = " + ".join(terms)
     st.success(
-        f"Latest solved output: y[{i+1}] = row_{i+1}(A) · x = {explanation} = {y_full[i]:.2f}"
+        f"Latest solved output: y[{i+1}] = row_{i+1}(A) · x = {explanation} = {y_full[i] + 0.0:.2f}"
     )
-    st.code("Rule: y_i = Σ_j A[i, j] * x[j]", language="text")
+    st.code("Rule: y_i = Σ_j A[i, j] × x[j]", language="text")
 
     with st.expander("See full multiplication result"):
         st.write("`y = A @ x`")
-        st.write(np.round(y, 3))
+        st.write(np.round(y_full, 3))
 
 
-def render_shape_story(A, x):
+def render_shape_story(A):
     st.header("2) Shape Story (Why dimensions must match)")
     rows, cols = A.shape
     
@@ -148,11 +130,21 @@ def render_shape_story(A, x):
     with col2:
         st.info(
             """
-            💡 **Why?** 
+            💡 **Why?**  
             Because when we multiply, we pair up each element of a matrix row with an element of the vector. 
             If a row has 3 elements, the vector *must* have 3 elements to pair with them!
             """
         )
+        with st.expander(f"🚫 What if x had {cols + 1} entries instead of {cols}?"):
+            bad_x = np.ones(cols + 1)
+            try:
+                A @ bad_x
+            except ValueError as err:
+                st.error(f"NumPy refuses: `{err}`")
+            st.caption(
+                f"Each row of A has only {cols} numbers, so the last entry of x has no partner. "
+                f"The product A x only exists when x has exactly {cols} entries."
+            )
     
     st.markdown("### Visualizing the Shape Transformation")
     st.latex(r"\underbrace{A_{m \times n}}_{\text{Matrix}} \cdot \underbrace{x_{n \times 1}}_{\text{Vector}} \rightarrow \underbrace{y_{m \times 1}}_{\text{Output Vector}}")
@@ -169,22 +161,24 @@ def main():
     render_intro()
     st.sidebar.header("Matrix x Vector Controls")
 
-    rows = st.sidebar.select_slider("Rows in matrix A", options=[2, 3, 4, 5], value=3)
-    cols = st.sidebar.select_slider("Columns in matrix A / size of x", options=[2, 3, 4, 5], value=3)
-    regen = st.sidebar.button("Generate new A and x")
+    rows = st.sidebar.select_slider("Rows in matrix A", options=[2, 3, 4, 5], value=3, key="p12_rows")
+    cols = st.sidebar.select_slider("Columns in matrix A / size of x", options=[2, 3, 4, 5], value=3, key="p12_cols")
+    regen = st.sidebar.button("Generate new A and x", key="p12_regen")
 
-    if "mxv_A" not in st.session_state or "mxv_shape" not in st.session_state:
-        st.session_state.mxv_A = make_matrix(rows, cols)
-        st.session_state.mxv_x = make_vector(cols)
-        st.session_state.mxv_shape = (rows, cols)
+    # Seeded generation: same A and x on every rerun until the shape changes or the button is pressed
+    if "p12_seed" not in st.session_state:
+        st.session_state.p12_seed = 0
+    if regen:
+        st.session_state.p12_seed += 1
 
-    if regen or st.session_state.mxv_shape != (rows, cols):
-        st.session_state.mxv_A = make_matrix(rows, cols)
-        st.session_state.mxv_x = make_vector(cols)
-        st.session_state.mxv_shape = (rows, cols)
+    if regen or st.session_state.get("p12_shape") != (rows, cols):
+        seed = st.session_state.p12_seed
+        st.session_state.p12_A = make_matrix(rows, cols, seed=[seed, rows, cols, 0])
+        st.session_state.p12_x = make_vector(cols, seed=[seed, rows, cols, 1])
+        st.session_state.p12_shape = (rows, cols)
 
-    A = st.session_state.mxv_A
-    x = st.session_state.mxv_x
+    A = st.session_state.p12_A
+    x = st.session_state.p12_x
 
     st.sidebar.markdown(
         """
@@ -197,7 +191,7 @@ def main():
 
     render_main_visual(A, x)
     st.divider()
-    render_shape_story(A, x)
+    render_shape_story(A)
 
     st.markdown(
         """

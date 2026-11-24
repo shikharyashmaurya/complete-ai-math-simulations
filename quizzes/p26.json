@@ -1,0 +1,49 @@
+{
+  "page": 26,
+  "questions": [
+    {
+      "q": "Events $A$ and $B$ (with $P(A) > 0$) are independent exactly when…",
+      "options": [
+        "$P(A \\cap B) = 0$",
+        "$P(A \\cap B) = P(A)\\,P(B)$, i.e. $P(B \\mid A) = P(B)$",
+        "$P(A) = P(B)$",
+        "$P(A \\cup B) = P(A) + P(B)$"
+      ],
+      "answer": 1,
+      "explain": "Independence means knowing $A$ does not change the probability of $B$: $P(B \\mid A) = P(B)$, equivalently the product rule. $P(A \\cap B) = 0$ describes disjoint events, which are actually highly dependent."
+    },
+    {
+      "q": "In Dependent Mode, $P(\\text{Sunny}) = 0.6$, and a T-Shirt is chosen 90% of the time if Sunny and 10% if Rainy. What is the overall $P(\\text{T-Shirt})$?",
+      "options": [
+        "$0.58$",
+        "$0.50$",
+        "$0.54$",
+        "$0.90$"
+      ],
+      "answer": 0,
+      "explain": "$P(T) = 0.6 \\cdot 0.9 + 0.4 \\cdot 0.1 = 0.54 + 0.04 = 0.58$. $0.54$ is only the Sunny-and-T-Shirt part; $0.50$ is the Independent Mode value."
+    },
+    {
+      "q": "Still in Dependent Mode: $P(\\text{Sunny} \\cap \\text{T-Shirt}) = 0.54$. How does it compare with $P(\\text{Sunny})\\,P(\\text{T-Shirt})$?",
+      "options": [
+        "Equal ($0.54$), so the spinners are independent",
+        "$0.6 \\times 0.5 = 0.30 \\neq 0.54$, so they are dependent",
+        "The comparison is meaningless for spinners",
+        "$0.6 \\times 0.58 = 0.348 \\neq 0.54$, so the spinners are dependent"
+      ],
+      "answer": 3,
+      "explain": "The product test uses the overall $P(T) = 0.58$: $0.6 \\times 0.58 = 0.348$, far from $0.54$. The product rule fails, so the events are dependent."
+    },
+    {
+      "q": "Which AI example is a case of **dependent** events?",
+      "options": [
+        "Dropout dropping neuron 3 and dropout dropping neuron 7",
+        "Two separate fair coin flips",
+        "The previous word being \"Eiffel\" and the next word being \"Tower\"",
+        "The two spinners in Independent Mode"
+      ],
+      "answer": 2,
+      "explain": "Language is full of dependence: seeing \"Eiffel\" makes \"Tower\" far more likely — that is what language models exploit. Dropout flips a separate coin per neuron, so those events are independent."
+    }
+  ]
+}

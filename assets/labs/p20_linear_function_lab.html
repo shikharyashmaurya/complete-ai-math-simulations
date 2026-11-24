@@ -1,0 +1,301 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; }
+        #canvas-container { width: 100%; height: 600px; position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        #ui-layer {
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px);
+            padding: 24px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+            width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 10;
+        }
+        .slider-group { margin-bottom: 20px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type="range"] { 
+            width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; outline: none; 
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+        }
+        #w-slider::-webkit-slider-thumb { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+        #b-slider::-webkit-slider-thumb { background: #f472b6; box-shadow: 0 0 10px #f472b6; }
+        #x-slider::-webkit-slider-thumb { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+        
+        .val-display { font-variant-numeric: tabular-nums; font-weight: 900; }
+        #w-val { color: #fbbf24; }
+        #b-val { color: #f472b6; }
+        #x-val { color: #4ade80; }
+        
+        #equation-display { 
+            font-size: 22px; font-weight: 900; text-align: center; margin-top: 20px; 
+            padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .instructions {
+            position: absolute; bottom: 20px; left: 20px; pointer-events: none;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);
+            padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8; font-size: 13px; font-weight: bold; display: flex; gap: 15px;
+        }
+        .instructions span { display: flex; align-items: center; gap: 6px; }
+        .kbd { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: white; }
+
+        /* Loading state */
+        #loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 18px; color: #38bdf8; font-weight: bold; pointer-events: none;
+            transition: opacity 0.5s;
+        }
+    </style>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js" integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf" crossorigin="anonymous"></script>
+    </head>
+    <body>
+    <div id="canvas-container">
+        <div id="loader">Initializing 3D Math Engine...</div>
+        <div class="instructions">
+            <span><span class="kbd">Left Click</span> Rotate</span>
+            <span><span class="kbd">Right Click</span> Pan</span>
+            <span><span class="kbd">Scroll</span> Zoom</span>
+        </div>
+        <div id="ui-layer" style="opacity: 0; transition: opacity 0.5s;">
+            <div class="slider-group">
+                <label><span>w (Sensitivity / Slope)</span> <span id="w-val" class="val-display">1.0</span></label>
+                <input type="range" id="w-slider" min="-3" max="3" step="0.1" value="1.0">
+            </div>
+            <div class="slider-group">
+                <label><span>b (Shift / Bias)</span> <span id="b-val" class="val-display">2.0</span></label>
+                <input type="range" id="b-slider" min="-5" max="5" step="0.1" value="2.0">
+            </div>
+            <div class="slider-group">
+                <label><span>x (Input Probe)</span> <span id="x-val" class="val-display">1.0</span></label>
+                <input type="range" id="x-slider" min="-8" max="8" step="0.1" value="1.0">
+            </div>
+            <div id="equation-display">y = (1.0)x + (2.0) = 3.0</div>
+        </div>
+    </div>
+    
+    <script>
+    (function () {
+        const loaderEl = document.getElementById('loader');
+        function showFallback(msg) {
+            loaderEl.textContent = msg;
+            loaderEl.style.opacity = '1';
+            loaderEl.style.color = '#fbbf24';
+            loaderEl.style.textAlign = 'center';
+            loaderEl.style.width = '80%';
+        }
+        if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
+            showFallback('Could not load the 3D engine (three.js from unpkg.com is blocked or offline). ' +
+                         'The table in section 3 below shows the same y = wx + b idea.');
+            return;
+        }
+
+        // Init Scene
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+        
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(5, 8, 25);
+        
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (err) {
+            showFallback('WebGL is not available in this browser, so the 3D scene cannot be shown. ' +
+                         'The table in section 3 below shows the same y = wx + b idea.');
+            return;
+        }
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 50;
+        controls.target.set(0, 0, 0);
+        
+        // Environment
+        // GridHelper lies in the XZ plane by default; rotate it into the XY plane so it is graph paper for y = wx + b.
+        const grid = new THREE.GridHelper(40, 40, 0x334155, 0x1e293b);
+        grid.rotation.x = Math.PI / 2;
+        grid.position.z = -0.01; // slightly behind to avoid Z-fighting with axes
+        scene.add(grid);
+        
+        // Cartesian Axes
+        const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, linewidth: 2 });
+        const xAxisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-20, 0, 0), new THREE.Vector3(20, 0, 0)]);
+        const yAxisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -20, 0), new THREE.Vector3(0, 20, 0)]);
+        scene.add(new THREE.Line(xAxisGeo, axisMat));
+        scene.add(new THREE.Line(yAxisGeo, axisMat));
+        
+        // The Line y = wx + b
+        const tubeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+        let tubeMesh = new THREE.Mesh(new THREE.BufferGeometry(), tubeMat);
+        scene.add(tubeMesh);
+
+        // Glow effect for line
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.2, side: THREE.BackSide });
+        let glowMesh = new THREE.Mesh(new THREE.BufferGeometry(), glowMat);
+        scene.add(glowMesh);
+        
+        // Update function for line geometry
+        function createLineGeom(w, b) {
+            const startPt = new THREE.Vector3(-20, w * -20 + b, 0);
+            const endPt = new THREE.Vector3(20, w * 20 + b, 0);
+            const path = new THREE.LineCurve3(startPt, endPt);
+            
+            const geo = new THREE.TubeGeometry(path, 1, 0.15, 8, false);
+            const glowGeo = new THREE.TubeGeometry(path, 1, 0.4, 8, false);
+            return { geo, glowGeo };
+        }
+
+        // Bias indicator (Vertical dotted line)
+        const biasMat = new THREE.LineDashedMaterial({ color: 0xf472b6, dashSize: 0.4, gapSize: 0.2, linewidth: 2 });
+        const biasGeo = new THREE.BufferGeometry();
+        const biasLine = new THREE.Line(biasGeo, biasMat);
+        scene.add(biasLine);
+        
+        // Intercept Marker
+        const interceptGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const interceptMat = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
+        const interceptMesh = new THREE.Mesh(interceptGeo, interceptMat);
+        scene.add(interceptMesh);
+
+        // Probe Objects
+        const probeGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const probeMat = new THREE.MeshBasicMaterial({ color: 0x4ade80 });
+        const probeMesh = new THREE.Mesh(probeGeo, probeMat);
+        scene.add(probeMesh);
+        
+        // Probe glow
+        const probeGlowMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.3 });
+        const probeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.9, 32, 32), probeGlowMat);
+        probeMesh.add(probeGlow);
+
+        const probeDropMat = new THREE.LineDashedMaterial({ color: 0x4ade80, dashSize: 0.3, gapSize: 0.15, linewidth: 2 });
+        const probeDropGeo = new THREE.BufferGeometry();
+        const probeDropLine = new THREE.Line(probeDropGeo, probeDropMat);
+        scene.add(probeDropLine);
+
+        // UI Logic
+        const wSlider = document.getElementById('w-slider');
+        const bSlider = document.getElementById('b-slider');
+        const xSlider = document.getElementById('x-slider');
+        const wVal = document.getElementById('w-val');
+        const bVal = document.getElementById('b-val');
+        const xVal = document.getElementById('x-val');
+        const eqDisplay = document.getElementById('equation-display');
+
+        function updateMath() {
+            const w = parseFloat(wSlider.value);
+            const b = parseFloat(bSlider.value);
+            const x = parseFloat(xSlider.value);
+            const y = w * x + b;
+            
+            // Update labels
+            wVal.innerText = w.toFixed(1);
+            bVal.innerText = b.toFixed(1);
+            xVal.innerText = x.toFixed(1);
+            
+            // Equation formatting
+            const signB = b >= 0 ? '+' : '-';
+            const absB = Math.abs(b).toFixed(1);
+            eqDisplay.innerHTML = `y = (<span style="color:#fbbf24">${w.toFixed(1)}</span>)·x ${signB} <span style="color:#f472b6">${absB}</span> = <span style="color:#4ade80">${y.toFixed(1)}</span>`;
+            
+            // Update 3D Line
+            const geoms = createLineGeom(w, b);
+            tubeMesh.geometry.dispose();
+            glowMesh.geometry.dispose();
+            tubeMesh.geometry = geoms.geo;
+            glowMesh.geometry = geoms.glowGeo;
+            
+            // Update Bias
+            biasGeo.setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, b, 0)]);
+            biasLine.computeLineDistances();
+            interceptMesh.position.set(0, b, 0);
+            
+            // Update Probe
+            probeMesh.position.set(x, y, 0);
+            probeDropGeo.setFromPoints([new THREE.Vector3(x, 0, 0), new THREE.Vector3(x, y, 0)]);
+            probeDropLine.computeLineDistances();
+        }
+
+        // Render loop: runs only while something changes, then idles (no 60 FPS burn while nobody interacts).
+        const clock = new THREE.Clock();
+        const IDLE_MS = 6000;
+        let rafId = null;
+        let lastActivity = performance.now();
+        let disposed = false;
+
+        function animate() {
+            rafId = null;
+            if (disposed) return;
+            controls.update();
+
+            const time = clock.getElapsedTime();
+            probeGlow.scale.setScalar(1 + 0.15 * Math.sin(time * 4));
+
+            renderer.render(scene, camera);
+            if (rafId === null && !document.hidden && performance.now() - lastActivity < IDLE_MS) {
+                rafId = requestAnimationFrame(animate);
+            }
+        }
+        function wake() {
+            lastActivity = performance.now();
+            if (rafId === null && !disposed && !document.hidden) {
+                rafId = requestAnimationFrame(animate);
+            }
+        }
+        function stopLoop() {
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+        }
+
+        [wSlider, bSlider, xSlider].forEach((s) => s.addEventListener('input', () => { updateMath(); wake(); }));
+        controls.addEventListener('start', wake);
+        controls.addEventListener('change', wake);
+        renderer.domElement.addEventListener('pointermove', wake);
+
+        function onResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            wake();
+        }
+        function onVisibility() {
+            if (document.hidden) { stopLoop(); } else { wake(); }
+        }
+        window.addEventListener('resize', onResize);
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('pageshow', (e) => { if (e.persisted) wake(); });
+        window.addEventListener('pagehide', (e) => {
+            stopLoop();
+            if (e.persisted) return;
+            disposed = true;
+            window.removeEventListener('resize', onResize);
+            document.removeEventListener('visibilitychange', onVisibility);
+            controls.dispose();
+            renderer.dispose();
+        });
+
+        // Initial Draw
+        updateMath();
+
+        // Remove loader and show UI
+        loaderEl.style.opacity = '0';
+        document.getElementById('ui-layer').style.opacity = '1';
+        wake();
+    })();
+    </script>
+    </body>
+    </html>
+    

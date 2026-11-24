@@ -1,0 +1,49 @@
+{
+  "page": 57,
+  "questions": [
+    {
+      "q": "Using $I(p) = -\\log_2(p)$, how many bits of surprise does an event with probability $p = 1/8$ carry?",
+      "options": [
+        "$8$ bits",
+        "$0.125$ bits",
+        "$-3$ bits",
+        "$3$ bits"
+      ],
+      "answer": 3,
+      "explain": "$-\\log_2(1/8) = \\log_2 8 = 3$ bits: like three fair coin flips. The minus sign makes surprise non-negative, so $-3$ is impossible."
+    },
+    {
+      "q": "You flip a fair coin and roll a fair die (independent). What is the total surprise of seeing a specific coin face *and* a specific die face?",
+      "options": [
+        "$1 \\times 2.585 = 2.585$ bits",
+        "$1/12 \\approx 0.083$ bits",
+        "$\\log_2 12 \\approx 3.585$ bits",
+        "$7$ bits"
+      ],
+      "answer": 2,
+      "explain": "Probabilities multiply ($\\frac{1}{2}\\cdot\\frac{1}{6} = \\frac{1}{12}$) and the log turns that into a sum: $1 + 2.585 = 3.585$ bits. That additivity is exactly why surprise uses a logarithm."
+    },
+    {
+      "q": "A framework reports a cross-entropy loss of $-\\ln(0.01) \\approx 4.61$ for one example. What is this surprise in **bits**?",
+      "options": [
+        "$\\approx 4.61$ bits",
+        "$\\approx 6.64$ bits",
+        "$\\approx 3.19$ bits",
+        "$\\approx 2.00$ bits"
+      ],
+      "answer": 1,
+      "explain": "Frameworks use the natural log, so $4.61$ is in nats. $1$ nat $= 1/\\ln 2 \\approx 1.443$ bits, so $4.61 \\times 1.443 \\approx 6.64$ bits $= -\\log_2(0.01)$. $3.19$ divides instead of multiplying; $2.00$ is $-\\log_{10}(0.01)$."
+    },
+    {
+      "q": "A classifier gives the true class probability 0.99 in one case and 0.01 in another. Which statement matches the page?",
+      "options": [
+        "The 0.01 case gives a huge surprise (≈ 6.64 bits) and a large loss; the 0.99 case is almost zero",
+        "Both cases give the same loss because the probabilities sum to 1",
+        "The 0.99 case gives the larger loss because the model is overconfident",
+        "Surprise only depends on whether the prediction is right, not on the probability"
+      ],
+      "answer": 0,
+      "explain": "$-\\log_2(0.99) \\approx 0.014$ bits vs. $-\\log_2(0.01) \\approx 6.64$ bits. For a one-hot label, this surprise *is* the cross-entropy loss, so being confidently wrong is punished heavily."
+    }
+  ]
+}

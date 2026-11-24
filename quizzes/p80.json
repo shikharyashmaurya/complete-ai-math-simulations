@@ -1,0 +1,49 @@
+{
+  "page": 80,
+  "questions": [
+    {
+      "q": "In the growing-rectangle picture with area $A = f\\,g$, why can the corner piece $\\Delta f\\,\\Delta g$ be ignored in $(fg)'$?",
+      "options": [
+        "Because it is always negative",
+        "Because $\\frac{\\Delta f\\,\\Delta g}{\\Delta x} = \\frac{\\Delta f}{\\Delta x}\\,\\Delta g \\to f' \\cdot 0 = 0$: it is second order",
+        "Because $\\Delta f = \\Delta g$",
+        "It cannot be ignored — it gives the term $f'g'$"
+      ],
+      "answer": 1,
+      "explain": "After dividing by $\\Delta x$, each strip tends to $f'g$ or $fg'$. The corner still carries a factor $\\Delta g \\to 0$, so it vanishes in the limit — which is why $(fg)' \\neq f'g'$."
+    },
+    {
+      "q": "What is the derivative of $h(x) = x^2 \\sin x$?",
+      "options": [
+        "$2x \\cos x$",
+        "$2x \\sin x + x^2 \\cos x$",
+        "$2x \\sin x - x^2 \\cos x$",
+        "$x^2 \\cos x$"
+      ],
+      "answer": 1,
+      "explain": "Product rule $f'g + fg'$ with $f = x^2$, $g = \\sin x$. The trap $f'g' = 2x\\cos x$ is what the explorer shows as the 'wrong guess' — it disagrees with the central difference."
+    },
+    {
+      "q": "A sigmoid neuron outputs $\\sigma(x) = 0.8$. What is $\\sigma'(x)$?",
+      "options": [
+        "$0.25$",
+        "$0.64$",
+        "$0.16$",
+        "$0.8$"
+      ],
+      "answer": 2,
+      "explain": "The quotient rule gives $\\sigma' = \\sigma(1-\\sigma) = 0.8 \\cdot 0.2 = 0.16$. The value $0.25$ is the maximum of $\\sigma'$, reached only at $\\sigma = 0.5$ ($x = 0$)."
+    },
+    {
+      "q": "Using the quotient rule, what is the derivative of $\\frac{\\ln x}{x}$ at $x = e$?",
+      "options": [
+        "$0$",
+        "$\\frac{1}{e^2}$",
+        "$-\\frac{1}{e^2}$",
+        "$\\frac{2}{e^2}$"
+      ],
+      "answer": 0,
+      "explain": "$\\left(\\frac{\\ln x}{x}\\right)' = \\frac{\\frac{1}{x}\\cdot x - \\ln x \\cdot 1}{x^2} = \\frac{1 - \\ln x}{x^2}$, which is $0$ at $x = e$. A common trap is the reversed numerator $fg' - f'g$, which flips the sign."
+    }
+  ]
+}

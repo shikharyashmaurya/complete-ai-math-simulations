@@ -1,0 +1,49 @@
+{
+  "page": 48,
+  "questions": [
+    {
+      "q": "For $f(x, y) = x^2 + y^2$, what are $\\nabla f$ and $|\\nabla f|$ at $(3, 4)$?",
+      "options": [
+        "$\\nabla f = [3, 4]$, $|\\nabla f| = 5$",
+        "$\\nabla f = [6, 8]$, $|\\nabla f| = 14$",
+        "$\\nabla f = [6, 8]$, $|\\nabla f| = 10$",
+        "$\\nabla f = [9, 16]$, $|\\nabla f| = 25$"
+      ],
+      "answer": 2,
+      "explain": "$\\nabla f = [2x, 2y] = [6, 8]$ and $|\\nabla f| = \\sqrt{36 + 64} = 10$. Adding components ($14$) is not a vector length."
+    },
+    {
+      "q": "Which direction does $\\nabla f$ point, and which direction does gradient descent move?",
+      "options": [
+        "$\\nabla f$ points steepest uphill; descent follows $-\\nabla f$",
+        "$\\nabla f$ points steepest downhill; descent follows $+\\nabla f$",
+        "$\\nabla f$ points along the contour lines; descent follows them too",
+        "$\\nabla f$ always points toward the origin"
+      ],
+      "answer": 0,
+      "explain": "The gradient is the direction of steepest ascent. Training wants lower loss, so it steps along $-\\nabla L$."
+    },
+    {
+      "q": "On the Saddle $f(x, y) = x^2 - y^2$, the gradient at $(0, 0)$ is $[0, 0]$. What does that tell you?",
+      "options": [
+        "$(0, 0)$ is the global minimum",
+        "The surface is flat there, but it is neither a min nor a max — it is a saddle point",
+        "$(0, 0)$ is a maximum",
+        "The gradient is undefined"
+      ],
+      "answer": 1,
+      "explain": "$\\nabla f = [2x, -2y] = [0, 0]$, yet $f$ rises along $x$ and falls along $y$. A zero gradient does not guarantee a minimum or maximum."
+    },
+    {
+      "q": "Why is $\\nabla f$ described as a vector rather than a number?",
+      "options": [
+        "Because it lists the function values at several points",
+        "Because it is always a unit vector",
+        "Because it is the sum of the partial derivatives",
+        "Because it has both a direction (steepest uphill) and a magnitude (how steep)"
+      ],
+      "answer": 3,
+      "explain": "$\\nabla f = \\left[\\frac{\\partial f}{\\partial x}, \\frac{\\partial f}{\\partial y}\\right]$ stacks the partials; its direction is steepest ascent and its length $|\\nabla f|$ is the steepness. It is not normalized to length 1."
+    }
+  ]
+}

@@ -1,0 +1,331 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        .container { display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 1200px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        .controls { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+        .viz { flex: 1.5; min-width: 0; display: flex; justify-content: center; align-items: center; position: relative;}
+        canvas { background: #1e293b; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); cursor: crosshair; max-width: 100%; height: auto; }
+        
+        .title { font-size: 28px; font-weight: 900; color: #f8fafc; margin-bottom: 8px; }
+        .desc { font-size: 15px; color: #94a3b8; line-height: 1.6; }
+        
+        .stats-box { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;}
+        .stat-row:last-child { margin-bottom: 0; }
+        .stat-label { font-size: 16px; font-weight: 700; color: #cbd5e1; }
+        .stat-val { font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 900; }
+        
+        .eq-display { font-family: monospace; font-size: 20px; color: #FFD166; text-align: center; margin-top: 10px; padding: 15px; background: rgba(255, 209, 102, 0.1); border: 1px solid rgba(255, 209, 102, 0.3); border-radius: 8px; font-weight: bold;}
+        
+        .btn-group { display: flex; gap: 15px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        .btn-clear { background: rgba(255, 107, 107, 0.2); color: #FF6B6B; border: 1px solid rgba(255, 107, 107, 0.4); }
+        .btn-clear:hover { background: rgba(255, 107, 107, 0.3); }
+        .btn-toggle { background: rgba(78, 205, 196, 0.2); color: #4ECDC4; border: 1px solid rgba(78, 205, 196, 0.4); }
+        .btn-toggle:hover { background: rgba(78, 205, 196, 0.3); }
+        .btn-toggle.active { background: #4ECDC4; color: #0f172a; }
+        
+        .instruction { font-size: 13px; color: #64748b; text-align: center; margin-top: 5px; font-style: italic; }
+        
+        /* Narrow screens (sidebar open / small laptops): tighten the text column so the buttons stay visible */
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .container { padding: 20px; gap: 20px; }
+            .controls { gap: 12px; }
+            .title { font-size: 22px; }
+            .desc { font-size: 13px; line-height: 1.45; }
+            .stats-box { padding: 14px; }
+            .stat-label { font-size: 14px; }
+            .stat-val { font-size: 17px; }
+            .eq-display { font-size: 16px; padding: 10px; }
+            button { padding: 8px; font-size: 13px; }
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="controls">
+                <div>
+                    <div class="title">The Chasing Line 🎯</div>
+                    <div class="desc">Click on the canvas to drop data points. Watch how the "Line of Best Fit" instantly updates to minimize the <b>sum of squared vertical residuals</b> (least squares).</div>
+                </div>
+                
+                <div class="stats-box">
+                    <div class="stat-row">
+                        <span class="stat-label">Points (N)</span>
+                        <span id="val-n" class="stat-val" style="color: #a78bfa;">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Slope (m)</span>
+                        <span id="val-m" class="stat-val" style="color: #FFD166;">0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Y-Intercept (b)</span>
+                        <span id="val-b" class="stat-val" style="color: #FFD166;">0.00</span>
+                    </div>
+                    <div class="stat-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span class="stat-label">Mean Squared Error (MSE)</span>
+                        <span id="val-mse" class="stat-val" style="color: #FF6B6B;">0.00</span>
+                    </div>
+                </div>
+                
+                <div class="eq-display" id="eq-box">y = 0.00x + 0.00</div>
+                <div class="instruction" id="fit-note" style="min-height: 16px;"></div>
+                
+                <div class="btn-group">
+                    <button class="btn-toggle" id="btn-res">Show Errors (Residuals)</button>
+                    <button class="btn-clear" id="btn-clear">Clear Points</button>
+                </div>
+                <div class="instruction">Click existing points to remove them. The latest 200 points are kept; adding another drops the oldest.</div>
+            </div>
+            
+            <div class="viz">
+                <canvas id="cvs" width="500" height="500"></canvas>
+            </div>
+        </div>
+        
+        <script>
+            const cvs = document.getElementById('cvs');
+            const ctx = cvs.getContext('2d');
+            
+            const btnClear = document.getElementById('btn-clear');
+            const btnRes = document.getElementById('btn-res');
+            
+            const valN = document.getElementById('val-n');
+            const valM = document.getElementById('val-m');
+            const valB = document.getElementById('val-b');
+            const valMSE = document.getElementById('val-mse');
+            const eqBox = document.getElementById('eq-box');
+            
+            let points = [];
+            const MAX_POINTS = 200;
+            let showResiduals = false;
+            
+            // Coordinate System Configuration
+            const range = 10; // -10 to 10
+            const cx = cvs.width / 2;
+            const cy = cvs.height / 2;
+            const scale = cvs.width / (range * 2);
+            
+            function toScreen(x, y) {
+                return { px: cx + x * scale, py: cy - y * scale };
+            }
+            function toData(px, py) {
+                return { x: (px - cx) / scale, y: -(py - cy) / scale };
+            }
+            
+            // Calculate OLS Regression
+            // status: 'empty' | 'single' (1 point) | 'vertical' (all x equal -> slope undefined) | 'ok'
+            function calculateRegression() {
+                const n = points.length;
+                if (n === 0) return { status: 'empty', m: 0, b: 0, mse: 0 };
+                if (n === 1) return { status: 'single', m: 0, b: 0, mse: 0 };
+                
+                let sumX = 0, sumY = 0;
+                for (let p of points) {
+                    sumX += p.x;
+                    sumY += p.y;
+                }
+                
+                const meanX = sumX / n;
+                const meanY = sumY / n;
+                
+                let num = 0;
+                let den = 0;
+                for(let p of points) {
+                    num += (p.x - meanX) * (p.y - meanY);
+                    den += (p.x - meanX) * (p.x - meanX);
+                }
+                
+                // All points share one x: the least-squares slope (num/den) is 0/0, i.e. undefined
+                if (den < 1e-9) return { status: 'vertical', m: 0, b: 0, mse: 0, meanX };
+                
+                const m = num / den;
+                const b = meanY - m * meanX;
+                
+                // Calculate MSE
+                let mse = 0;
+                for(let p of points) {
+                    const predY = m * p.x + b;
+                    const error = p.y - predY;
+                    mse += error * error;
+                }
+                mse /= n;
+                
+                return { status: 'ok', m, b, mse };
+            }
+            
+            function signed(v) {
+                const s = v.toFixed(2);
+                return (v > 0 && s !== '0.00') ? '+' + s : (s === '-0.00' ? '0.00' : s);
+            }
+            
+            function draw() {
+                // Clear
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                
+                // Grid and Axes
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for(let i = -range; i <= range; i++) {
+                    let p1 = toScreen(i, -range);
+                    let p2 = toScreen(i, range);
+                    ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py);
+                    p1 = toScreen(-range, i);
+                    p2 = toScreen(range, i);
+                    ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py);
+                }
+                ctx.stroke();
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, cy); ctx.lineTo(cvs.width, cy); // X axis
+                ctx.moveTo(cx, 0); ctx.lineTo(cx, cvs.height); // Y axis
+                ctx.stroke();
+                
+                const { status, m, b, mse, meanX } = calculateRegression();
+                const fitNote = document.getElementById('fit-note');
+                
+                // Update UI Stats
+                valN.innerText = points.length;
+                if (status === 'ok') {
+                    valM.innerText = signed(m);
+                    valB.innerText = signed(b);
+                    valMSE.innerText = mse.toFixed(2);
+                    eqBox.innerHTML = `y = <span style="color:white;">${m.toFixed(2)}x</span> ${b >= 0 ? '+' : '-'} <span style="color:white;">${Math.abs(b).toFixed(2)}</span>`;
+                    fitNote.innerText = '';
+                } else if (status === 'vertical') {
+                    valM.innerText = 'undefined';
+                    valB.innerText = '—';
+                    valMSE.innerText = '—';
+                    eqBox.innerHTML = `x = <span style="color:white;">${meanX.toFixed(2)}</span>`;
+                    fitNote.innerText = 'All points share the same x, so the slope is undefined (a vertical line). Add a point with a different x.';
+                } else {
+                    valM.innerText = '—';
+                    valB.innerText = '—';
+                    valMSE.innerText = '—';
+                    eqBox.innerHTML = 'Need ≥ 2 points';
+                    fitNote.innerText = points.length === 1 ? 'One point fits infinitely many lines. Add another point.' : 'Click the canvas to add points.';
+                }
+                
+                // Draw Residuals First (so they are under points and line)
+                if (showResiduals && status === 'ok') {
+                    ctx.beginPath();
+                    for(let p of points) {
+                        const predY = m * p.x + b;
+                        const pScreen = toScreen(p.x, p.y);
+                        const predScreen = toScreen(p.x, predY);
+                        ctx.moveTo(pScreen.px, pScreen.py);
+                        ctx.lineTo(predScreen.px, predScreen.py);
+                    }
+                    ctx.strokeStyle = '#FF6B6B';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // Draw Line of Best Fit
+                if (status === 'ok') {
+                    const p1 = toScreen(-range, m * (-range) + b);
+                    const p2 = toScreen(range, m * range + b);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(p1.px, p1.py);
+                    ctx.lineTo(p2.px, p2.py);
+                    ctx.strokeStyle = '#FFD166';
+                    ctx.lineWidth = 3;
+                    // Glow effect
+                    ctx.shadowColor = '#FFD166';
+                    ctx.shadowBlur = 10;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0; // reset
+                } else if (status === 'vertical') {
+                    // Least squares of y on x is undefined here; show where the points line up instead
+                    const p1 = toScreen(meanX, -range);
+                    const p2 = toScreen(meanX, range);
+                    ctx.beginPath();
+                    ctx.moveTo(p1.px, p1.py);
+                    ctx.lineTo(p2.px, p2.py);
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 6]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // Draw Points
+                for(let p of points) {
+                    const pScreen = toScreen(p.x, p.y);
+                    ctx.beginPath();
+                    ctx.arc(pScreen.px, pScreen.py, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#a78bfa';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+            }
+            
+            // Initial data for demo
+            points.push({x: -4, y: -3});
+            points.push({x: -2, y: -1});
+            points.push({x: 1, y: 2});
+            points.push({x: 3, y: 1});
+            points.push({x: 5, y: 4});
+            
+            // Interaction
+            cvs.addEventListener('mousedown', (e) => {
+                const rect = cvs.getBoundingClientRect();
+                // The canvas may be shrunk by CSS on narrow screens: map CSS pixels to canvas pixels
+                const px = (e.clientX - rect.left) * (cvs.width / rect.width);
+                const py = (e.clientY - rect.top) * (cvs.height / rect.height);
+                const pData = toData(px, py);
+                
+                // Check if clicking existing point to remove
+                let clickedExisting = false;
+                for(let i=0; i<points.length; i++) {
+                    const pScreen = toScreen(points[i].x, points[i].y);
+                    const dist = Math.hypot(pScreen.px - px, pScreen.py - py);
+                    if(dist < 10 * (cvs.width / rect.width)) { // ~10 CSS px hit area
+                        points.splice(i, 1);
+                        clickedExisting = true;
+                        break;
+                    }
+                }
+                
+                if(!clickedExisting) {
+                    if(points.length >= MAX_POINTS) points.shift();
+                    points.push(pData);
+                }
+                draw();
+            });
+            
+            btnClear.addEventListener('click', () => {
+                points = [];
+                draw();
+            });
+            
+            btnRes.addEventListener('click', () => {
+                showResiduals = !showResiduals;
+                if(showResiduals) {
+                    btnRes.classList.add('active');
+                    btnRes.innerText = "Hide Errors (Residuals)";
+                } else {
+                    btnRes.classList.remove('active');
+                    btnRes.innerText = "Show Errors (Residuals)";
+                }
+                draw();
+            });
+            
+            draw();
+        </script>
+    </body>
+    </html>
+    

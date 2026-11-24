@@ -1,0 +1,18 @@
+{"page": 91, "questions": [
+  {"q": "With bias correction and a tiny $\\varepsilon$, what is Adam's very first update $\\Delta_1$ (starting from $m_0 = v_0 = 0$)?",
+   "options": ["$\\eta\\, g_1$, the same as SGD", "$\\eta\\, g_1/(|g_1|+\\varepsilon) \\approx \\eta\\,\\mathrm{sign}(g_1)$", "$\\eta\\,(1-\\beta_1)\\,g_1$", "Zero, because the averages start at zero"],
+   "answer": 1,
+   "explain": "Bias correction gives $\\hat m_1 = g_1$ and $\\hat v_1 = g_1^2$, so the step is $\\eta g_1/(|g_1|+\\varepsilon)$: size about η whatever the gradient's magnitude."},
+  {"q": "If Adam (β₁ = 0.9, β₂ = 0.999) skipped bias correction, how big would the first step be?",
+   "options": ["About $0.1\\,\\eta$ — too small", "Exactly $\\eta$", "About $3.16\\,\\eta$ — too large, because $v$ is even more biased toward 0 than $m$", "Infinite, because $v_1 = 0$"],
+   "answer": 2,
+   "explain": "Uncorrected: $\\eta\\,(1-\\beta_1)|g_1| / (\\sqrt{1-\\beta_2}\\,|g_1|) = 0.1/0.0316\\,\\eta \\approx 3.16\\,\\eta$. The trap is assuming bias correction only enlarges small early steps."},
+  {"q": "What is the difference between AdamW and Adam with an L2 penalty?",
+   "options": ["None — they are the same update written differently", "In Adam + L2 the term $\\lambda w$ is divided by $\\sqrt{\\hat v}$, so weights with large gradients are barely decayed; AdamW applies $-\\eta\\lambda w$ outside the adaptive scaling, shrinking every weight by the same factor", "AdamW removes momentum from Adam", "AdamW decays only the biases"],
+   "answer": 1,
+   "explain": "For plain SGD L2 and weight decay coincide, but in Adam the penalty gradient goes through the per-parameter denominator. AdamW decouples it — the demo shows the loud weight barely shrinking under Adam + L2 but shrinking like $(1-\\eta\\lambda)^t$ under AdamW."},
+  {"q": "On the bowl, rotating the valley by 45° makes Adam's advantage over SGD shrink or vanish. Why?",
+   "options": ["Adam can only minimise convex functions", "Adam's scaling is per coordinate; after rotation each coordinate mixes the steep and shallow directions, so dividing coordinate by coordinate cannot undo the stretch", "Rotation changes the minimum's location", "Rotation makes the gradient zero"],
+   "answer": 1,
+   "explain": "The denominators $\\sqrt{\\hat v}$ rescale x and y separately. That fixes axis-aligned bad scaling (the 'badly scaled features' landscape) but not ill-conditioning along a diagonal direction."}
+]}

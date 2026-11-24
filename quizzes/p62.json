@@ -1,0 +1,49 @@
+{
+  "page": 62,
+  "questions": [
+    {
+      "q": "$\\mathbf{v}$ lies along an eigenvector with $\\lambda = -1.8$ and $\\|\\mathbf{v}\\| = 2$. What is $A\\mathbf{v}$?",
+      "options": [
+        "An arrow of length $3.6$ pointing the same way",
+        "An arrow of length $1.8$ pointing the opposite way",
+        "An arrow of length $3.6$ pointing the opposite way",
+        "The zero vector, because $\\lambda < 0$"
+      ],
+      "answer": 2,
+      "explain": "$\\|A\\mathbf{v}\\| / \\|\\mathbf{v}\\| = |\\lambda| = 1.8$, so the length becomes $3.6$; the negative sign flips the direction. 'Flip + Grow': a negative $\\lambda$ does not mean shrinking."
+    },
+    {
+      "q": "Which eigenvalue makes its eigen-direction **shrink** toward the origin *without* flipping?",
+      "options": [
+        "$\\lambda = -0.4$",
+        "$\\lambda = 0.4$",
+        "$\\lambda = 2$",
+        "$\\lambda = 1$"
+      ],
+      "answer": 1,
+      "explain": "$0 < \\lambda < 1$ shrinks while keeping the direction. $-0.4$ also shrinks but flips; $2$ grows; $1$ leaves the vector unchanged."
+    },
+    {
+      "q": "In the 2D Matrix View you set $A = \\begin{bmatrix} 3 & 0 \\\\ 0 & 0.5 \\end{bmatrix}$. What does the unit circle become?",
+      "options": [
+        "An axis-aligned ellipse with semi-axes $3$ (horizontal) and $0.5$ (vertical)",
+        "A circle of radius $3.5$",
+        "An ellipse with semi-axes $1.5$ and $0.25$",
+        "A tilted ellipse rotated by $45°$"
+      ],
+      "answer": 0,
+      "explain": "For a diagonal matrix the eigenvalues sit on the diagonal and the eigen-directions are the axes, so the semi-axes (half-width, half-height) are exactly $|\\lambda_1| = 3$ and $|\\lambda_2| = 0.5$. $1.5$ and $0.25$ confuse semi-axes with half of them."
+    },
+    {
+      "q": "A simple RNN applies the same recurrent matrix 10 times. Along an eigen-direction with $\\lambda = 0.9$, how large is the signal after 10 steps (starting from 1)?",
+      "options": [
+        "$\\approx 2.59$ — it explodes",
+        "$9$",
+        "$0.9$ — repeated application doesn't change it",
+        "$\\approx 0.35$ — it vanishes"
+      ],
+      "answer": 3,
+      "explain": "Each step multiplies by $0.9$: $0.9^{10} \\approx 0.349$. $|\\lambda| < 1$ causes vanishing, while $1.1^{10} \\approx 2.59$ would show exploding. $9 = 10 \\times 0.9$ adds instead of compounding."
+    }
+  ]
+}

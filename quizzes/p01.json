@@ -1,0 +1,49 @@
+{
+  "page": 1,
+  "questions": [
+    {
+      "q": "What is the difference between the scalar $s = 5$ and the 1D vector $v = [5]$?",
+      "options": [
+        "They are exactly the same object, just written differently",
+        "The 1D vector holds two numbers, the scalar holds one",
+        "The scalar has a direction, the vector does not",
+        "The scalar is a single number (how much); the 1D vector is an arrow along one axis with a direction"
+      ],
+      "answer": 3,
+      "explain": "Both hold one number, but the vector is treated as an arrow on a number line (left or right). Mixing up `5` and `[5]` is a classic shape bug in AI code."
+    },
+    {
+      "q": "A 28×28 grayscale MNIST-style image is unrolled (flattened) for a basic neural network. How many dimensions does the resulting vector have?",
+      "options": [
+        "28",
+        "28×28 = a 2D vector",
+        "784",
+        "56"
+      ],
+      "answer": 2,
+      "explain": "Flattening stacks the 28 rows of 28 pixels end to end: $28 \\times 28 = 784$ numbers, so the image becomes a 784-dimensional vector."
+    },
+    {
+      "q": "Using the same idea, how long is the vector you get by flattening a 32×32 **colour** (RGB) image?",
+      "options": [
+        "1024",
+        "32",
+        "96",
+        "3072"
+      ],
+      "answer": 3,
+      "explain": "Each pixel has 3 channel values: $32 \\times 32 \\times 3 = 3072$. Forgetting the colour channels gives the trap answer 1024."
+    },
+    {
+      "q": "Which vector has **no** direction, so the page draws it without an arrowhead?",
+      "options": [
+        "$[0]$ (the zero vector)",
+        "$[-10]$",
+        "$[0.5]$",
+        "Any 1D vector"
+      ],
+      "answer": 0,
+      "explain": "Every non-zero vector points somewhere; only the zero vector has length 0 and therefore no direction."
+    }
+  ]
+}

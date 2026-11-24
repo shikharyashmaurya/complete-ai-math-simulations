@@ -1,0 +1,49 @@
+{
+  "page": 70,
+  "questions": [
+    {
+      "q": "Toy network $h = w_1x$, $\\hat{y} = w_2h$, loss $L = \\frac{1}{2}(\\hat{y} - y_{true})^2$. With $x = 2$, $w_1 = 0.5$, $w_2 = 3$, $y_{true} = 2$: what is $\\frac{\\partial L}{\\partial w_1}$?",
+      "options": [
+        "$1.5$",
+        "$3$",
+        "$6$",
+        "$1$"
+      ],
+      "answer": 2,
+      "explain": "Forward: $h = 1$, $\\hat{y} = 3$. Backward: $\\frac{\\partial L}{\\partial \\hat{y}} = 3 - 2 = 1$; $\\frac{\\partial L}{\\partial h} = 1 \\cdot w_2 = 3$; $\\frac{\\partial L}{\\partial w_1} = 3 \\cdot x = 6$. $1.5$ multiplies by $w_1$ instead of $x$; $3$ stops at $\\frac{\\partial L}{\\partial h}$; $1$ is $\\frac{\\partial L}{\\partial w_2} = 1 \\cdot h$."
+    },
+    {
+      "q": "In that example $\\frac{\\partial L}{\\partial w_1} = 6 > 0$. What should gradient descent do to $w_1$?",
+      "options": [
+        "Increase $w_1$",
+        "Decrease $w_1$ (move opposite to the gradient)",
+        "Leave $w_1$ unchanged because only $w_2$ touches the output",
+        "Set $w_1$ to $6$"
+      ],
+      "answer": 1,
+      "explain": "A positive gradient means increasing $w_1$ increases the loss, so we step the other way: $w_1 \\leftarrow w_1 - \\eta \\cdot 6$. Indeed $\\hat{y} = 3$ is too big, and shrinking $w_1$ lowers it."
+    },
+    {
+      "q": "What does the chain rule let backpropagation do?",
+      "options": [
+        "Split one complicated derivative into local derivatives and multiply them while moving backward",
+        "Add up the local derivatives of all layers",
+        "Compute each weight's gradient by re-running the forward pass with that weight changed",
+        "Skip the forward pass entirely"
+      ],
+      "answer": 0,
+      "explain": "$\\frac{\\partial L}{\\partial w_1} = \\frac{\\partial L}{\\partial \\hat{y}} \\cdot \\frac{\\partial \\hat{y}}{\\partial h} \\cdot \\frac{\\partial h}{\\partial w_1}$: upstream gradient × local derivative, step by step. The forward pass is still needed to know $h$ and $\\hat{y}$."
+    },
+    {
+      "q": "A real network uses $h = \\sigma(w_1x + b_1)$ instead of the linear $h = w_1x$. How does the backward-pass recipe change?",
+      "options": [
+        "Backpropagation no longer works with nonlinear activations",
+        "The gradient of $w_1$ becomes independent of $x$",
+        "We must add $\\sigma'$ to the gradient instead of multiplying",
+        "One more local derivative, $\\sigma'$, is multiplied into the chain; the recipe stays the same"
+      ],
+      "answer": 3,
+      "explain": "$\\frac{\\partial h}{\\partial w_1} = \\sigma'(w_1x + b_1) \\cdot x$, so the chain simply gains a factor. This is also where saturating activations shrink gradients."
+    }
+  ]
+}

@@ -5,6 +5,14 @@ from scipy.stats import binom, norm
 
 st.set_page_config(page_title="Random Variables", layout="wide")
 
+N_HEIGHT_SAMPLES = 2_000_000
+
+
+@st.cache_data(show_spinner=False)
+def simulated_heights():
+    # Enough samples that even 0.1 cm buckets track the true density closely.
+    return np.random.default_rng(42).normal(170, 7, N_HEIGHT_SAMPLES)
+
 def local_css():
     st.markdown("""
     <style>
@@ -20,13 +28,6 @@ def local_css():
     .narrative-box h3 {
         color: #ffffff !important;
         margin-top: 0;
-    }
-    .concept-box {
-        background: #0f172a;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #334155;
-        height: 100%;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -51,12 +52,10 @@ def render_discrete():
     st.markdown("In a discrete world, outcomes fall into distinct 'buckets'. Let's flip some coins. The random variable is the **number of heads**.")
    
     col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown("<div class='concept-box'>", unsafe_allow_html=True)
+    with col1, st.container(border=True):
         n_coins = st.slider("Number of Coins", min_value=1, max_value=50, value=10)
         p_heads = st.slider("Probability of Heads", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
-        st.markdown("<br><small>Notice how the x-axis only has whole numbers. There is no such thing as getting 3.4 heads!</small>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<small>Notice how the x-axis only has whole numbers. There is no such thing as getting 3.4 heads!</small>", unsafe_allow_html=True)
        
     with col2:
         x = np.arange(0, n_coins + 1)
@@ -74,19 +73,17 @@ def render_discrete():
         )
         fig.update_xaxes(tickmode='linear', tick0=0, dtick=max(1, n_coins//10), gridcolor='#334155')
         fig.update_yaxes(gridcolor='#334155')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 def render_continuous():
     st.header("2️⃣ Continuous: The World of Measuring")
-    st.markdown("In a continuous world, outcomes can be *any* value within a range. The probability of getting *exactly* a specific number (like 170.0000000 cm) is essentially zero. Instead, we look at the probability of falling within a range (an area under the curve).")
+    st.markdown("In a continuous world, outcomes can be *any* value within a range. The probability of getting *exactly* a specific number (like 170.0000000 cm) is zero. Instead, we look at the probability of falling within a range (an area under the curve).")
    
     col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown("<div class='concept-box'>", unsafe_allow_html=True)
+    with col1, st.container(border=True):
         mu = st.slider("Average Height (cm)", min_value=150.0, max_value=190.0, value=170.0)
         sigma = st.slider("Spread (Standard Deviation)", min_value=2.0, max_value=20.0, value=7.0)
-        st.markdown("<br><small>Notice how the x-axis is a smooth line. A person's height could be absolutely any value.</small>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<small>Notice how the x-axis is a smooth line. A person's height could be absolutely any value.</small>", unsafe_allow_html=True)
        
     with col2:
         x_min = mu - 4 * sigma
@@ -106,18 +103,17 @@ def render_continuous():
         )
         fig.update_xaxes(gridcolor='#334155', range=[x_min, x_max])
         fig.update_yaxes(gridcolor='#334155')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 def render_bridge():
     st.header("3️⃣ The Bridge: From Counting to Measuring")
     st.markdown("What happens if we take a discrete measurement (like grouping people by height) and make the buckets smaller and smaller? The discrete histogram morphs into the continuous density curve!")
    
     col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown("<div class='concept-box'>", unsafe_allow_html=True)
+    with col1, st.container(border=True):
         bins = st.select_slider(
             "Measurement Precision (Bucket Size)",
-            options=["10 cm (Nearest 10cm)", "5 cm", "2 cm", "1 cm", "0.1 cm (Continuous)"],
+            options=["10 cm (Nearest 10cm)", "5 cm", "2 cm", "1 cm", "0.1 cm (Nearly continuous)"],
             value="10 cm (Nearest 10cm)"
         )
        
@@ -126,17 +122,15 @@ def render_bridge():
             "5 cm": 5,
             "2 cm": 2,
             "1 cm": 1,
-            "0.1 cm (Continuous)": 0.1
+            "0.1 cm (Nearly continuous)": 0.1
         }
         bin_width = bin_mapping[bins]
         st.markdown(f"**Current Bucket Width:** {bin_width} cm")
-        st.markdown("As the buckets get thinner, the density bars approximate a smooth curve. In the limit, continuous probability is described by a density rather than infinitely thin probability bars.")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(f"As the buckets get thinner, the density bars approximate a smooth curve. In the limit, continuous probability is described by a density rather than infinitely thin probability bars. "
+                    f"(Based on {N_HEIGHT_SAMPLES:,} simulated people — with fewer people, very thin buckets would look noisy.)")
        
     with col2:
-        # Simulate data
-        rng = np.random.default_rng(42)
-        data = rng.normal(170, 7, 10000)
+        data = simulated_heights()
        
         fig = go.Figure()
        
@@ -176,7 +170,7 @@ def render_bridge():
         )
         fig.update_xaxes(gridcolor='#334155', range=[140, 200])
         fig.update_yaxes(gridcolor='#334155')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 def main():
     local_css()

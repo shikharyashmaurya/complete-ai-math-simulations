@@ -1,0 +1,795 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:10px;overflow-x:hidden;}
+.outer{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+.title-card{background:rgba(30,41,59,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.title-card h2{font-size:22px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f472b6,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.mode-toggle{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:4px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;}
+.mbtn{background:transparent;color:#94a3b8;border:none;padding:8px 12px;font-size:11px;font-weight:700;border-radius:8px;cursor:pointer;transition:.2s;}
+.mbtn:hover{color:#e2e8f0;}
+.mbtn.active{background:#1e293b;color:#fbbf24;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:1px solid rgba(251,191,36,0.3);}
+.mbtn[data-m="math"].active{color:#38bdf8;border-color:rgba(56,189,248,0.3);}
+.mbtn[data-m="contrib"].active{color:#34d399;border-color:rgba(52,211,153,0.3);}
+.main-grid{display:grid;grid-template-columns:1fr 1.45fr;gap:20px;}
+@media(max-width:920px){.main-grid{grid-template-columns:1fr;}}
+.panel{background:rgba(30,41,59,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;}
+.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:6px;}
+.preset-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+.pbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#cbd5e1;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;transition:.2s;line-height:1.4;}
+.pbtn:hover{background:rgba(255,255,255,0.08);}
+.pbtn.active{background:rgba(251,191,36,0.1);border-color:#fbbf24;color:#fde68a;box-shadow:0 0 16px rgba(251,191,36,0.15);}
+.pbtn small{display:block;font-weight:600;color:#64748b;margin-top:3px;font-size:10px;}
+.pbtn.active small{color:#a8a29e;}
+.slider-box{background:rgba(0,0,0,0.2);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.04);margin-bottom:8px;}
+.srow{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;}
+.srow .val{font-family:monospace;font-weight:900;font-size:15px;}
+input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;cursor:pointer;}
+.in-sl::-webkit-slider-thumb{background:#4ade80;box-shadow:0 0 8px #4ade80;}
+.w-sl::-webkit-slider-thumb{background:#fbbf24;box-shadow:0 0 8px #fbbf24;}
+.b-sl::-webkit-slider-thumb{background:#f472b6;box-shadow:0 0 8px #f472b6;}
+.act-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.abtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#cbd5e1;padding:9px 6px;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;transition:.2s;}
+.abtn:hover{background:rgba(255,255,255,0.08);}
+.abtn.active{background:rgba(56,189,248,0.12);border-color:#38bdf8;color:#7dd3fc;}
+.pipeline{background:rgba(0,0,0,0.28);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.05);font-family:monospace;font-size:12px;line-height:1.7;}
+.pipe-step{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.06);}
+.pipe-step:last-child{border:none;}
+.pipe-step.dim{color:#64748b;}
+.pipe-step.hot{color:#fde68a;font-weight:800;}
+.pipe-step.out{color:#34d399;font-weight:900;font-size:14px;}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.metric{background:rgba(0,0,0,0.22);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.04);}
+.metric.full{grid-column:1/-1;}
+.metric .mt{font-size:10px;font-weight:800;text-transform:uppercase;color:#64748b;letter-spacing:1px;}
+.metric .mv{font-size:22px;font-weight:900;font-family:monospace;margin-top:4px;}
+.metric .ms{font-size:10px;color:#94a3b8;margin-top:2px;}
+.fire-btn{width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(244,114,182,0.2));color:#fde68a;border:1px solid rgba(251,191,36,0.4);padding:13px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;transition:.2s;letter-spacing:0.5px;}
+.fire-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,191,36,0.2);}
+.fire-btn.on{background:rgba(244,114,182,0.15);color:#fbcfe8;border-color:rgba(244,114,182,0.5);}
+.canvas-col{display:flex;flex-direction:column;gap:10px;}
+.status-banner{text-align:center;padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);color:#94a3b8;line-height:1.45;transition:.25s;}
+.status-banner.fire{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.35);color:#fde68a;}
+canvas{background:#090d16;border:2px solid rgba(255,255,255,0.08);border-radius:16px;display:block;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.35);}
+.mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mini-lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:4px;text-align:center;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:11px;padding:8px 12px;border-radius:20px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.04);}
+.leg{display:flex;align-items:center;gap:6px;}
+.leg-dot{width:10px;height:10px;border-radius:50%;}
+</style>
+</head>
+<body>
+<div class="outer">
+  <div class="title-card" style="display:flex">
+    <h2>🧠 ONE NEURON — The Smallest Decision Maker</h2>
+    <div class="mode-toggle" id="mode-btns">
+      <button class="mbtn active" data-m="flow" onclick="setMode('flow')">⚡ Signal Flow</button>
+      <button class="mbtn" data-m="math" onclick="setMode('math')">🔢 Dot Product</button>
+      <button class="mbtn" data-m="contrib" onclick="setMode('contrib')">📊 Contributions</button>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="panel">
+      <div>
+        <div class="lbl">Pick a Story (Preset)</div>
+        <div class="preset-grid" id="preset-btns">
+          <button class="pbtn active" data-p="study" onclick="loadPreset('study',this)">
+            📚 Will I study tonight?
+            <small>Tiredness · Homework load · Coffee boost</small>
+          </button>
+          <button class="pbtn" data-p="spam" onclick="loadPreset('spam',this)">
+            📧 Is this email spam?
+            <small>ALL CAPS ratio · !!! count · Unknown sender</small>
+          </button>
+          <button class="pbtn" data-p="game" onclick="loadPreset('game',this)">
+            🎮 Should I play outside?
+            <small>Weather · Share of homework done · Friend invited</small>
+          </button>
+        </div>
+      </div>
+
+      <div id="input-sliders"></div>
+
+      <div>
+        <div class="lbl">Weights (importance of each input)</div>
+        <div id="weight-sliders"></div>
+      </div>
+
+      <div class="slider-box">
+        <div class="srow"><span style="color:#f472b6">Bias b</span><span class="val" id="b-val" style="color:#f472b6">0.00</span></div>
+        <input type="range" class="b-sl" id="bias-sl" min="-3" max="3" step="0.1" value="0" oninput="onBias()">
+        <div style="font-size:10px;color:#64748b;margin-top:6px">Shifts the decision threshold — like needing extra motivation when tired.</div>
+      </div>
+
+      <div>
+        <div class="lbl">Activation f(z) (turns z into the output)</div>
+        <div class="act-grid" id="act-btns">
+          <button class="abtn" data-a="relu" onclick="setAct('relu',this)">ReLU</button>
+          <button class="abtn active" data-a="sigmoid" onclick="setAct('sigmoid',this)">Sigmoid</button>
+          <button class="abtn" data-a="tanh" onclick="setAct('tanh',this)">Tanh</button>
+          <button class="abtn" data-a="step" onclick="setAct('step',this)">Step</button>
+          <button class="abtn" data-a="linear" onclick="setAct('linear',this)">Linear</button>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="mt">Pre-activation z</div>
+          <div class="mv" id="z-val" style="color:#38bdf8">0.00</div>
+          <div class="ms">w·x + b</div>
+        </div>
+        <div class="metric">
+          <div class="mt">Output y</div>
+          <div class="mv" id="y-val" style="color:#34d399">0.00</div>
+          <div class="ms" id="y-label">activation(z)</div>
+        </div>
+        <div class="metric full">
+          <div class="mt" id="decision-label">Decision</div>
+          <div class="mv" id="dec-val" style="color:#fbbf24;font-size:18px">—</div>
+          <div class="ms">Rule used on this page: decide “yes” when z ≥ 0 (same as σ(z) ≥ 0.5). The output is a score, not a calibrated probability.</div>
+        </div>
+      </div>
+
+      <button class="fire-btn" id="fire-btn" onclick="toggleFire()">⚡ FIRE THE NEURON</button>
+
+      <div class="pipeline" id="pipeline"></div>
+    </div>
+
+    <div class="canvas-col">
+      <div class="status-banner" id="status">Adjust inputs & weights, then press FIRE to watch the signal travel.</div>
+      <canvas id="cvs" width="720" height="420"></canvas>
+      <div class="mini-row">
+        <div>
+          <div class="mini-lbl">Activation curve (z → y)</div>
+          <canvas id="cvs-act" width="340" height="140"></canvas>
+        </div>
+        <div>
+          <div class="mini-lbl" id="mini2-lbl">Weighted contributions</div>
+          <canvas id="cvs-mini" width="340" height="140"></canvas>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#4ade80"></div> Inputs x</div>
+        <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div> Weights w</div>
+        <div class="leg"><div class="leg-dot" style="background:#f472b6"></div> Bias b</div>
+        <div class="leg"><div class="leg-dot" style="background:#38bdf8"></div> Sum z</div>
+        <div class="leg"><div class="leg-dot" style="background:#34d399"></div> Output y</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRESETS = {
+  study: {
+    labels: ['Tiredness', 'Homework hrs', 'Coffee cups'],
+    inputs: [0.7, 1.5, 1],
+    weights: [-1.8, 0.8, 0.6],
+    bias: -0.3,
+    inMin: [0, 0, 0], inMax: [1, 3, 3], inStep: [0.05, 0.25, 1],
+    yes: 'Yes — hit the books! 📖', no: 'Nah — couch wins 🛋️'
+  },
+  spam: {
+    labels: ['CAPS ratio', '!!! count', 'Unknown sender (0/1)'],
+    inputs: [0.6, 2, 1],
+    weights: [2.2, 0.6, 1.8],
+    bias: -2.5,
+    inMin: [0, 0, 0], inMax: [1, 5, 1], inStep: [0.05, 1, 1],
+    yes: 'Spam folder 🗑️', no: 'Inbox ✅'
+  },
+  game: {
+    labels: ['Nice weather', 'Homework done', 'Friend invited (0/1)'],
+    inputs: [0.8, 0.3, 1],
+    weights: [1.2, 1.5, 2.0],
+    bias: -2.5,
+    inMin: [0, 0, 0], inMax: [1, 1, 1], inStep: [0.05, 0.05, 1],
+    yes: 'Go play! ⚽', no: 'Stay in & grind 💻'
+  }
+};
+
+const INPUT_NAMES = ['x₁', 'x₂', 'x₃'];
+const WEIGHT_NAMES = ['w₁', 'w₂', 'w₃'];
+const CONTRIB_NAMES = ['w₁x₁', 'w₂x₂', 'w₃x₃'];
+const COLORS = { in: '#4ade80', w: '#fbbf24', b: '#f472b6', z: '#38bdf8', y: '#34d399' };
+
+let preset = 'study';
+let mode = 'flow';
+let act = 'sigmoid';
+let firing = false;
+let fireT = 0;
+let fireAnim = null;
+
+const x = [0, 0, 0];
+const w = [0, 0, 0];
+let bias = 0;
+
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+const cAct = document.getElementById('cvs-act');
+const ctxA = cAct.getContext('2d');
+const cMini = document.getElementById('cvs-mini');
+const ctxM = cMini.getContext('2d');
+
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+function relu(z) { return Math.max(0, z); }
+function step(z) { return z >= 0 ? 1 : 0; }
+function linear(z) { return z; }
+
+function activate(z) {
+  if (act === 'relu') return relu(z);
+  if (act === 'sigmoid') return sigmoid(z);
+  if (act === 'tanh') return Math.tanh(z);
+  if (act === 'step') return step(z);
+  return linear(z);
+}
+
+function actName() {
+  if (act === 'relu') return 'ReLU';
+  if (act === 'sigmoid') return 'σ';
+  if (act === 'tanh') return 'tanh';
+  if (act === 'step') return 'Step';
+  return 'Linear';
+}
+
+function outputNote() {
+  if (act === 'sigmoid') return '0–1, probability-like (not calibrated)';
+  if (act === 'tanh') return 'between −1 and 1';
+  if (act === 'relu') return 'unbounded score ≥ 0';
+  if (act === 'step') return 'hard 0 or 1';
+  return 'raw score, any value';
+}
+
+function dotSum() {
+  let s = 0;
+  for (let i = 0; i < 3; i++) s += w[i] * x[i];
+  return s;
+}
+
+function zVal() { return dotSum() + bias; }
+
+// One decision rule for every activation: z ≥ 0  (⇔ σ(z) ≥ 0.5 ⇔ tanh(z) ≥ 0 ⇔ step(z) = 1).
+function decide(z) {
+  const p = PRESETS[preset];
+  return z >= 0 ? p.yes : p.no;
+}
+
+function fmtX(i) {
+  return PRESETS[preset].inStep[i] >= 1 ? x[i].toFixed(0) : x[i].toFixed(2);
+}
+
+function buildSliders() {
+  const p = PRESETS[preset];
+  const inDiv = document.getElementById('input-sliders');
+  const wDiv = document.getElementById('weight-sliders');
+  let inHtml = '<div class="lbl">Inputs (signals arriving)</div>';
+  let wHtml = '';
+  for (let i = 0; i < 3; i++) {
+    inHtml += `
+      <div class="slider-box">
+        <div class="srow"><span style="color:#4ade80">${p.labels[i]} (${INPUT_NAMES[i]})</span>
+        <span class="val" id="x${i}-val" style="color:#4ade80">${fmtX(i)}</span></div>
+        <input type="range" class="in-sl" id="x${i}-sl" min="${p.inMin[i]}" max="${p.inMax[i]}" step="${p.inStep[i]}" value="${x[i]}"
+          oninput="onInput(${i})">
+      </div>`;
+    wHtml += `
+      <div class="slider-box">
+        <div class="srow"><span style="color:#fbbf24">${WEIGHT_NAMES[i]} on ${p.labels[i]}</span>
+        <span class="val" id="w${i}-val" style="color:#fbbf24">${w[i].toFixed(2)}</span></div>
+        <input type="range" class="w-sl" id="w${i}-sl" min="-3" max="3" step="0.1" value="${w[i]}"
+          oninput="onWeight(${i})">
+      </div>`;
+  }
+  inDiv.innerHTML = inHtml;
+  wDiv.innerHTML = wHtml;
+  document.getElementById('bias-sl').value = bias;
+  document.getElementById('b-val').textContent = bias.toFixed(2);
+}
+
+function loadPreset(name, btn) {
+  preset = name;
+  const p = PRESETS[name];
+  for (let i = 0; i < 3; i++) { x[i] = p.inputs[i]; w[i] = p.weights[i]; }
+  bias = p.bias;
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
+  const activeBtn = btn || document.querySelector(`.pbtn[data-p="${name}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  buildSliders();
+  updateAll();
+}
+
+function onInput(i) {
+  x[i] = parseFloat(document.getElementById(`x${i}-sl`).value);
+  document.getElementById(`x${i}-val`).textContent = fmtX(i);
+  updateAll();
+}
+function onWeight(i) {
+  w[i] = parseFloat(document.getElementById(`w${i}-sl`).value);
+  document.getElementById(`w${i}-val`).textContent = w[i].toFixed(2);
+  updateAll();
+}
+function onBias() {
+  bias = parseFloat(document.getElementById('bias-sl').value);
+  document.getElementById('b-val').textContent = bias.toFixed(2);
+  updateAll();
+}
+
+function setAct(a, btn) {
+  act = a;
+  document.querySelectorAll('.abtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateAll();
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('#mode-btns .mbtn').forEach(b => {
+    b.classList.toggle('active', b.dataset.m === m);
+  });
+  document.getElementById('mini2-lbl').textContent =
+    m === 'math' ? 'Dot product as projection (x₁,x₂ slice)' :
+    m === 'contrib' ? 'Waterfall: w₁x₁ + w₂x₂ + w₃x₃ + b = z' : 'Weighted contributions wᵢxᵢ';
+  draw();
+}
+
+function toggleFire() {
+  firing = !firing;
+  const btn = document.getElementById('fire-btn');
+  btn.textContent = firing ? '⏹ STOP' : '⚡ FIRE THE NEURON';
+  btn.classList.toggle('on', firing);
+  if (fireAnim) { cancelAnimationFrame(fireAnim); fireAnim = null; }
+  if (firing) {
+    fireT = 0;
+    animateFire();
+  } else {
+    draw();
+  }
+}
+
+function animateFire() {
+  if (!firing) return;
+  fireT += 0.01;
+  if (fireT >= 1) fireT = 0;
+  draw();
+  fireAnim = requestAnimationFrame(animateFire);
+}
+
+function updatePipeline(z, y) {
+  const terms = [];
+  for (let i = 0; i < 3; i++) terms.push(`(${w[i].toFixed(2)})(${fmtX(i)})`);
+  const sum = dotSum();
+  document.getElementById('pipeline').innerHTML = `
+    <div class="pipe-step">① Multiply: ${terms.join(' + ')}</div>
+    <div class="pipe-step hot">② Sum (dot product): ${sum.toFixed(3)}</div>
+    <div class="pipe-step">③ Add bias: ${sum.toFixed(3)} + (${bias.toFixed(2)}) = <b style="color:#38bdf8">${z.toFixed(3)}</b></div>
+    <div class="pipe-step">④ ${actName()}(z) = <b style="color:#34d399">${y.toFixed(3)}</b> <span style="color:#64748b">(${outputNote()})</span></div>
+    <div class="pipe-step out">⑤ z ${z >= 0 ? '≥' : '<'} 0 → ${decide(z)}</div>`;
+}
+
+function updateAll() {
+  const z = zVal();
+  const y = activate(z);
+  document.getElementById('z-val').textContent = z.toFixed(2);
+  document.getElementById('y-val').textContent = y.toFixed(2);
+  document.getElementById('y-label').textContent = actName() + '(z) · ' + outputNote();
+  document.getElementById('dec-val').textContent = decide(z);
+  updatePipeline(z, y);
+  if (!firing) draw();
+}
+
+function drawNeuronFlow(progress) {
+  const W = cvs.width, H = cvs.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const inX = 70, sumX = 340, actX = 500, outX = 640;
+  const inYs = [90, 210, 330];
+  const sumY = 210;
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('FORWARD PASS', W / 2, 28);
+
+  function node(nx, ny, r, color, label, sub) {
+    ctx.beginPath();
+    ctx.arc(nx, ny, r, 0, Math.PI * 2);
+    ctx.fillStyle = color + '22';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, nx, ny + 5);
+    if (sub) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 10px sans-serif';
+      ctx.fillText(sub, nx, ny + r + 16);
+    }
+  }
+
+  function edge(x1, y1, x2, y2, color, alpha, label, pulse) {
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.min(10, 2 + Math.abs(label) * 0.3);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    const cx = (x1 + x2) / 2;
+    ctx.quadraticCurveTo(cx, y1, x2, y2);
+    ctx.stroke();
+    if (pulse !== undefined && pulse >= 0) {
+      // Follow the same quadratic Bézier the edge is drawn with (control point (cx, y1)).
+      const t = Math.max(0, Math.min(1, pulse));
+      const u = 1 - t;
+      const px = u * u * x1 + 2 * u * t * cx + t * t * x2;
+      const py = u * u * y1 + 2 * u * t * y1 + t * t * y2;
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = '#fde68a';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(px, py, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde68a';
+      ctx.fill();
+      ctx.restore();
+    }
+    if (label !== undefined && Math.abs(label) > 0.01) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(label.toFixed(2), cx, (y1 + y2) / 2 - 8);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const p = PRESETS[preset];
+  const z = zVal();
+  const y = activate(z);
+  const prog = progress || 0;
+
+  // Timeline: inputs 0–0.7 (staggered), sum→activation 0.7–0.85, activation→output 0.85–1.
+  for (let i = 0; i < 3; i++) {
+    const contrib = w[i] * x[i];
+    const pulse = firing ? Math.max(0, Math.min(1, (prog - i * 0.15) * 2.5)) : -1;
+    const alpha = 0.35 + Math.min(1, Math.abs(contrib) / 3) * 0.5;
+    edge(inX + 28, inYs[i], sumX - 32, sumY, COLORS.w, alpha, contrib, pulse);
+  }
+
+  const p2 = firing ? Math.max(0, Math.min(1, (prog - 0.7) / 0.15)) : -1;
+  edge(sumX + 32, sumY, actX - 36, sumY, COLORS.z, 0.7, z, p2);
+
+  ctx.fillStyle = COLORS.b;
+  ctx.font = 'bold 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`b=${bias.toFixed(2)}`, sumX, sumY - 52);
+  ctx.beginPath();
+  ctx.moveTo(sumX, sumY - 42);
+  ctx.lineTo(sumX, sumY - 30);
+  ctx.strokeStyle = COLORS.b;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const p3 = firing ? Math.max(0, Math.min(1, (prog - 0.85) / 0.15)) : -1;
+  edge(actX + 36, sumY, outX - 28, sumY, COLORS.y, 0.8, y, p3);
+
+  for (let i = 0; i < 3; i++) {
+    node(inX, inYs[i], 28, COLORS.in, fmtX(i), p.labels[i]);
+    ctx.fillStyle = COLORS.w;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`w=${w[i].toFixed(1)}`, inX, inYs[i] - 36);
+  }
+
+  node(sumX, sumY, 34, COLORS.z, 'Σ', 'weighted sum');
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(`z=${z.toFixed(2)}`, sumX, sumY + 72);
+
+  ctx.fillStyle = 'rgba(56,189,248,0.08)';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  roundRect(actX - 40, sumY - 38, 80, 76, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#7dd3fc';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(actName(), actX, sumY - 6);
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('activation', actX, sumY + 10);
+
+  node(outX, sumY, 30, COLORS.y, y.toFixed(2), 'output y');
+
+  if (mode === 'math') {
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(440, 300, 270, 86);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('w · x = Σ wᵢxᵢ', 452, 322);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px monospace';
+    ctx.fillText(`${dotSum().toFixed(2)} + b = ${z.toFixed(2)}`, 452, 342);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('Same as one row of', 452, 360);
+    ctx.fillText('matrix × vector!', 452, 374);
+  } else if (mode === 'contrib') {
+    let big = 0;
+    for (let i = 1; i < 3; i++) if (Math.abs(w[i] * x[i]) > Math.abs(w[big] * x[big])) big = i;
+    const c = w[big] * x[big];
+    const totalAbs = Math.abs(w[0] * x[0]) + Math.abs(w[1] * x[1]) + Math.abs(w[2] * x[2]) + Math.abs(bias);
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(440, 300, 270, 86);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('Biggest influence on z:', 452, 322);
+    ctx.fillStyle = c >= 0 ? '#34d399' : '#f87171';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText(`${p.labels[big]}: ${CONTRIB_NAMES[big]} = ${c.toFixed(2)}`, 452, 344);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    const share = totalAbs > 0 ? (Math.abs(c) / totalAbs) * 100 : 0;
+    ctx.fillText(`${share.toFixed(0)}% of all |push| incl. bias · ${c >= 0 ? 'pushes toward yes' : 'pulls toward no'}`, 452, 366);
+  }
+}
+
+function roundRect(rx, ry, rw, rh, r) {
+  ctx.beginPath();
+  ctx.moveTo(rx + r, ry);
+  ctx.lineTo(rx + rw - r, ry);
+  ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+  ctx.lineTo(rx + rw, ry + rh - r);
+  ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+  ctx.lineTo(rx + r, ry + rh);
+  ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+  ctx.lineTo(rx, ry + r);
+  ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+  ctx.closePath();
+}
+
+function actRange(zR) {
+  if (act === 'sigmoid' || act === 'step') return [-0.15, 1.15];
+  if (act === 'tanh') return [-1.15, 1.15];
+  if (act === 'relu') return [-0.1 * zR, zR];
+  return [-zR, zR];
+}
+
+function drawActivationCurve() {
+  const W = cAct.width, H = cAct.height;
+  ctxA.clearRect(0, 0, W, H);
+  const pad = 22;
+  const zNow = zVal();
+  const yNow = activate(zNow);
+  // The z-axis grows with |z| so "your z" is always on screen.
+  const zR = Math.max(4, Math.ceil(Math.abs(zNow) * 1.15));
+  const [yLo, yHi] = actRange(zR);
+  const clampY = v => Math.max(yLo, Math.min(yHi, v));
+  const X = z => pad + ((z + zR) / (2 * zR)) * (W - 2 * pad);
+  const Y = v => H - pad - ((clampY(v) - yLo) / (yHi - yLo)) * (H - 2 * pad);
+
+  ctxA.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctxA.lineWidth = 1;
+  ctxA.beginPath();
+  ctxA.moveTo(pad, Y(0));
+  ctxA.lineTo(W - pad, Y(0));
+  ctxA.moveTo(X(0), pad - 6);
+  ctxA.lineTo(X(0), H - pad);
+  ctxA.stroke();
+
+  ctxA.strokeStyle = '#38bdf8';
+  ctxA.lineWidth = 2.5;
+  ctxA.beginPath();
+  for (let i = 0; i <= 200; i++) {
+    const z = -zR + (2 * zR * i) / 200;
+    const px = X(z), py = Y(activate(z));
+    if (i === 0) ctxA.moveTo(px, py);
+    else ctxA.lineTo(px, py);
+  }
+  ctxA.stroke();
+
+  const px = X(zNow), py = Y(yNow);
+  ctxA.fillStyle = '#fde68a';
+  ctxA.beginPath();
+  ctxA.arc(px, py, 6, 0, Math.PI * 2);
+  ctxA.fill();
+  ctxA.fillStyle = '#94a3b8';
+  ctxA.font = '10px sans-serif';
+  ctxA.textAlign = 'center';
+  ctxA.fillText('your z', px, py < 30 ? py + 18 : py - 11);
+  ctxA.fillStyle = '#64748b';
+  ctxA.textAlign = 'left';
+  ctxA.fillText(`z = −${zR}`, pad, H - 6);
+  ctxA.textAlign = 'right';
+  ctxA.fillText(`+${zR}`, W - pad, H - 6);
+  ctxA.textAlign = 'center';
+  ctxA.fillText('0', X(0), H - 6);
+}
+
+function drawBars(W, H) {
+  const contribs = [0, 1, 2].map(i => w[i] * x[i]);
+  const maxC = Math.max(0.5, ...contribs.map(Math.abs));
+  const top = 14, bottom = H - 20;
+  const zeroY = (top + bottom) / 2;
+  const half = (bottom - top) / 2 - 4;
+  const padX = 28;
+  const barW = (W - 2 * padX) / 3 - 12;
+
+  ctxM.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctxM.lineWidth = 1;
+  ctxM.beginPath();
+  ctxM.moveTo(padX - 8, zeroY);
+  ctxM.lineTo(W - padX + 8, zeroY);
+  ctxM.stroke();
+
+  ctxM.textAlign = 'center';
+  for (let i = 0; i < 3; i++) {
+    const bx = padX + i * (barW + 12);
+    const h = (contribs[i] / maxC) * half;
+    ctxM.fillStyle = contribs[i] >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)';
+    if (h >= 0) ctxM.fillRect(bx, zeroY - h, barW, h);
+    else ctxM.fillRect(bx, zeroY, barW, -h);
+    ctxM.fillStyle = '#f8fafc';
+    ctxM.font = 'bold 11px monospace';
+    ctxM.fillText(contribs[i].toFixed(2), bx + barW / 2, h >= 0 ? zeroY - h - 4 : zeroY - h + 12);
+    ctxM.fillStyle = '#94a3b8';
+    ctxM.font = '10px monospace';
+    ctxM.fillText(CONTRIB_NAMES[i], bx + barW / 2, H - 5);
+  }
+}
+
+function drawWaterfall(W, H) {
+  const steps = [w[0] * x[0], w[1] * x[1], w[2] * x[2], bias];
+  const names = ['w₁x₁', 'w₂x₂', 'w₃x₃', 'b', 'z'];
+  const partial = [0];
+  steps.forEach(s => partial.push(partial[partial.length - 1] + s));
+  const z = partial[4];
+  const lo = Math.min(0, ...partial), hi = Math.max(0, ...partial, 0.5);
+  const top = 16, bottom = H - 20;
+  const Y = v => bottom - ((v - lo) / (hi - lo || 1)) * (bottom - top);
+  const padX = 16;
+  const colW = (W - 2 * padX) / 5;
+  const barW = colW - 14;
+
+  ctxM.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctxM.lineWidth = 1;
+  ctxM.beginPath();
+  ctxM.moveTo(padX, Y(0));
+  ctxM.lineTo(W - padX, Y(0));
+  ctxM.stroke();
+
+  ctxM.textAlign = 'center';
+  for (let i = 0; i < 5; i++) {
+    const bx = padX + i * colW + 7;
+    const from = i < 4 ? partial[i] : 0;
+    const to = i < 4 ? partial[i + 1] : z;
+    const val = i < 4 ? steps[i] : z;
+    if (i === 4) ctxM.fillStyle = 'rgba(56,189,248,0.8)';
+    else if (i === 3) ctxM.fillStyle = 'rgba(244,114,182,0.75)';
+    else ctxM.fillStyle = val >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)';
+    const y1 = Y(Math.max(from, to)), y2 = Y(Math.min(from, to));
+    ctxM.fillRect(bx, y1, barW, Math.max(1, y2 - y1));
+    if (i < 4) {
+      ctxM.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctxM.setLineDash([3, 3]);
+      ctxM.beginPath();
+      ctxM.moveTo(bx + barW, Y(to));
+      ctxM.lineTo(bx + colW, Y(to));
+      ctxM.stroke();
+      ctxM.setLineDash([]);
+    }
+    ctxM.fillStyle = '#f8fafc';
+    ctxM.font = 'bold 10px monospace';
+    ctxM.fillText((val >= 0 ? '+' : '') + val.toFixed(2), bx + barW / 2, Math.max(11, y1 - 3));
+    ctxM.fillStyle = '#94a3b8';
+    ctxM.font = '10px monospace';
+    ctxM.fillText(names[i], bx + barW / 2, H - 5);
+  }
+}
+
+function drawProjection(W, H) {
+  const xv = [x[0], x[1]], wv = [w[0], w[1]];
+  const wLen2 = wv[0] * wv[0] + wv[1] * wv[1];
+  const dot = xv[0] * wv[0] + xv[1] * wv[1];
+  const k = wLen2 > 1e-12 ? dot / wLen2 : 0;
+  const proj = [k * wv[0], k * wv[1]];
+  const ox = W / 2, oy = H / 2 + 6;
+  const maxAbsX = Math.max(Math.abs(xv[0]), Math.abs(wv[0]), Math.abs(proj[0]), 0.1);
+  const maxAbsY = Math.max(Math.abs(xv[1]), Math.abs(wv[1]), Math.abs(proj[1]), 0.1);
+  const scale = Math.min(40, (W / 2 - 34) / maxAbsX, (H / 2 - 22) / maxAbsY);
+  const S = v => [ox + v[0] * scale, oy - v[1] * scale];
+
+  ctxM.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctxM.lineWidth = 1;
+  ctxM.beginPath();
+  ctxM.moveTo(10, oy); ctxM.lineTo(W - 10, oy);
+  ctxM.moveTo(ox, 22); ctxM.lineTo(ox, H - 4);
+  ctxM.stroke();
+
+  if (wLen2 > 1e-12) {
+    const L = 400 / Math.sqrt(wLen2);
+    ctxM.strokeStyle = 'rgba(251,191,36,0.18)';
+    ctxM.beginPath();
+    ctxM.moveTo(ox - wv[0] * L, oy + wv[1] * L);
+    ctxM.lineTo(ox + wv[0] * L, oy - wv[1] * L);
+    ctxM.stroke();
+  }
+
+  const [xpx, xpy] = S(xv), [ppx, ppy] = S(proj);
+  ctxM.strokeStyle = 'rgba(253,230,138,0.6)';
+  ctxM.setLineDash([3, 3]);
+  ctxM.beginPath();
+  ctxM.moveTo(xpx, xpy); ctxM.lineTo(ppx, ppy);
+  ctxM.stroke();
+  ctxM.setLineDash([]);
+
+  function arrow(v, col, lbl, width) {
+    const [x2, y2] = S(v);
+    const ang = Math.atan2(y2 - oy, x2 - ox);
+    ctxM.strokeStyle = col;
+    ctxM.fillStyle = col;
+    ctxM.lineWidth = width;
+    ctxM.beginPath();
+    ctxM.moveTo(ox, oy);
+    ctxM.lineTo(x2, y2);
+    ctxM.stroke();
+    if (Math.hypot(x2 - ox, y2 - oy) > 6) {
+      ctxM.beginPath();
+      ctxM.moveTo(x2, y2);
+      ctxM.lineTo(x2 - 7 * Math.cos(ang - 0.4), y2 - 7 * Math.sin(ang - 0.4));
+      ctxM.lineTo(x2 - 7 * Math.cos(ang + 0.4), y2 - 7 * Math.sin(ang + 0.4));
+      ctxM.closePath();
+      ctxM.fill();
+    }
+    ctxM.font = 'bold 10px monospace';
+    ctxM.textAlign = 'left';
+    ctxM.fillText(lbl, x2 + 5, y2 - 3);
+  }
+  arrow(wv, COLORS.w, 'w', 2.5);
+  arrow(xv, COLORS.in, 'x', 2.5);
+  arrow(proj, '#fde68a', 'proj', 3.5);
+
+  ctxM.textAlign = 'left';
+  ctxM.fillStyle = '#94a3b8';
+  ctxM.font = '10px sans-serif';
+  ctxM.fillText(`x₁,x₂ slice: w·x = ${dot.toFixed(2)} (x₃ and b not shown)`, 8, 13);
+}
+
+function drawMini() {
+  const W = cMini.width, H = cMini.height;
+  ctxM.clearRect(0, 0, W, H);
+  if (mode === 'math') drawProjection(W, H);
+  else if (mode === 'contrib') drawWaterfall(W, H);
+  else drawBars(W, H);
+  ctxM.textAlign = 'left';
+}
+
+function draw() {
+  const prog = firing ? fireT : 1;
+  drawNeuronFlow(prog);
+  drawActivationCurve();
+  drawMini();
+  const z = zVal();
+  const y = activate(z);
+  const status = document.getElementById('status');
+  if (firing) {
+    status.className = 'status-banner fire';
+    status.textContent = 'Signal traveling: inputs → multiply → sum → +bias → activation → output';
+  } else {
+    status.className = 'status-banner';
+    status.textContent = `z = ${z.toFixed(2)} → y = ${y.toFixed(2)} · ${decide(z)}`;
+  }
+}
+
+loadPreset('study', document.querySelector('.pbtn.active'));
+</script>
+</body>
+</html>

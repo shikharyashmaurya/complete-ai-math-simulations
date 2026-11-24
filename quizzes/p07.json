@@ -1,0 +1,49 @@
+{
+  "page": 7,
+  "questions": [
+    {
+      "q": "Using the default vectors $\\mathbf{a} = (2, 1)$ and $\\mathbf{b} = (1, 2)$, what is $\\mathbf{a} \\cdot \\mathbf{b}$?",
+      "options": [
+        "$(2, 2)$",
+        "3",
+        "4",
+        "5"
+      ],
+      "answer": 2,
+      "explain": "$a_1 b_1 + a_2 b_2 = 2 \\cdot 1 + 1 \\cdot 2 = 4$. The dot product is a single number, not a vector."
+    },
+    {
+      "q": "Compute $(3, -2) \\cdot (4, 5)$.",
+      "options": [
+        "−2",
+        "22",
+        "2",
+        "$(12, -10)$"
+      ],
+      "answer": 2,
+      "explain": "$3 \\cdot 4 + (-2) \\cdot 5 = 12 - 10 = 2$. The component-wise products $(12, -10)$ must still be added."
+    },
+    {
+      "q": "For the defaults $\\mathbf{a} = (2, 1)$, $\\mathbf{b} = (1, 2)$, both lengths are $\\sqrt{5}$. What is $\\cos\\theta$?",
+      "options": [
+        "4",
+        "0.5",
+        "0.4",
+        "0.8"
+      ],
+      "answer": 3,
+      "explain": "$\\cos\\theta = \\dfrac{\\mathbf{a}\\cdot\\mathbf{b}}{\\|\\mathbf{a}\\|\\,\\|\\mathbf{b}\\|} = \\dfrac{4}{5} = 0.8$, so $\\theta \\approx 36.9°$."
+    },
+    {
+      "q": "$(1, 1) \\cdot (1, -1) = 0$. What does that tell you about the two (non-zero) vectors?",
+      "options": [
+        "One of them must be the zero vector",
+        "They point in opposite directions",
+        "They are perpendicular (90° apart)",
+        "They point in the same direction"
+      ],
+      "answer": 2,
+      "explain": "For non-zero vectors a zero dot product means the agreements and disagreements cancel exactly: the vectors are perpendicular."
+    }
+  ]
+}

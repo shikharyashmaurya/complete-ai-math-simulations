@@ -1,0 +1,49 @@
+{
+  "page": 17,
+  "questions": [
+    {
+      "q": "Compute $\\det\\begin{pmatrix} 3 & 1 \\\\ 2 & 2 \\end{pmatrix}$.",
+      "options": [
+        "6",
+        "8",
+        "4",
+        "−4"
+      ],
+      "answer": 2,
+      "explain": "$ad - bc = 3 \\cdot 2 - 1 \\cdot 2 = 4$. Adding the products ($6 + 2 = 8$) is the classic slip."
+    },
+    {
+      "q": "The preset **Mirror world (flip)** is $\\begin{pmatrix} 1 & 0.2 \\\\ 0.6 & -0.4 \\end{pmatrix}$ with $\\det = -0.52$. What happens to the unit square?",
+      "options": [
+        "It becomes a parallelogram of area 0.52 with flipped orientation",
+        "It collapses to a line",
+        "It gets a negative area of −0.52",
+        "Its area grows to 1.52"
+      ],
+      "answer": 0,
+      "explain": "Area is $|\\det| = 0.52$; the negative sign means orientation is reversed (like a mirror), not that area is negative."
+    },
+    {
+      "q": "If you multiply a 2×2 matrix by 3 (both columns tripled), how does the determinant change?",
+      "options": [
+        "It is multiplied by 6",
+        "It is multiplied by 3",
+        "It is multiplied by 9",
+        "It stays the same"
+      ],
+      "answer": 2,
+      "explain": "In 2D, $\\det(kM) = k^2 \\det(M)$: each side of the parallelogram triples, so area scales by $3 \\times 3 = 9$."
+    },
+    {
+      "q": "The **Near-singular** preset has $\\det = 0.0075$. What does that mean?",
+      "options": [
+        "Orientation is flipped",
+        "The plane is almost flattened but still not collapsed — the matrix is still invertible",
+        "The plane collapsed to a line exactly",
+        "Area is multiplied by 75"
+      ],
+      "answer": 1,
+      "explain": "A tiny but non-zero determinant means the parallelogram is very thin. Only $\\det = 0$ means a full collapse."
+    }
+  ]
+}

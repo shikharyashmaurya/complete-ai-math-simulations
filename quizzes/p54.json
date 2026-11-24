@@ -1,0 +1,49 @@
+{
+  "page": 54,
+  "questions": [
+    {
+      "q": "What is a **local minimum**?",
+      "options": [
+        "The absolute lowest point of the landscape",
+        "A point that is a minimum in some directions and a maximum in others",
+        "A point lower than all its immediate neighbors, but not the lowest point of the whole landscape",
+        "Any point where the loss is negative"
+      ],
+      "answer": 2,
+      "explain": "Local = lowest in its neighborhood only. The absolute lowest point is the global minimum, and 'minimum in some directions, maximum in others' describes a saddle point."
+    },
+    {
+      "q": "Why does plain gradient descent stop at a local minimum (or a saddle point) even when a deeper valley is one hill away?",
+      "options": [
+        "It remembers that it already visited the deeper valley",
+        "It only looks at the immediate slope, and the gradient there is zero",
+        "The learning rate automatically drops to zero near a minimum",
+        "It always stops after a fixed number of steps"
+      ],
+      "answer": 1,
+      "explain": "Optimization is greedy: the update is $-\\eta\\nabla f$, and where the ground is flat ($\\nabla f = 0$) the step is zero, wherever that is."
+    },
+    {
+      "q": "Ordinary least-squares linear regression has a **convex** objective. What does that guarantee?",
+      "options": [
+        "Every local minimum is a global minimum",
+        "The optimal weights are always unique",
+        "Gradient descent converges with any learning rate",
+        "There are no flat regions at all"
+      ],
+      "answer": 0,
+      "explain": "Convexity rules out bad local minima: any local minimum is global. The page notes the solution need not be unique, and a too-large step size can still make gradient descent diverge."
+    },
+    {
+      "q": "Which escape strategy does the page say is *most* reliable for the narrow deep well on 'The Secret' landscape?",
+      "options": [
+        "A very large learning rate ($\\eta \\ge 0.2$)",
+        "Running more steps from the same starting point",
+        "Making the landscape convex by squaring the loss",
+        "Better initialization — start close to the right valley"
+      ],
+      "answer": 3,
+      "explain": "Only starts near the narrow well find it. Larger learning rates more often bounce or diverge, and more steps do not help once the ball is stuck where the gradient is zero."
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; font-family: system-ui, sans-serif; background: #0f172a; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px;}
+        .container { display: flex; flex-direction: row; gap: 40px; width: 100%; max-width: 1100px; padding: 30px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        .controls { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+        .viz { flex: 1.2; min-width: 0; display: flex; justify-content: center; align-items: center; position: relative;}
+        canvas { background: #1e293b; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); max-width: 100%; height: auto; }
+        
+        .title { font-size: 28px; font-weight: 900; color: #f8fafc; margin-bottom: 12px; }
+        .desc { font-size: 15px; color: #94a3b8; line-height: 1.6; }
+        
+        .slider-group { background: rgba(0,0,0,0.2); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .slider-label { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+        
+        input[type="range"] { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; outline: none; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: #4ECDC4; cursor: pointer; box-shadow: 0 0 15px #4ECDC4; transition: background 0.2s, box-shadow 0.2s; }
+        input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; border: none; border-radius: 50%; background: #4ECDC4; cursor: pointer; box-shadow: 0 0 15px #4ECDC4; }
+        
+        .val-display { font-variant-numeric: tabular-nums; color: #4ECDC4; font-size: 24px; }
+        .measured { display: flex; justify-content: space-between; margin-top: 14px; font-size: 14px; color: #cbd5e1; }
+        .measured b { font-variant-numeric: tabular-nums; color: #FFD166; font-size: 18px; }
+        .resample { margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #e2e8f0; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .resample:hover { background: rgba(255,255,255,0.12); }
+        
+        .status-box { padding: 15px; border-radius: 10px; font-weight: 700; text-align: center; font-size: 16px; transition: all 0.3s; margin-top: 15px;}
+        .status-pos { background: rgba(78, 205, 196, 0.15); color: #4ECDC4; border: 1px solid rgba(78, 205, 196, 0.3); }
+        .status-neg { background: rgba(255, 107, 107, 0.15); color: #FF6B6B; border: 1px solid rgba(255, 107, 107, 0.3); }
+        .status-zero { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+        
+        .math-eq { font-family: monospace; font-size: 16px; color: #cbd5e1; text-align: center; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+        
+        /* Narrow screens (sidebar open / small laptops): tighten the text column so nothing is clipped */
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .container { padding: 20px; gap: 20px; }
+            .controls { gap: 12px; }
+            .title { font-size: 22px; margin-bottom: 6px; }
+            .desc { font-size: 13px; line-height: 1.45; }
+            .slider-group { padding: 16px; }
+            .slider-label { font-size: 16px; margin-bottom: 12px; }
+            .measured { font-size: 12px; }
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="controls">
+                <div>
+                    <div class="title">The Correlation Morph 🧪</div>
+                    <div class="desc">Move the slider to change the target population correlation between X and Y. The finite sample's measured correlation may differ slightly. At +1.0 or -1.0, the points lie on a straight line.</div>
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Target Pearson r</span>
+                        <span id="r-val" class="val-display">0.00</span>
+                    </div>
+                    <input type="range" id="r-slider" min="-1" max="1" step="0.01" value="0">
+                    <div class="measured"><span>Measured sample r</span><b id="r-measured">0.00</b></div>
+                    <div id="status" class="status-box status-zero">≈ No linear correlation: a random cloud.</div>
+                    <button class="resample" id="resample">🎲 New random sample</button>
+                </div>
+                
+                <div class="math-eq" id="eq">y = 0.00x + 1.00 × noise</div>
+            </div>
+            
+            <div class="viz">
+                <canvas id="cvs" width="450" height="450"></canvas>
+            </div>
+        </div>
+        
+        <script>
+            const cvs = document.getElementById('cvs');
+            const ctx = cvs.getContext('2d');
+            const slider = document.getElementById('r-slider');
+            const valDisplay = document.getElementById('r-val');
+            const statusBox = document.getElementById('status');
+            const eqBox = document.getElementById('eq');
+            const measuredEl = document.getElementById('r-measured');
+            const resampleBtn = document.getElementById('resample');
+            
+            // Small seeded PRNG so the cloud is reproducible until you ask for a new sample
+            function mulberry32(a) {
+                return function() {
+                    a |= 0; a = a + 0x6D2B79F5 | 0;
+                    let t = Math.imul(a ^ a >>> 15, 1 | a);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+            
+            // Generate synthetic normal data using Box-Muller transform
+            function randn_bm(rand) {
+                let u = 0, v = 0;
+                while(u === 0) u = rand();
+                while(v === 0) v = rand();
+                return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+            }
+            
+            const numPoints = 400;
+            let seed = 41;
+            let points = [];
+            function generate() {
+                const rand = mulberry32(seed);
+                points = [];
+                for(let i=0; i<numPoints; i++) {
+                    points.push({ bx: randn_bm(rand), by: randn_bm(rand) });
+                }
+            }
+            
+            function sampleR(xs, ys) {
+                const n = xs.length;
+                let mx = 0, my = 0;
+                for (let i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+                mx /= n; my /= n;
+                let sxy = 0, sxx = 0, syy = 0;
+                for (let i = 0; i < n; i++) {
+                    const dx = xs[i] - mx, dy = ys[i] - my;
+                    sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+                }
+                // r is undefined when either variable has zero spread
+                if (sxx < 1e-12 || syy < 1e-12) return NaN;
+                return sxy / Math.sqrt(sxx * syy);
+            }
+            
+            function signed(v) {
+                return (v > 0 ? '+' : '') + v.toFixed(2);
+            }
+            
+            function lerpColor(c1, c2, t) {
+                const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+                const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+                const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+                return `rgb(${r},${g},${b})`;
+            }
+            
+            const C_POS = [78, 205, 196]; // #4ECDC4
+            const C_NEG = [255, 107, 107]; // #FF6B6B
+            const C_ZERO = [148, 163, 184]; // #94a3b8
+            
+            function draw() {
+                const r = parseFloat(slider.value);
+                valDisplay.innerText = signed(r);
+                
+                // Update UI based on r (same rule-of-thumb bands as the scale below the lab)
+                const a = Math.abs(r);
+                const dir = r > 0 ? 'Positive' : 'Negative';
+                let thumbColor = '#94a3b8';
+                let cls = 'status-zero';
+                let text = '≈ No linear correlation: a random cloud.';
+                if (a >= 0.999) {
+                    text = `Perfect ${dir}: every point on one line.`;
+                } else if (a >= 0.7) {
+                    text = r > 0 ? 'Strong Positive: they move together.' : 'Strong Negative: they move opposite.';
+                } else if (a >= 0.3) {
+                    text = `Moderate ${dir}: a visible ${r > 0 ? 'upward' : 'downward'} trend.`;
+                } else if (a >= 0.1) {
+                    text = `Weak ${dir}: a loose ${r > 0 ? 'upward' : 'downward'} tilt.`;
+                }
+                if (a >= 0.1) {
+                    cls = r > 0 ? 'status-pos' : 'status-neg';
+                    thumbColor = r > 0 ? '#4ECDC4' : '#FF6B6B';
+                }
+                statusBox.className = 'status-box ' + cls;
+                statusBox.innerText = text;
+                
+                valDisplay.style.color = thumbColor;
+                document.documentElement.style.setProperty('--thumb-col', thumbColor);
+                
+                // Math EQ
+                const weightX = r;
+                const weightNoise = Math.sqrt(Math.max(0, 1 - r*r));
+                eqBox.innerHTML = `y = <span style="color:${thumbColor}; font-weight:bold;">${weightX.toFixed(2)}x</span> + ${weightNoise.toFixed(2)} × noise`;
+                
+                // Clear Canvas
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+                
+                // Draw axes
+                const cx = cvs.width / 2;
+                const cy = cvs.height / 2;
+                const scale = 50; // pixels per unit
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, cy); ctx.lineTo(cvs.width, cy); // X axis
+                ctx.moveTo(cx, 0); ctx.lineTo(cx, cvs.height); // Y axis
+                ctx.stroke();
+                
+                // Grid lines
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.beginPath();
+                for(let i=-4; i<=4; i++) {
+                    ctx.moveTo(0, cy + i*scale); ctx.lineTo(cvs.width, cy + i*scale);
+                    ctx.moveTo(cx + i*scale, 0); ctx.lineTo(cx + i*scale, cvs.height);
+                }
+                ctx.stroke();
+                
+                // Draw points
+                const xs = [], ys = [];
+                for(let i=0; i<numPoints; i++) {
+                    const bx = points[i].bx;
+                    const by = points[i].by;
+                    
+                    const x = bx;
+                    const y = weightX * bx + weightNoise * by;
+                    
+                    const px = cx + x * scale;
+                    const py = cy - y * scale;
+                    xs.push(x); ys.push(y);
+                    
+                    // Determine color based on quadrant contribution to correlation
+                    let prod = x * y;
+                    let intensity = Math.min(1, Math.abs(prod) / 3);
+                    let color = C_ZERO;
+                    if(prod > 0) color = lerpColor(C_ZERO, C_POS, intensity);
+                    if(prod < 0) color = lerpColor(C_ZERO, C_NEG, intensity);
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 4.5, 0, 2*Math.PI);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                    ctx.stroke();
+                }
+                
+                const rHat = sampleR(xs, ys);
+                measuredEl.innerText = Number.isNaN(rHat) ? 'undefined' : signed(rHat);
+                
+                // Draw trendline (population line y = r·x, since both variables have SD 1)
+                ctx.beginPath();
+                ctx.moveTo(cx - 4*scale, cy - (-4*r)*scale);
+                ctx.lineTo(cx + 4*scale, cy - (4*r)*scale);
+                ctx.strokeStyle = '#FFD166';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 6]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            slider.addEventListener('input', draw);
+            resampleBtn.addEventListener('click', () => { seed += 1; generate(); draw(); });
+            
+            const style = document.createElement('style');
+            style.innerHTML = `input[type="range"]::-webkit-slider-thumb { background: var(--thumb-col, #4ECDC4) !important; box-shadow: 0 0 15px var(--thumb-col, #4ECDC4) !important; }
+            input[type="range"]::-moz-range-thumb { background: var(--thumb-col, #4ECDC4) !important; box-shadow: 0 0 15px var(--thumb-col, #4ECDC4) !important; }`;
+            document.head.appendChild(style);
+            
+            generate();
+            draw();
+        </script>
+    </body>
+    </html>
+    

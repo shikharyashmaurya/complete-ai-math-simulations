@@ -1,0 +1,49 @@
+{
+  "page": 30,
+  "questions": [
+    {
+      "q": "For the population $\\{2, 4, 4, 4, 5, 5, 7, 9\\}$ (mean $\\mu = 5$), what are the variance $\\sigma^2$ and standard deviation $\\sigma$ (dividing by $N$)?",
+      "options": [
+        "$\\sigma^2 = 2$, $\\sigma = 4$",
+        "$\\sigma^2 = 4$, $\\sigma = 2$",
+        "$\\sigma^2 = 32$, $\\sigma = \\sqrt{32}$",
+        "$\\sigma^2 = 0$, $\\sigma = 0$"
+      ],
+      "answer": 1,
+      "explain": "Squared deviations: $9+1+1+1+0+0+4+16 = 32$; $\\sigma^2 = 32/8 = 4$, $\\sigma = \\sqrt{4} = 2$. Without squaring, deviations would sum to $0$; $32$ forgets to divide by $N$."
+    },
+    {
+      "q": "Heights are measured in cm. What are the units of the variance and of the standard deviation?",
+      "options": [
+        "Both in cm",
+        "Variance in cm, standard deviation in cm²",
+        "Both are unitless",
+        "Variance in cm², standard deviation in cm"
+      ],
+      "answer": 3,
+      "explain": "Variance averages *squared* differences, so its units are squared. Taking the square root gives $\\sigma$, back on the original scale — a usable \"ruler\" for spread."
+    },
+    {
+      "q": "Why does the sample variance $s^2$ divide by $n-1$ instead of $n$?",
+      "options": [
+        "To make the number bigger for safety",
+        "Because one data point is always an outlier",
+        "Measuring spread around $\\bar{x}$ instead of the unknown $\\mu$ biases the result downward; $n-1$ corrects that bias",
+        "Because $n-1$ makes $s$ equal to the range"
+      ],
+      "answer": 2,
+      "explain": "$\\bar{x}$ is fitted to the sample, so deviations around it are slightly too small on average. Dividing by $n-1$ makes $s^2$ an unbiased estimate of $\\sigma^2$."
+    },
+    {
+      "q": "For a normal distribution, roughly what fraction of values lies within $\\mu \\pm 1\\sigma$?",
+      "options": [
+        "About 68.3%",
+        "About 50%",
+        "About 95.4%",
+        "About 99.7%"
+      ],
+      "answer": 0,
+      "explain": "$\\approx 68.3\\%$ lies within one standard deviation; 95.4% within $\\pm 2\\sigma$ and 99.7% within $\\pm 3\\sigma$."
+    }
+  ]
+}

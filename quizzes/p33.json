@@ -1,0 +1,49 @@
+{
+  "page": 33,
+  "questions": [
+    {
+      "q": "For a continuous uniform $X \\sim U(0, 10)$, what is the height of the PDF $f(x)$ on $[0, 10]$?",
+      "options": [
+        "$1$",
+        "$10$",
+        "$0.1$",
+        "$0.5$"
+      ],
+      "answer": 2,
+      "explain": "The total area must be 1: width $(b-a) = 10$ times height $\\frac{1}{b-a} = 0.1$ gives $1$. A height of $1$ would make the total area 10."
+    },
+    {
+      "q": "For $X \\sim U(0, 10)$, what is $P(2 \\le X \\le 5)$?",
+      "options": [
+        "$0$",
+        "$0.5$",
+        "$3$",
+        "$0.3$"
+      ],
+      "answer": 3,
+      "explain": "Probability is area under the rectangle: width $5 - 2 = 3$ times height $0.1$ gives $0.3$. It is not $0$ — only a single exact point has probability $0$."
+    },
+    {
+      "q": "A fair 6-sided die is a discrete uniform $U\\{1, 6\\}$. What are $E[X]$ and $\\text{Var}(X)$?",
+      "options": [
+        "$E[X] = 3$, $\\text{Var}(X) = 3$",
+        "$E[X] = 3.5$, $\\text{Var}(X) = \\frac{35}{12} \\approx 2.92$",
+        "$E[X] = 3.5$, $\\text{Var}(X) = \\frac{25}{12} \\approx 2.08$",
+        "$E[X] = \\frac{1}{6}$, $\\text{Var}(X) = \\frac{1}{36}$"
+      ],
+      "answer": 1,
+      "explain": "$E[X] = \\frac{n+1}{2} = 3.5$ and $\\text{Var}(X) = \\frac{n^2-1}{12} = \\frac{35}{12}$. $\\frac{25}{12}$ applies the continuous formula $\\frac{(b-a)^2}{12}$ with $b-a = 5$, which is wrong for a die."
+    },
+    {
+      "q": "When doing random search over learning rates, how does the page say they are usually sampled?",
+      "options": [
+        "Uniformly on a log scale, e.g. the exponent uniform between $-5$ and $-1$",
+        "Uniformly between $0$ and $1$",
+        "From a grid of evenly spaced values",
+        "Always fixed at $0.01$"
+      ],
+      "answer": 0,
+      "explain": "Learning rates span orders of magnitude, so sampling the exponent uniformly gives each decade equal coverage. Sampling uniformly on $[0, 1]$ would almost never try small values like $10^{-4}$."
+    }
+  ]
+}

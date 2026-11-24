@@ -1,0 +1,29 @@
+{
+  "page": 82,
+  "questions": [
+    {
+      "q": "For the polar map $f(r,\\theta) = (r\\cos\\theta,\\ r\\sin\\theta)$, $\\det J = r$. Near $r = 2$, a tiny square of area $A$ in the $(r,\\theta)$ plane maps to a patch of area about…",
+      "options": ["$2A$", "$4A$", "$A$", "$A/2$"],
+      "answer": 0,
+      "explain": "$|\\det J|$ is the local area scaling factor, so the image has area $\\approx |\\det J|\\,A = 2A$. $4A$ would square the factor — that is the trap of thinking of lengths instead of areas (the determinant already accounts for both directions)."
+    },
+    {
+      "q": "At $(0,0)$, $f(x,y) = x^4 + y^4$ has $\\nabla f = 0$ and Hessian $H = 0$. What does the second-derivative (eigenvalue) test conclude?",
+      "options": ["A local minimum, because $f \\ge 0$", "Inconclusive, because an eigenvalue is $0$", "A saddle point", "A local maximum"],
+      "answer": 1,
+      "explain": "The test needs all eigenvalues strictly positive (min), strictly negative (max) or of mixed sign (saddle). With $\\lambda = 0$ it cannot decide; higher-order terms do. The point *is* a minimum, but the Hessian alone cannot tell you that."
+    },
+    {
+      "q": "You run Newton's method $p \\leftarrow p - H^{-1}\\nabla f$ on $f(x,y) = x^2 - y^2$ from $(1.5,\\ 0.8)$. What happens after one step?",
+      "options": ["It moves downhill along $-y$ and keeps decreasing $f$", "It cannot be computed because $H$ is singular", "It overshoots and diverges", "It lands exactly on the saddle point $(0,0)$"],
+      "answer": 3,
+      "explain": "Newton jumps to the critical point of the quadratic model, and $f$ is its own quadratic model, so the step is $-H^{-1}\\nabla f = -(x, y)$. $H = \\mathrm{diag}(2,-2)$ is invertible. Newton looks for $\\nabla f = 0$, not for low $f$, which is why saddles attract it."
+    },
+    {
+      "q": "The softmax Jacobian is $J = \\mathrm{diag}(p) - pp^\\top$. Why is it always singular ($J\\mathbf{1} = 0$)?",
+      "options": ["Because some probability $p_i$ is always $0$", "Because adding the same constant to every logit leaves $p$ unchanged", "Because $J$ is symmetric", "Because the exponential function has no inverse"],
+      "answer": 1,
+      "explain": "Shifting every logit by $c$ cancels in the ratio $e^{z_i}/\\sum_j e^{z_j}$, so moving along $\\mathbf{1}$ changes nothing: $J\\mathbf{1} = p - p(p^\\top\\mathbf{1}) = p - p = 0$. Symmetric matrices can be invertible, so symmetry is not the reason."
+    }
+  ]
+}

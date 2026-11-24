@@ -1,0 +1,49 @@
+{
+  "page": 72,
+  "questions": [
+    {
+      "q": "You try 13 polynomial degrees, pick the one with the lowest **validation** MSE, and get 0.093. What should you report as the expected error on new data?",
+      "options": [
+        "0.093 — the validation set was never used for training",
+        "The training MSE of the chosen model",
+        "The MSE of the chosen model on the untouched test set, measured once",
+        "The average validation MSE over all 13 degrees"
+      ],
+      "answer": 2,
+      "explain": "Choosing the minimum of many noisy validation scores favours models that were lucky on that particular set (winner's curse), so the selected validation score is optimistic. Only data that played no part in any choice gives an honest estimate."
+    },
+    {
+      "q": "With 5-fold cross-validation the fold MSEs of a model are 0.10, 0.12, 0.08, 0.11, 0.09. Which summary does the page compute?",
+      "options": [
+        "$0.10 \\pm 0.016$ (mean ± sample sd)",
+        "$0.08$ (the best fold)",
+        "$0.50$ (the sum)",
+        "$0.12$ (the worst fold)"
+      ],
+      "answer": 0,
+      "explain": "Mean $= 0.50/5 = 0.10$; squared deviations sum to $0.0010$, so sd $= \\sqrt{0.0010/4} \\approx 0.016$. Each point is held out exactly once, and the sd shows how much the score depends on which points were held out."
+    },
+    {
+      "q": "On 60 samples with **random** labels you select the 10 features most correlated with the labels using all data, then run 5-fold CV and get ~85 % accuracy. What happened?",
+      "options": [
+        "The features really are predictive",
+        "Leakage: the validation folds helped choose the features, so CV is inflated — the true accuracy is 50 %",
+        "5-fold CV always overestimates by about 35 points",
+        "Standardizing the features created signal"
+      ],
+      "answer": 1,
+      "explain": "Every step that learns from data (scaler, feature selector, imputer…) must be fit on the training fold only. Fitting the selector inside each fold brings the score back to about 50 %."
+    },
+    {
+      "q": "A dataset has 5 % positives and you randomly split off a small validation set. What does **stratification** guarantee?",
+      "options": [
+        "Each split has exactly 50 % positives",
+        "The model's recall improves",
+        "Each split keeps (up to rounding) the overall 5 % positive rate, so the validation set cannot end up with zero positives by bad luck",
+        "Duplicate rows are removed"
+      ],
+      "answer": 2,
+      "explain": "Stratifying applies the split fractions within each class separately. A plain random split can leave a small validation set with no positives, making metrics like recall undefined or very noisy."
+    }
+  ]
+}

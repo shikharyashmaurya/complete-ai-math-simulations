@@ -1,0 +1,49 @@
+{
+  "page": 86,
+  "questions": [
+    {
+      "q": "Prior $\\text{Beta}(2, 2)$ on a coin's heads probability $p$. You observe 7 heads and 3 tails. What is the posterior and its mean?",
+      "options": [
+        "$\\text{Beta}(7, 3)$, mean $0.7$",
+        "$\\text{Beta}(9, 5)$, mean $9/14 \\approx 0.643$",
+        "$\\text{Beta}(9, 5)$, mean $0.7$",
+        "Still $\\text{Beta}(2, 2)$, mean $0.5$"
+      ],
+      "answer": 1,
+      "explain": "Conjugacy just adds counts: $\\text{Beta}(\\alpha+h, \\beta+t) = \\text{Beta}(9, 5)$ with mean $9/14 \\approx 0.643$. That lies between the prior mean $0.5$ and the MLE $h/n = 0.7$ — the prior acts like 4 extra pseudo-flips."
+    },
+    {
+      "q": "What does $\\text{Beta}(0.5, 0.5)$ look like?",
+      "options": [
+        "Flat on $[0, 1]$",
+        "A bell peaked at $p = 0.5$",
+        "U-shaped: density shoots up near both $p = 0$ and $p = 1$",
+        "Decreasing, with all its mass near $p = 0$"
+      ],
+      "answer": 2,
+      "explain": "With $\\alpha, \\beta < 1$ the factors $p^{\\alpha-1}$ and $(1-p)^{\\beta-1}$ blow up at both edges, so the density is U-shaped. Its mean is still $0.5$, but $0.5$ is the *least* likely region. Flat is $\\text{Beta}(1, 1)$."
+    },
+    {
+      "q": "An ad got 0 clicks in 8 views. Using Laplace smoothing (posterior mean under a $\\text{Beta}(1, 1)$ prior), what is the estimated click-through rate?",
+      "options": [
+        "$0$",
+        "$1/10 = 0.1$",
+        "$1/8 = 0.125$",
+        "$0.5$"
+      ],
+      "answer": 1,
+      "explain": "Posterior $\\text{Beta}(1+0, 1+8)$ has mean $(h+1)/(n+2) = 1/10$. The MLE would be $0/8 = 0$, which wrongly claims the ad can never be clicked."
+    },
+    {
+      "q": "In Thompson sampling, why does an arm that has been pulled only a few times still get played sometimes?",
+      "options": [
+        "A fixed fraction of rounds is reserved for random exploration",
+        "Its wide posterior occasionally produces the largest sampled $\\theta$, so it is chosen in proportion to the chance it is the best arm",
+        "The algorithm always plays the arm with the fewest pulls",
+        "It only happens until the first win, then the arm is dropped"
+      ],
+      "answer": 1,
+      "explain": "Each round draws one $\\theta_i$ from every arm's Beta posterior and plays the argmax. Uncertain arms have spread-out posteriors, so they sometimes win the draw; as evidence accumulates their posteriors concentrate and bad arms are played less. There is no fixed $\\varepsilon$ (that is $\\varepsilon$-greedy)."
+    }
+  ]
+}

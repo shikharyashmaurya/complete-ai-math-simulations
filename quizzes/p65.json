@@ -1,0 +1,49 @@
+{
+  "page": 65,
+  "questions": [
+    {
+      "q": "The sigmoid derivative $f'(z) = f(z)\\,(1 - f(z))$ is at most $0.25$. In the Backprop Race, what is the **best case** fraction of the error that survives 3 sigmoid layers?",
+      "options": [
+        "$0.25 \\times 3 = 75\\%$",
+        "$25\\%$",
+        "$100\\%$ when all inputs are $z = 0$",
+        "$0.25^3 \\approx 1.6\\%$"
+      ],
+      "answer": 3,
+      "explain": "The chain rule multiplies one derivative per layer: $0.25 \\times 0.25 \\times 0.25 = 0.015625$. Even at the ideal $z = 0$ sigmoid loses ~98% of the gradient; adding the factors (75%) is the common mistake."
+    },
+    {
+      "q": "What is the tanh derivative $f'(z) = 1 - \\tanh^2(z)$ at $z = 1$?",
+      "options": [
+        "$1$",
+        "$\\approx 0.76$",
+        "$\\approx 0.42$",
+        "$\\approx 0.07$"
+      ],
+      "answer": 2,
+      "explain": "$\\tanh(1) \\approx 0.762$, so $1 - 0.762^2 \\approx 0.42$. $1$ is the peak at $z = 0$, $0.76$ is $\\tanh(1)$ itself, and $0.07$ is the derivative at $z = 2$: it drops quickly as $|z|$ grows."
+    },
+    {
+      "q": "At the preset 'Deep Negative' ($z = -3$), what do ReLU and Leaky ReLU ($\\alpha = 0.1$) output, and what are their derivatives?",
+      "options": [
+        "ReLU: $-3$ with $f' = 1$; Leaky ReLU: $-0.3$ with $f' = 1$",
+        "ReLU: $0$ with $f' = 0$; Leaky ReLU: $-0.3$ with $f' = 0.1$",
+        "ReLU: $0$ with $f' = 0$; Leaky ReLU: $0$ with $f' = 0$",
+        "ReLU: $0$ with $f' = 0.1$; Leaky ReLU: $-3$ with $f' = 0.1$"
+      ],
+      "answer": 1,
+      "explain": "ReLU $= \\max(0, z)$ blocks negative inputs completely. Leaky ReLU $= \\max(0.1z, z) = -0.3$ and keeps a small slope $0.1$, so a gradient still leaks through and the unit can recover."
+    },
+    {
+      "q": "When is a ReLU unit called a **dead ReLU**?",
+      "options": [
+        "When it is inactive (input ≤ 0) for every input in the data, so it never receives a gradient again",
+        "Whenever its input is negative for a single example",
+        "When its output is larger than 1",
+        "When its derivative equals exactly 1"
+      ],
+      "answer": 0,
+      "explain": "A negative input only blocks the gradient *for that input*. The unit is 'dead' when it sits in the flat zero region for **all** inputs, so its weights stop updating permanently."
+    }
+  ]
+}

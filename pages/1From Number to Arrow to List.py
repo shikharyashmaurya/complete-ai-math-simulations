@@ -16,8 +16,8 @@ def create_smiley_image():
     img[18:20, 8:20] = 0.7
     img[16:18, 6:8] = 0.6
     img[16:18, 20:22] = 0.6
-    # Add a little "sensor noise" to make it look like real data
-    noise = np.random.uniform(0, 0.1, (28, 28))
+    # Add a little "sensor noise" to make it look like real data (seeded so it stays the same on every rerun)
+    noise = np.random.default_rng(28).uniform(0, 0.1, (28, 28))
     return np.clip(img + noise, 0, 1)
 
 # --- Main App Header ---
@@ -32,14 +32,14 @@ st.divider()
 # --- STEP 1: The Scalar and 1D Vector ---
 st.header("1. The Scalar (0D) vs The 1D Vector 📏")
 st.markdown("""
-A **scalar** (0D) is just a fancy word for a single, regular number. It tells us *magnitude* (how much), but it has no *direction*. It's a point.
+A **scalar** (0D) is just a fancy word for a single, regular number. It tells us *how much* (and its sign), but it is not treated as an arrow — below we mark it as a single dot.
 
-A **1D Vector**, on the other hand, is an arrow along a single line (like a number line). While it also holds just one number, it technically has a **direction** (left or right along that axis). 
+A **1D Vector**, on the other hand, is an arrow along a single line (like a number line). While it also holds just one number, a non-zero 1D vector has a **direction** (left or right along that axis). The zero vector `[0]` is the special case with no direction at all.
 
 *Programming Tip:* In AI, confusing a 0D scalar like `5` with a 1D list like `[5]` is a very common source of bugs!
 """)
 
-scalar_val = st.slider("Pick a number", min_value=-10.0, max_value=10.0, value=5.0, step=0.5)
+scalar_val = st.slider("Pick a number", min_value=-10.0, max_value=10.0, value=5.0, step=0.5, key="p01_scalar")
 
 col_scalar1, col_scalar2 = st.columns(2)
 with col_scalar1:
@@ -49,11 +49,13 @@ with col_scalar2:
 
 fig1 = go.Figure()
 
-# 1D Vector (Arrow)
-fig1.add_annotation(x=scalar_val, y=0.3, ax=0, ay=0.3, xref="x", yref="y", axref="x", ayref="y",
-                    showarrow=True, arrowhead=3, arrowsize=2, arrowwidth=3, arrowcolor="cyan")
+# 1D Vector (Arrow) — the zero vector has no direction, so no arrowhead is drawn for it
+if scalar_val != 0:
+    fig1.add_annotation(x=scalar_val, y=0.3, ax=0, ay=0.3, xref="x", yref="y", axref="x", ayref="y",
+                        showarrow=True, arrowhead=3, arrowsize=2, arrowwidth=3, arrowcolor="cyan")
 fig1.add_trace(go.Scatter(x=[scalar_val], y=[0.45], mode='text', 
-                          text=["1D Vector (Arrow)"], textposition="middle center", textfont=dict(color="cyan")))
+                          text=["1D Vector (Arrow)" if scalar_val != 0 else "Zero vector [0] (no direction)"],
+                          textposition="middle center", textfont=dict(color="cyan")))
 
 # 0D Scalar (Point)
 fig1.add_trace(go.Scatter(x=[scalar_val], y=[-0.3], mode='markers+text', 
@@ -64,7 +66,7 @@ fig1.add_hline(y=0, line_width=1, line_color="gray", line_dash="dash")
 fig1.update_xaxes(range=[-11, 11], zeroline=True, zerolinewidth=2, zerolinecolor='white')
 fig1.update_yaxes(showticklabels=False, range=[-1, 1])
 fig1.update_layout(height=250, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(fig1, width="stretch")
 
 st.divider()
 
@@ -74,19 +76,23 @@ st.markdown("What if we need to describe something with *two* properties? Like a
 
 col1, col2 = st.columns(2)
 with col1:
-    x_val = st.slider("X (Horizontal)", -10, 10, 4)
-    y_val = st.slider("Y (Vertical)", -10, 10, 7)
+    x_val = st.slider("X (Horizontal)", -10, 10, 4, key="p01_x")
+    y_val = st.slider("Y (Vertical)", -10, 10, 7, key="p01_y")
     st.info(f"**Vector Notation:**\n\n $v = \\begin{{bmatrix}} {x_val} \\\\ {y_val} \\end{{bmatrix}}$")
 
 with col2:
     fig2 = go.Figure()
-    # Draw arrow
-    fig2.add_annotation(x=x_val, y=y_val, ax=0, ay=0, xref="x", yref="y", axref="x", ayref="y",
-                        showarrow=True, arrowhead=3, arrowsize=2, arrowwidth=3, arrowcolor="cyan")
+    # Draw arrow (skip the arrowhead for the zero vector, which has no direction)
+    if x_val != 0 or y_val != 0:
+        fig2.add_annotation(x=x_val, y=y_val, ax=0, ay=0, xref="x", yref="y", axref="x", ayref="y",
+                            showarrow=True, arrowhead=3, arrowsize=2, arrowwidth=3, arrowcolor="cyan")
+    else:
+        fig2.add_trace(go.Scatter(x=[0], y=[0], mode="markers+text", marker=dict(color="cyan", size=10),
+                                  text=["zero vector"], textposition="top center", showlegend=False))
     fig2.update_xaxes(range=[-11, 11], zeroline=True, zerolinewidth=2, zerolinecolor='gray')
     fig2.update_yaxes(range=[-11, 11], zeroline=True, zerolinewidth=2, zerolinecolor='gray')
     fig2.update_layout(height=400, width=400, margin=dict(l=20, r=20, t=20, b=20))
-    st.plotly_chart(fig2, use_container_width=False)
+    st.plotly_chart(fig2, width="content")
 
 st.divider()
 
@@ -96,7 +102,7 @@ st.markdown("Add a third number, and our arrow pops off the screen into 3D space
 
 col3, col4 = st.columns(2)
 with col3:
-    z_val = st.slider("Z (Depth)", -10, 10, 5)
+    z_val = st.slider("Z (Depth)", -10, 10, 5, key="p01_z")
     st.info(f"**Vector:**\n\n $v = \\begin{{bmatrix}} {x_val} \\\\ {y_val} \\\\ {z_val} \\end{{bmatrix}}$")
 
 with col4:
@@ -109,7 +115,7 @@ with col4:
                                   yaxis=dict(range=[-10, 10]), 
                                   zaxis=dict(range=[-10, 10])),
                        margin=dict(l=0, r=0, t=0, b=0), height=400)
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3, width="stretch")
 
 st.divider()
 
@@ -121,18 +127,30 @@ But a computer doesn't care about arrows. To a computer, **a vector is just a li
 Let's generate a 15-dimensional vector. It's no longer an arrow; it's a data profile!
 """)
 
-if st.button("🎲 Generate Random 15-Dim Vector"):
-    n_dim_vector = np.random.randint(-50, 50, 15)
-else:
-    n_dim_vector = np.array([12, -4, 33, 0, -19, 45, 8, -22, 14, 5, -9, 27, 3, -41, 10])
+DEFAULT_N_DIM_VECTOR = [12, -4, 33, 0, -19, 45, 8, -22, 14, 5, -9, 27, 3, -41, 10]
+if "p01_n_dim_vector" not in st.session_state:
+    st.session_state.p01_n_dim_vector = DEFAULT_N_DIM_VECTOR
+    st.session_state.p01_n_dim_draws = 0
 
-st.code(f"v = {list(n_dim_vector)}", language="python")
+btn_col1, btn_col2 = st.columns(2)
+with btn_col1:
+    if st.button("🎲 Generate Random 15-Dim Vector", key="p01_generate_vector"):
+        st.session_state.p01_n_dim_draws += 1
+        rng = np.random.default_rng(st.session_state.p01_n_dim_draws)
+        st.session_state.p01_n_dim_vector = rng.integers(-50, 51, 15).tolist()
+with btn_col2:
+    if st.button("↩️ Reset to Example Vector", key="p01_reset_vector"):
+        st.session_state.p01_n_dim_vector = DEFAULT_N_DIM_VECTOR
+
+n_dim_vector = np.array(st.session_state.p01_n_dim_vector)
+
+st.code(f"v = {n_dim_vector.tolist()}", language="python")
 
 # Visualize the array as a bar chart to show "magnitudes" of each dimension
 fig4 = go.Figure(data=[go.Bar(y=n_dim_vector, marker_color='springgreen')])
 fig4.update_layout(title="Visualizing a 15-Dimensional List", height=300, 
                    xaxis_title="Dimension Index (0 to 14)", yaxis_title="Value")
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(fig4, width="stretch")
 
 st.divider()
 
@@ -155,23 +173,22 @@ with col5:
     fig5 = go.Figure(data=go.Heatmap(z=np.flipud(image_data), colorscale='gray', showscale=False))
     fig5.update_layout(width=400, height=400, xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False), margin=dict(l=10, r=10, t=30, b=10))
-    st.plotly_chart(fig5)
+    st.plotly_chart(fig5, width="content")
 
 with col6:
     st.subheader("How AI Sees It (784x1 Vector)")
-    # Flatten the image
+    # Flatten the image: the 28 rows are stacked end-to-end into one list of 784 numbers
     flattened_image = image_data.flatten()
-    
-    # We display it as a long, multi-column heatmap so it fits on screen, 
-    # but we represent it visually as a continuous stream of data.
-    reshaped_for_viewing = flattened_image.reshape(28, 28) # Kept square purely to fit on the screen without scrolling forever!
     
     st.markdown("We take the rows of the image and stack them end-to-end into a single line:")
     
-    # Interactive slice viewer
-    elements_to_show = st.slider("Drag to unroll more pixels into our list:", min_value=10, max_value=784, value=50, step=10)
+    # Interactive slice viewer (one image row = 28 pixels per step, so the full 784 is reachable)
+    elements_to_show = st.slider("Drag to unroll more pixel rows into our list:", min_value=28, max_value=784,
+                                 value=56, step=28, key="p01_elements_to_show")
     
-    st.code(f"x = {np.round(flattened_image[:elements_to_show], 2).tolist()} ... [length: 784]", language="python")
+    suffix = " ... [length: 784]" if elements_to_show < 784 else "  # all 784 values"
+    st.code(f"x = {np.round(flattened_image[:elements_to_show], 2).tolist()}{suffix}", language="python")
+    st.caption(f"Showing {elements_to_show} of 784 values = the first {elements_to_show // 28} of 28 image rows.")
     
     st.success("If an AI wants to learn this face, it's just looking for mathematical patterns inside that long list of 784 numbers!")
 

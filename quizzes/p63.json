@@ -1,0 +1,49 @@
+{
+  "page": 63,
+  "questions": [
+    {
+      "q": "A centered 2D dataset has covariance $\\mathbf{C} = \\begin{bmatrix} 2.5 & 1.5 \\\\ 1.5 & 2.5 \\end{bmatrix}$ with eigenvalues $\\lambda_1 = 4$, $\\lambda_2 = 1$. What fraction of the variance does PC1 explain?",
+      "options": [
+        "$75\\%$",
+        "$80\\%$",
+        "$50\\%$",
+        "$100\\%$"
+      ],
+      "answer": 1,
+      "explain": "$\\lambda_1 / (\\lambda_1 + \\lambda_2) = 4/5 = 80\\%$. ($75\\%$ would be $3/4$, e.g. dividing $\\lambda_1 - \\lambda_2$ by $\\lambda_1$.)"
+    },
+    {
+      "q": "For that same data, you **squash to 1D** onto PC1. How much variance is lost?",
+      "options": [
+        "$\\lambda_2 = 1$",
+        "$\\lambda_1 = 4$",
+        "$\\lambda_1 - \\lambda_2 = 3$",
+        "$0$ — projection keeps all variance"
+      ],
+      "answer": 0,
+      "explain": "Projecting onto PC1 throws away exactly the PC2 coordinate, so the lost variance equals $\\lambda_2$. The kept variance is $\\lambda_1$."
+    },
+    {
+      "q": "Centered points $(2, 1), (-2, -1), (1, -1), (-1, 1)$. What is the spread along $\\mathbf{u} = (1, 0)$ using $\\frac{1}{n-1}\\sum_i (\\mathbf{x}_i \\cdot \\mathbf{u})^2$?",
+      "options": [
+        "$2.5$",
+        "$0$",
+        "$10$",
+        "$\\approx 3.33$"
+      ],
+      "answer": 3,
+      "explain": "Projections are $2, -2, 1, -1$; squares sum to $10$; divide by $n - 1 = 3$: $\\approx 3.33$. $2.5$ divides by $n$; $0$ is the *mean* projection (the data is centered), not its variance."
+    },
+    {
+      "q": "With the **Round Cloud** preset, PC1 jumps to a completely different angle each time you press 🎲 New random sample. Why?",
+      "options": [
+        "PCA is broken for round data and returns a random angle on purpose",
+        "The lab only sweeps 0°–180°, missing the true peak",
+        "The true spread is equal in all directions, so the 'best' angle is just sampling noise",
+        "Round clouds have zero variance in every direction"
+      ],
+      "answer": 2,
+      "explain": "With equal true variance in every direction, no direction is special; the measured peak comes from random fluctuations in 90 points. Squashing such a cloud to 1D throws away almost half the variance."
+    }
+  ]
+}

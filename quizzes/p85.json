@@ -1,0 +1,49 @@
+{
+  "page": 85,
+  "questions": [
+    {
+      "q": "A server gets on average $\\lambda = 2$ requests per second (Poisson). What is the probability of **no** request in a given second?",
+      "options": [
+        "$0$",
+        "$e^{-2} \\approx 0.135$",
+        "$0.5$",
+        "$2e^{-2} \\approx 0.271$"
+      ],
+      "answer": 1,
+      "explain": "$P(K=0) = \\lambda^0 e^{-\\lambda}/0! = e^{-2} \\approx 0.135$. $2e^{-2}$ is $P(K=1)$."
+    },
+    {
+      "q": "Word counts per paragraph follow a Poisson distribution with $\\lambda = 9$. What is the standard deviation of the count?",
+      "options": [
+        "$9$",
+        "$81$",
+        "$3$",
+        "$4.5$"
+      ],
+      "answer": 2,
+      "explain": "For a Poisson, mean $=$ variance $= \\lambda = 9$, so the standard deviation is $\\sqrt{9} = 3$. $9$ is the variance, not the standard deviation."
+    },
+    {
+      "q": "Requests arrive as a Poisson process with rate $\\lambda = 2$ per minute. You have already waited 3 minutes with no request. What is the probability you wait **at least 1 more** minute?",
+      "options": [
+        "$e^{-8}$",
+        "$e^{-6}$",
+        "$1 - e^{-2}$",
+        "$e^{-2}$"
+      ],
+      "answer": 3,
+      "explain": "The exponential is memoryless: $P(T > s+t \\mid T > s) = e^{-\\lambda(s+t)}/e^{-\\lambda s} = e^{-\\lambda t} = e^{-2}$. The 3 minutes already waited do not matter; $e^{-8}$ is the unconditional $P(T > 4)$."
+    },
+    {
+      "q": "Keep $\\lambda = n p$ fixed and let $n$ grow in $\\text{Binomial}(n, \\lambda/n)$. What happens?",
+      "options": [
+        "It converges to $\\text{Poisson}(\\lambda)$; the total variation distance shrinks roughly like $1/n$ (bounded by $\\lambda^2/n$)",
+        "It converges to a Normal with mean $n$",
+        "The distribution collapses onto $k = 0$ because $p \\to 0$",
+        "Nothing changes, since the mean $np$ stays the same"
+      ],
+      "answer": 0,
+      "explain": "Many chances, each rare: $\\binom{n}{k}p^k(1-p)^{n-k} \\to \\lambda^k e^{-\\lambda}/k!$. The mean stays $\\lambda$ (not $n$), and the probability of $k = 0$ tends to $e^{-\\lambda}$, not 1. Matching the mean alone does not make two distributions equal."
+    }
+  ]
+}

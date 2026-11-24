@@ -1,33 +1,23 @@
+import sys
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
+
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common.matrix_display import matrix_html  # noqa: E402
 
 
 st.set_page_config(page_title="Transpose - Rows Become Columns", layout="wide")
 
 
-def make_matrix(rows, cols, low=-9, high=10):
-    return np.random.randint(low, high, size=(rows, cols)).astype(float)
-
-
-def matrix_html(matrix, title, highlight=None, color="#22d3ee", precision=1):
-    rows, cols = matrix.shape
-    highlight = highlight or []
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:18px;">
-    """
-    for i in range(rows):
-        html += "<tr>"
-        for j in range(cols):
-            bg = color if (i, j) in highlight else "transparent"
-            html += (
-                f"<td style='border:1px solid #475569;padding:7px 10px;text-align:center;"
-                f"min-width:42px;background:{bg};'>{matrix[i, j]:.{precision}f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
+def make_matrix(rows, cols, seed, low=-9, high=10):
+    rng = np.random.default_rng(seed)
+    return rng.integers(low, high, size=(rows, cols)).astype(float)
 
 
 def render_intro():
@@ -63,7 +53,7 @@ def render_shape_story(A):
 def render_row_column_mapping(A):
     st.header("2) Row-to-Column Teleport")
     AT = A.T
-    row_idx = st.selectbox("Pick a row from A", options=list(range(1, A.shape[0] + 1)))
+    row_idx = st.selectbox("Pick a row from A", options=list(range(1, A.shape[0] + 1)), key="p15_row_pick")
     i = row_idx - 1
 
     row_vals = A[i, :]
@@ -72,21 +62,20 @@ def render_row_column_mapping(A):
     left, right = st.columns(2)
     with left:
         highlights = [(i, j) for j in range(A.shape[1])]
-        st.markdown(matrix_html(A, f"A (highlight row {row_idx})", highlights, "#22c55e"), unsafe_allow_html=True)
+        st.markdown(matrix_html(A, f"A (highlight row {row_idx})", highlights, "#22c55e", precision=0), unsafe_allow_html=True)
     with right:
         highlights_t = [(j, i) for j in range(AT.shape[0])]
         st.markdown(
-            matrix_html(AT, f"A^T (matching column {row_idx})", highlights_t, "#a78bfa"),
+            matrix_html(AT, f"A^T (matching column {row_idx})", highlights_t, "#a78bfa", precision=0),
             unsafe_allow_html=True,
         )
 
     st.code(
-        f"Row {row_idx} in A  = {np.array2string(row_vals, precision=1)}\n"
-        f"Col {row_idx} in A^T = {np.array2string(col_vals, precision=1)}",
+        f"Row {row_idx} in A  = {np.array2string(row_vals.astype(int))}\n"
+        f"Col {row_idx} in A^T = {np.array2string(col_vals.astype(int))}",
         language="text",
     )
-    if np.allclose(row_vals, col_vals):
-        st.success("Perfect match. That is exactly what transpose does.")
+    st.success("Same numbers, same order: row i of A is read top-to-bottom as column i of A^T.")
 
 
 def render_index_explorer(A):
@@ -94,39 +83,44 @@ def render_index_explorer(A):
     AT = A.T
     c1, c2 = st.columns(2)
     with c1:
-        i = st.number_input("Pick i (row in A)", min_value=1, max_value=A.shape[0], value=1, step=1)
+        i = st.number_input("Pick i (row in A)", min_value=1, max_value=A.shape[0], value=1, step=1, key=f"p15_i_{A.shape[0]}")
     with c2:
-        j = st.number_input("Pick j (col in A)", min_value=1, max_value=A.shape[1], value=1, step=1)
+        j = st.number_input("Pick j (col in A)", min_value=1, max_value=A.shape[1], value=1, step=1, key=f"p15_j_{A.shape[1]}")
     i0, j0 = int(i - 1), int(j - 1)
 
     val = A[i0, j0]
     trans_val = AT[j0, i0]
 
     st.latex(rf"A_{{{int(i)},{int(j)}}} = {val:.0f} \quad \Rightarrow \quad (A^T)_{{{int(j)},{int(i)}}} = {trans_val:.0f}")
-    if abs(val - trans_val) < 1e-9:
-        st.success("Value preserved, only its address changed.")
-    else:
-        st.error("Something is off. This should not happen.")
+    st.success(f"Value preserved, only its address changed: ({int(i)}, {int(j)}) → ({int(j)}, {int(i)}).")
+
+
+def render_double_flip(A):
+    st.header("4) Flip Twice = Back Home")
+    st.markdown("Transposing swaps every address `(i, j) → (j, i)`. Do it again and every entry walks back: `(A^T)^T = A`.")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(matrix_html(A, f"A ({A.shape[0]} x {A.shape[1]})", precision=0), unsafe_allow_html=True)
+    with c2:
+        st.markdown(matrix_html(A.T, f"A^T ({A.shape[1]} x {A.shape[0]})", precision=0), unsafe_allow_html=True)
+    with c3:
+        st.markdown(matrix_html(A.T.T, f"(A^T)^T ({A.shape[0]} x {A.shape[1]})", precision=0), unsafe_allow_html=True)
+    st.latex(r"(A^T)^T = A")
 
 
 def main():
     render_intro()
 
     st.sidebar.header("Transpose Controls")
-    rows = st.sidebar.select_slider("Rows in A", options=[2, 3, 4, 5], value=3)
-    cols = st.sidebar.select_slider("Cols in A", options=[2, 3, 4, 5], value=4)
-    regen = st.sidebar.button("Generate new matrix")
+    rows = st.sidebar.select_slider("Rows in A", options=[2, 3, 4, 5], value=3, key="p15_rows")
+    cols = st.sidebar.select_slider("Cols in A", options=[2, 3, 4, 5], value=4, key="p15_cols")
+    regen = st.sidebar.button("Generate new matrix", key="p15_regen")
 
-    shape_key = (rows, cols)
-    if "transpose_A" not in st.session_state or "transpose_shape" not in st.session_state:
-        st.session_state.transpose_A = make_matrix(rows, cols)
-        st.session_state.transpose_shape = shape_key
-
-    if regen or st.session_state.transpose_shape != shape_key:
-        st.session_state.transpose_A = make_matrix(rows, cols)
-        st.session_state.transpose_shape = shape_key
-
-    A = st.session_state.transpose_A
+    st.session_state.setdefault("p15_seed", 15)
+    if regen:
+        st.session_state.p15_seed += 1
+    # Deterministic: the same (shape, seed) always yields the same matrix.
+    A = make_matrix(rows, cols, seed=st.session_state.p15_seed)
     AT = A.T
 
     c1, c2 = st.columns(2, vertical_alignment="top")
@@ -150,6 +144,8 @@ def main():
     render_row_column_mapping(A)
     st.divider()
     render_index_explorer(A)
+    st.divider()
+    render_double_flip(A)
 
     st.markdown(
         """

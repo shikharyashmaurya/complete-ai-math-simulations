@@ -1,0 +1,18 @@
+{"page": 90, "questions": [
+  {"q": "Heavy-ball momentum $v \\leftarrow \\beta v - \\eta \\nabla f$, $x \\leftarrow x + v$ runs on a direction with curvature $\\lambda$ and $\\beta = 0.9$. Which step sizes keep it stable?",
+   "options": ["$\\eta < 2/\\lambda$, exactly as for plain gradient descent", "$\\eta < 3.8/\\lambda$, because the limit is $2(1+\\beta)/\\lambda$", "$\\eta < 0.2/\\lambda$, because momentum multiplies the step by $1/(1-\\beta)$", "Any $\\eta > 0$: momentum always damps oscillations"],
+   "answer": 1,
+   "explain": "The roots of $z^2 - (1+\\beta-\\eta\\lambda)z + \\beta$ stay inside the unit circle exactly when $0 < \\eta\\lambda < 2(1+\\beta)$, i.e. $\\eta < 3.8/\\lambda$ for $\\beta = 0.9$ — wider than GD's $2/\\lambda$. The stability map on the page checks this by simulation."},
+  {"q": "In the narrow valley, why does momentum reduce the zig-zag across the valley while speeding up travel along it?",
+   "options": ["It clips gradients that are too large", "It averages past gradients: components that flip sign every step cancel, while consistent components add up", "It rescales each coordinate by its own gradient size", "It lowers the learning rate automatically when the loss goes up"],
+   "answer": 1,
+   "explain": "Momentum is an exponentially weighted average of gradients. An alternating component shrinks by $(1-\\beta)/(1+\\beta)$, a constant one is kept (and amplified by $1/(1-\\beta)$ in the velocity). Per-coordinate rescaling is what RMSProp/Adam do, not momentum."},
+  {"q": "With well-tuned settings on a quadratic with condition number $\\kappa$, how does the number of steps to a fixed accuracy scale?",
+   "options": ["GD $\\sim \\kappa$, heavy-ball $\\sim \\sqrt{\\kappa}$", "Both $\\sim \\kappa$; momentum only changes the constant", "GD $\\sim \\sqrt{\\kappa}$, heavy-ball $\\sim \\log \\kappa$", "Both are independent of $\\kappa$"],
+   "answer": 0,
+   "explain": "Tuned GD contracts by $(\\kappa-1)/(\\kappa+1)$ per step, tuned heavy-ball by $(\\sqrt\\kappa-1)/(\\sqrt\\kappa+1)$, so the step counts grow like $\\kappa$ and $\\sqrt\\kappa$ respectively — the table in Lab 1 shows both."},
+  {"q": "You set $\\beta = 0.99$ on a direction where the roots are complex. What happens?",
+   "options": ["Convergence becomes faster than with any smaller $\\beta$", "The iterate overshoots and rings for a long time, since the root magnitude is $\\sqrt{\\beta} \\approx 0.995$", "The optimizer stops moving because the velocity is frozen", "It behaves exactly like plain gradient descent"],
+   "answer": 1,
+   "explain": "Complex roots have magnitude $\\sqrt\\beta$, so with $\\beta = 0.99$ the error shrinks by only about 0.5% per step while oscillating — the 'Too much momentum' tab shows many sign changes."}
+]}

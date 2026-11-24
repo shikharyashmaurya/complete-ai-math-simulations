@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:white;padding:20px;overflow:hidden;}
+.outer{display:flex;flex-direction:column;gap:15px;max-width:1100px;margin:0 auto;}
+.top-row{display:flex;flex-direction:row;gap:20px;}
+.controls{flex:1;display:flex;flex-direction:column;gap:12px;}
+.viz-col{flex:1.8;position:relative;background:rgba(255,255,255,0.02);border-radius:20px;border:1px solid rgba(255,255,255,0.08);padding:15px;display:flex;flex-direction:column;}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;transition:0.3s;}
+.card:hover{background:rgba(255,255,255,0.06);}
+h2{font-size:22px;font-weight:900;color:#f8fafc;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+.sub{font-size:13px;color:#94a3b8;line-height:1.5;}
+
+.loss-meter-wrap{margin-top:10px;display:flex;flex-direction:column;gap:5px;}
+.meter-label{font-size:11px;font-weight:800;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;}
+.meter-bg{width:100%;height:35px;background:rgba(255,255,255,0.05);border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.1);}
+#meter-fill{height:100%;width:50%;background:linear-gradient(90deg, #10b981, #f59e0b, #ef4444);transition:0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);}
+#loss-val{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-weight:900;font-size:18px;text-shadow:0 2px 4px rgba(0,0,0,0.5);}
+
+.mode-toggle{display:flex;background:rgba(255,255,255,0.05);border-radius:10px;padding:4px;gap:4px;}
+.mbtn{flex:1;padding:10px;border-radius:8px;border:none;background:none;color:#94a3b8;font-weight:700;cursor:pointer;font-size:12px;transition:0.2s;}
+.mbtn.active{background:#6366f1;color:white;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3);}
+
+.slabel{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px;}
+.sval{font-size:15px;font-weight:900;color:#6366f1;font-variant-numeric:tabular-nums;}
+input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;margin-bottom:12px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#6366f1;cursor:pointer;box-shadow:0 0 10px rgba(99, 102, 241, 0.5);}
+
+canvas{border-radius:12px;cursor:crosshair;touch-action:none;display:block;max-width:100%;}
+.badge{background:rgba(99, 102, 241, 0.15);color:#818cf8;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;border:1px solid rgba(99, 102, 241, 0.3);}
+
+.hint{font-size:11px;color:#64748b;margin-top:8px;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="outer">
+  <div class="top-row">
+    <div class="controls">
+      <div class="card">
+        <h2>Penalty Box 🥊</h2>
+        <p class="sub">The <b>Loss Function</b> is your "Regret Meter". It measures how far your prediction (the line) is from reality (the points).</p>
+      </div>
+
+      <div class="card">
+        <div class="slabel"><span>Line Slope (Weight <i>w</i>)</span><span id="wv" class="sval">1.00</span></div>
+        <input type="range" id="w-range" min="-3" max="3" step="0.01" value="1.0">
+        
+        <div class="slabel"><span>Line Shift (Bias <i>b</i>)</span><span id="bv" class="sval">0.0</span></div>
+        <input type="range" id="b-range" min="-200" max="200" step="0.1" value="0">
+      </div>
+
+      <div class="card">
+        <div class="meter-label">Loss Type</div>
+        <div class="mode-toggle">
+          <button class="mbtn active" id="btn-mse">MSE (Squared)</button>
+          <button class="mbtn" id="btn-mae">MAE (Absolute)</button>
+        </div>
+        <p class="hint" id="mode-desc">MSE squares the errors, making big misses hurt way more than small ones!</p>
+      </div>
+
+      <div class="card">
+        <div class="loss-meter-wrap">
+          <div class="meter-label">Total Loss (The Goal: Minimize) · units: pixels² (MSE) / pixels (MAE)</div>
+          <div class="meter-bg">
+            <div id="meter-fill"></div>
+            <span id="loss-val">0</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card" style="display:flex; gap:10px; align-items:center; justify-content:center;">
+          <button class="mbtn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);" onclick="resetPoints()">🔄 Reset Data</button>
+          <button class="mbtn" style="background:rgba(16, 185, 129, 0.1); color:#10b981; border:1px solid #10b981;" onclick="solveBestFit()" title="Finds the line with the lowest loss for the selected loss type">✨ Best Fit</button>
+      </div>
+    </div>
+
+    <div class="viz-col">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span class="badge">LIVE DATA PLAYGROUND</span>
+        <span style="font-size:12px; color:#64748b;">Click/Drag to move points!</span>
+      </div>
+      <canvas id="main-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+const wRange = document.getElementById('w-range');
+const bRange = document.getElementById('b-range');
+const wvDisplay = document.getElementById('wv');
+const bvDisplay = document.getElementById('bv');
+const lossVal = document.getElementById('loss-val');
+const meterFill = document.getElementById('meter-fill');
+const btnMse = document.getElementById('btn-mse');
+const btnMae = document.getElementById('btn-mae');
+const modeDesc = document.getElementById('mode-desc');
+
+let points = [];
+let draggingPoint = null;
+let lossType = 'MSE'; // MSE or MAE
+let width, height;
+
+// Small seeded PRNG so the first dataset is the same on every load;
+// "Reset Data" advances the seed to get a new (but reproducible) dataset.
+let dataSeed = 7;
+function mulberry32(a) {
+    return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+function init() {
+    resize();
+    createPoints();
+    render();
+}
+
+function resize() {
+    const parent = canvas.parentElement;
+    const oldWidth = width;
+    const oldHeight = height;
+    width = Math.max(1, Math.min(parent.clientWidth - 30, 1200));
+    height = 420;
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = width + 'px';
+    if (points.length && oldWidth && oldHeight) {
+        points.forEach(p => {
+            p.x = p.x / oldWidth * width;
+            p.y = p.y / oldHeight * height;
+        });
+    } else if (points.length) {
+        createPoints();
+    }
+    if (points.length) render();
+}
+
+function clampY(y) { return Math.max(12, Math.min(height - 12, y)); }
+
+function createPoints() {
+    points = [];
+    const rand = mulberry32(dataSeed);
+    const n = 10;
+    // Keep the generated line (plus noise) inside the canvas.
+    const maxSlope = Math.max(0.05, (height/2 - 80) / Math.max(1, width/2 - 50));
+    const trueW = (rand() - 0.5) * 2 * maxSlope;
+    const trueB = (rand() - 0.5) * 60;
+    for(let i=0; i<n; i++) {
+        let rx = (i / (n-1)) * (width - 100) + 50;
+        let ry = clampY((rx - width/2) * trueW + (height/2 - trueB) + (rand()-0.5)*80);
+        points.push({x: rx, y: ry, id: i});
+    }
+}
+
+function resetPoints() {
+    dataSeed++;
+    createPoints();
+    render();
+}
+
+function toMath(p) { return {x: p.x - width/2, y: height/2 - p.y}; }
+
+function lossFor(w, b) {
+    let total = 0;
+    points.forEach(p => {
+        const q = toMath(p);
+        const e = q.y - (q.x * w + b);
+        total += lossType === 'MSE' ? e * e : Math.abs(e);
+    });
+    return total / points.length;
+}
+
+function setLine(w, b) {
+    const clampTo = (el, v) => Math.max(parseFloat(el.min), Math.min(parseFloat(el.max), v));
+    wRange.value = clampTo(wRange, w).toFixed(2);
+    bRange.value = clampTo(bRange, b).toFixed(1);
+}
+
+function solveBestFit() {
+    let n = points.length;
+    if (!n) return;
+    const qs = points.map(toMath);
+    if (lossType === 'MAE') {
+        // Least-absolute-error line: an optimal line always passes through
+        // two data points, so checking every pair gives the exact optimum.
+        let best = {loss: Infinity, w: 0, b: 0};
+        for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+                const dx = qs[j].x - qs[i].x;
+                if (Math.abs(dx) < 1e-9) continue;
+                const w = (qs[j].y - qs[i].y) / dx;
+                const b = qs[i].y - w * qs[i].x;
+                const l = lossFor(w, b);
+                if (l < best.loss) best = {loss: l, w, b};
+            }
+        }
+        setLine(best.w, best.b);
+        render();
+        return;
+    }
+    // Ordinary least squares (minimizes MSE)
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    qs.forEach(q => {
+        sumX += q.x; sumY += q.y;
+        sumXY += q.x * q.y; sumXX += q.x * q.x;
+    });
+    const denominator = n * sumXX - sumX * sumX;
+    let w = Math.abs(denominator) > 1e-9
+        ? (n * sumXY - sumX * sumY) / denominator
+        : 0;
+    let b = (sumY - w * sumX) / n;
+    setLine(w, b);
+    render();
+}
+
+function canvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: Math.max(0, Math.min(width, e.clientX - rect.left)),
+        y: Math.max(0, Math.min(height, e.clientY - rect.top))
+    };
+}
+
+canvas.onpointerdown = (e) => {
+    const m = canvasPos(e);
+    points.forEach(p => {
+        const dx = p.x - m.x;
+        const dy = p.y - m.y;
+        if(dx*dx + dy*dy < 400) draggingPoint = p;
+    });
+    if (draggingPoint) canvas.setPointerCapture(e.pointerId);
+};
+
+canvas.onpointermove = (e) => {
+    if(!draggingPoint) return;
+    const m = canvasPos(e);
+    draggingPoint.x = m.x;
+    draggingPoint.y = m.y;
+    render();
+};
+
+canvas.onpointerup = canvas.onpointercancel = () => { draggingPoint = null; };
+function render() {
+    update();
+    draw();
+}
+
+let totalLoss = 0;
+
+wRange.addEventListener('input', render);
+bRange.addEventListener('input', render);
+window.addEventListener('resize', resize);
+window.addEventListener('pagehide', () => {
+    window.removeEventListener('resize', resize);
+    draggingPoint = null;
+});
+
+function update() {
+    wvDisplay.innerText = parseFloat(wRange.value).toFixed(2);
+    bvDisplay.innerText = parseFloat(bRange.value).toFixed(1);
+    
+    const w = parseFloat(wRange.value);
+    const b = parseFloat(bRange.value);
+    
+    totalLoss = lossFor(w, b);
+    
+    lossVal.innerText = totalLoss.toFixed(0);
+    
+    // Scale meter fill
+    let maxExpected = lossType === 'MSE' ? 10000 : 200;
+    let percent = Math.min(100, (totalLoss / maxExpected) * 100);
+    meterFill.style.width = percent + '%';
+    
+    // Color shift
+    if(percent < 10) meterFill.style.background = '#10b981';
+    else if(percent < 30) meterFill.style.background = '#f59e0b';
+    else meterFill.style.background = '#ef4444';
+}
+
+function draw() {
+    ctx.clearRect(0, 0, width, height);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for(let i=0; i<width; i+=40) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
+    }
+    for(let i=0; i<height; i+=40) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
+    }
+    
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(width/2, 0); ctx.lineTo(width/2, height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, height/2); ctx.lineTo(width, height/2); ctx.stroke();
+
+    const w = parseFloat(wRange.value);
+    const b = parseFloat(bRange.value);
+
+    // Draw Error Bars / Rects
+    points.forEach(p => {
+        const x_coord = p.x - width/2;
+        const pred_y_coord = x_coord * w + b;
+        const pred_canvas_y = height/2 - pred_y_coord;
+        
+        const error = Math.abs(p.y - pred_canvas_y);
+        
+        if(lossType === 'MSE') {
+            // Draw Squares for MSE
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+            ctx.lineWidth = 1;
+            let side = p.y < pred_canvas_y ? error : -error;
+            ctx.fillRect(p.x, p.y, -side, side);
+            ctx.strokeRect(p.x, p.y, -side, side);
+        } else {
+            // Draw Bars for MAE
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 2]);
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x, pred_canvas_y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    });
+
+    // Prediction Line
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = 'rgba(99, 102, 241, 0.5)';
+    ctx.shadowBlur = 15;
+    
+    const x1 = -width/2;
+    const y1 = x1 * w + b;
+    const x2 = width/2;
+    const y2 = x2 * w + b;
+    
+    ctx.beginPath();
+    ctx.moveTo(0, height/2 - y1);
+    ctx.lineTo(width, height/2 - y2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Points
+    points.forEach(p => {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+}
+
+btnMse.onclick = () => {
+    lossType = 'MSE';
+    btnMse.classList.add('active');
+    btnMae.classList.remove('active');
+    modeDesc.innerText = "MSE squares the errors, making big misses hurt way more than small ones! Best Fit = least-squares line.";
+    render();
+};
+
+btnMae.onclick = () => {
+    lossType = 'MAE';
+    btnMae.classList.add('active');
+    btnMse.classList.remove('active');
+    modeDesc.innerText = "MAE takes the absolute distance, so outliers pull less. Best Fit = least-absolute-error line (it passes through two points). Its V-shaped kink makes calculus harder.";
+    render();
+};
+
+init();
+</script>
+</body>
+</html>

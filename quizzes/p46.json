@@ -1,0 +1,49 @@
+{
+  "page": 46,
+  "questions": [
+    {
+      "q": "Machine G stretches its input by $3\\times$ and Machine F stretches its input by $2\\times$. Feeding an input through G then F, how much does a small change get stretched?",
+      "options": [
+        "$5\\times$",
+        "$6\\times$",
+        "$1.5\\times$",
+        "$9\\times$"
+      ],
+      "answer": 1,
+      "explain": "The Chain Rule multiplies the rates: $3 \\times 2 = 6$. Adding them ($5$) is the most common mistake."
+    },
+    {
+      "q": "What is $\\frac{d}{dx}\\sin(x^2)$?",
+      "options": [
+        "$\\cos(x^2)$",
+        "$\\cos(2x)$",
+        "$\\cos(x^2) \\cdot 2x$",
+        "$2x \\sin(x^2)$"
+      ],
+      "answer": 2,
+      "explain": "Outer $f(g) = \\sin(g)$ gives $\\cos(g)$, inner $g(x) = x^2$ gives $2x$. Multiply and plug the inner layer back in: $\\cos(x^2) \\cdot 2x$. $\\cos(x^2)$ forgets the inner slope."
+    },
+    {
+      "q": "In the lab's Power preset, $g(x) = 0.5x^2 - 2$ and $f(g) = 0.2g^2$. What is $\\frac{df}{dx}$ at $x = 3$?",
+      "options": [
+        "$1$",
+        "$2.5$",
+        "$0.25$",
+        "$3$"
+      ],
+      "answer": 3,
+      "explain": "$g(3) = 2.5$, $g'(3) = 3$, $f'(g) = 0.4g = 1$. So $\\frac{df}{dx} = f'(g) \\cdot g'(x) = 1 \\times 3 = 3$. $1$ is only the outer slope."
+    },
+    {
+      "q": "How does backpropagation use the Chain Rule in a network $\\text{Loss}(\\text{Layer3}(\\text{Layer2}(\\text{Layer1}(w))))$?",
+      "options": [
+        "It multiplies the local slopes of each layer along the path from the Loss back to the weight (summing over paths when there are several)",
+        "It adds the layers' outputs together",
+        "It only uses the slope of the last layer",
+        "It differentiates each layer with respect to the Loss independently and averages them"
+      ],
+      "answer": 0,
+      "explain": "Backpropagation is the Chain Rule applied systematically backwards: local derivatives are multiplied along each path, and contributions from different paths are added."
+    }
+  ]
+}

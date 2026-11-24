@@ -1,0 +1,49 @@
+{
+  "page": 12,
+  "questions": [
+    {
+      "q": "$A$ has shape $(3, 5)$. What shape must $x$ have for $A x$ to exist, and what shape is $y = A x$?",
+      "options": [
+        "$x$: $(5,)$, $y$: $(3,)$",
+        "$x$: $(3,)$, $y$: $(5,)$",
+        "$x$: $(15,)$, $y$: $(3,)$",
+        "$x$: $(5,)$, $y$: $(5,)$"
+      ],
+      "answer": 0,
+      "explain": "The number of columns of $A$ (5) must match the length of $x$; the output has one entry per row of $A$ (3)."
+    },
+    {
+      "q": "Compute $\\begin{bmatrix} 1 & 2 \\\\ 3 & -1 \\end{bmatrix} \\begin{bmatrix} 2 \\\\ 1 \\end{bmatrix}$.",
+      "options": [
+        "$\\begin{bmatrix} 2 \\\\ 2 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 8 \\\\ 1 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 4 \\\\ 5 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 5 \\\\ 1 \\end{bmatrix}$"
+      ],
+      "answer": 2,
+      "explain": "Each output entry is a row of $A$ dotted with $x$: $1\\cdot 2 + 2 \\cdot 1 = 4$ and $3 \\cdot 2 + (-1) \\cdot 1 = 5$. Using the columns instead of the rows gives the wrong $(5, 1)$."
+    },
+    {
+      "q": "How is the single output entry $y_i$ computed?",
+      "options": [
+        "$y_i = \\sum_j A[i, j]\\, x[j]$ — row $i$ of $A$ dotted with $x$",
+        "$y_i = x[i] + \\sum_j A[i, j]$",
+        "$y_i = A[i, i] \\cdot x[i]$",
+        "$y_i = \\sum_i A[i, j]\\, x[i]$ — column $j$ dotted with $x$"
+      ],
+      "answer": 0,
+      "explain": "Every output number is one row dot product: multiply row $i$ by $x$ entry by entry and add."
+    },
+    {
+      "q": "What happens if $A$ is $3 \\times 3$ but $x$ has 4 entries?",
+      "options": [
+        "The output gets 4 entries",
+        "NumPy raises an error — the 4th entry of $x$ has no partner in a row of $A$",
+        "$A$ is padded with zeros automatically",
+        "The extra entry is ignored"
+      ],
+      "answer": 1,
+      "explain": "Each row of $A$ has 3 numbers, so a 4-entry $x$ cannot be paired up; the product $A x$ does not exist."
+    }
+  ]
+}

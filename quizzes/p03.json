@@ -1,0 +1,49 @@
+{
+  "page": 3,
+  "questions": [
+    {
+      "q": "What does multiplying a vector by $k = -1$ do?",
+      "options": [
+        "Leaves it unchanged",
+        "Collapses it to the origin",
+        "Keeps its length but reverses its direction",
+        "Rotates it by 90°"
+      ],
+      "answer": 2,
+      "explain": "A negative scalar flips the direction; with $|k| = 1$ the length stays the same."
+    },
+    {
+      "q": "For $\\mathbf{v} = (2, 1)$ and $k = -1.5$, what is $k\\mathbf{v}$?",
+      "options": [
+        "$(-3, -1.5)$",
+        "$(0.5, -0.5)$",
+        "$(-3, 1)$",
+        "$(3, 1.5)$"
+      ],
+      "answer": 0,
+      "explain": "Multiply **every** component by $k$: $(-1.5 \\cdot 2,\\; -1.5 \\cdot 1) = (-3, -1.5)$. Scaling only one component would change the arrow's direction, not just its length."
+    },
+    {
+      "q": "If $-1 < k < 0$, what happens to the arrow?",
+      "options": [
+        "It flips and shrinks",
+        "It stretches and keeps its direction",
+        "It shrinks and keeps its direction",
+        "It flips and stretches"
+      ],
+      "answer": 0,
+      "explain": "The negative sign reverses the direction, and $|k| < 1$ makes it shorter."
+    },
+    {
+      "q": "$\\mathbf{v} = (2, 1)$ has length $\\sqrt{5} \\approx 2.24$. What is the length of $-2\\mathbf{v}$?",
+      "options": [
+        "$4.47$",
+        "$2.24$",
+        "$8.94$",
+        "$-4.47$"
+      ],
+      "answer": 0,
+      "explain": "Scaling multiplies the length by $|k|$: $2 \\times \\sqrt{5} \\approx 4.47$. Lengths are never negative — the sign only flips the direction."
+    }
+  ]
+}

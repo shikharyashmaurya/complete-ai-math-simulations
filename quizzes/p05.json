@@ -1,0 +1,49 @@
+{
+  "page": 5,
+  "questions": [
+    {
+      "q": "Normalize $\\vec{v} = (3, 4)$. What is $\\hat{v}$?",
+      "options": [
+        "$(0.6, 0.8)$",
+        "$(0.75, 1)$",
+        "$(3/7, 4/7)$",
+        "$(1, 1)$"
+      ],
+      "answer": 0,
+      "explain": "$|\\vec{v}| = 5$, so $\\hat{v} = (3/5, 4/5) = (0.6, 0.8)$. Dividing by the component sum (7) gives a vector whose length is not 1."
+    },
+    {
+      "q": "The vector $(0.3, 0.4)$ has length $0.5$. What does normalizing it do?",
+      "options": [
+        "Shrinks it",
+        "Stretches it to length 1",
+        "Flips its direction",
+        "Leaves it unchanged"
+      ],
+      "answer": 1,
+      "explain": "Dividing by a length below 1 makes the arrow longer: $(0.3, 0.4)/0.5 = (0.6, 0.8)$, which has length 1."
+    },
+    {
+      "q": "Why can the zero vector $(0, 0)$ **not** be normalized?",
+      "options": [
+        "Its components are negative",
+        "It is already a unit vector",
+        "Its length is 0, so we would divide by 0",
+        "Normalization only works in 3D"
+      ],
+      "answer": 2,
+      "explain": "Normalizing means $\\vec{v} / |\\vec{v}|$; for the zero vector that is division by zero, and there is no direction to keep anyway."
+    },
+    {
+      "q": "The page's 3D default is $(2, 3, 6)$ with length 7. Which statement about its unit vector is true?",
+      "options": [
+        "It is $(2/11, 3/11, 6/11)$",
+        "It points in a different direction but has length 1",
+        "It is $(2/7, 3/7, 6/7) \\approx (0.29, 0.43, 0.86)$ and points in the same direction",
+        "It is $(1, 1, 1)$"
+      ],
+      "answer": 2,
+      "explain": "Normalizing divides every component by the length (7): the direction is kept exactly, only the size changes to 1."
+    }
+  ]
+}

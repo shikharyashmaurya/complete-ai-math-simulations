@@ -1,0 +1,49 @@
+{
+  "page": 64,
+  "questions": [
+    {
+      "q": "Cat detector, starting design $\\mathbf{w} = (4, 5, -8)$, $b = -3$. The 🤖 Robo-Dog has $\\mathbf{x} = (0.9,\\ 0.1,\\ 0.8)$. What is $z = \\mathbf{w}\\cdot\\mathbf{x} + b$, and does the neuron fire (rule: $z \\ge 0$)?",
+      "options": [
+        "$z = -5.3$, silent (not a cat)",
+        "$z = -2.3$, silent (not a cat)",
+        "$z = 7.3$, fires (cat)",
+        "$z = 1.1$, fires (cat)"
+      ],
+      "answer": 0,
+      "explain": "$4(0.9) + 5(0.1) - 8(0.8) = 3.6 + 0.5 - 6.4 = -2.3$, then add the bias: $-2.3 - 3 = -5.3 < 0$. $-2.3$ forgets the bias; the negative barking weight is what shuts the Robo-Dog down."
+    },
+    {
+      "q": "With the starting weights the Bunny scores $+8.5$ and the Lion $+8.2$ before the bias. Why can no bias $b$ make the neuron fire for the Lion but not the Bunny?",
+      "options": [
+        "The bias is multiplied by the inputs, so it affects the Bunny more",
+        "Any bias below $0$ makes every animal silent",
+        "Biases only matter for ReLU, and this neuron uses sigmoid",
+        "The bias adds the same number to every animal, so it can only slide the cut-off, never reorder the ranking"
+      ],
+      "answer": 3,
+      "explain": "Firing for the Lion needs $b \\ge -8.2$, which also lets the Bunny ($8.5 + b \\ge 0$) through. Only changing the **weights** (e.g. $\\mathbf{w} = (0, 10, -8)$, $b = -9.5$) can separate them."
+    },
+    {
+      "q": "Which statement about the neuron's output $y = f(z)$ matches the page?",
+      "options": [
+        "Every activation function outputs a probability between 0 and 1",
+        "ReLU outputs are always between 0 and 1",
+        "Only sigmoid gives an output in $(0, 1)$, and even that is not a calibrated probability unless trained and checked for it",
+        "The step function outputs a calibrated confidence"
+      ],
+      "answer": 2,
+      "explain": "Sigmoid squashes into $(0, 1)$ and merely *looks* probability-like. ReLU is unbounded above, tanh lies in $(-1, 1)$, and the step function gives a hard 0/1 vote."
+    },
+    {
+      "q": "A layer of 10 neurons reads a 784-dimensional input. How are its weights organized?",
+      "options": [
+        "A $784 \\times 10$ matrix with a single shared bias",
+        "A $10 \\times 784$ matrix (one row per neuron) plus 10 biases",
+        "One vector of 784 weights shared by all 10 neurons",
+        "A $10 \\times 10$ matrix"
+      ],
+      "answer": 1,
+      "explain": "Each neuron is one row $\\mathbf{w}_i$ of dot products with $\\mathbf{x}$, so stacking 10 neurons gives a $10 \\times 784$ matrix times the input vector, plus one bias per neuron."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{"page": 93, "questions": [
+  {"q": "A pre-activation is $z=\\sum_{i=1}^{n} w_i x_i$ with independent zero-mean weights and zero-mean inputs. What is $\\mathrm{Var}(z)$?",
+   "options": ["$\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$", "$n\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$", "$n^2\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$", "$\\sqrt{n}\\,\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$"],
+   "answer": 1,
+   "explain": "Each product $w_i x_i$ has variance $\\mathrm{Var}(w)\\,\\mathrm{Var}(x)$ and the $n$ independent terms add their variances. A common trap is $n^2$, which would hold only for perfectly correlated terms."},
+  {"q": "Why does He/Kaiming initialisation use $\\mathrm{Var}(w)=2/n_\\text{in}$ for ReLU networks instead of $1/n_\\text{in}$?",
+   "options": ["ReLU doubles the variance of its input", "ReLU zeroes the negative half, so $\\mathbb{E}[\\mathrm{ReLU}(z)^2]=\\tfrac12\\mathrm{Var}(z)$ and the factor 2 compensates", "Because the backward pass has twice as many units", "To make the activations exactly zero-mean"],
+   "answer": 1,
+   "explain": "For a symmetric $z$, ReLU keeps only half of the second moment. With $n\\,\\mathrm{Var}(w)=2$ each layer multiplies the variance by $2\\cdot\\tfrac12=1$, so the signal neither explodes nor vanishes."},
+  {"q": "In the lab, a deep ReLU MLP uses Xavier/Glorot init ($\\mathrm{Var}(w)=2/(n_\\text{in}+n_\\text{out})$) with square layers. Roughly how does the activation variance change per layer?",
+   "options": ["It stays constant", "It is multiplied by about $\\tfrac12$ each layer, so it vanishes with depth", "It doubles each layer", "It depends only on the batch size"],
+   "answer": 1,
+   "explain": "With $n_\\text{in}=n_\\text{out}=n$, $n\\,\\mathrm{Var}(w)=1$, and the ReLU contributes another $\\tfrac12$, so the variance shrinks like $(\\tfrac12)^{L}$. Xavier was derived for tanh-like units that are linear near 0."},
+  {"q": "What goes wrong if every weight of a hidden layer is initialised to the same constant?",
+   "options": ["Nothing; gradient descent quickly breaks the tie", "The activations explode", "All hidden units compute the same output and receive identical gradients, so they stay identical forever", "Only the biases learn, but the hidden units still become different"],
+   "answer": 2,
+   "explain": "Identical units get identical updates, so the symmetry is never broken and the layer acts like a single unit. Random initialisation is needed to make units differ."}
+]}

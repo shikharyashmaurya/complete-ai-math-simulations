@@ -1,0 +1,49 @@
+{
+  "page": 4,
+  "questions": [
+    {
+      "q": "What is the magnitude of $\\vec{v} = (3, 4)$ (the page's default 2D vector)?",
+      "options": [
+        "7",
+        "5",
+        "12",
+        "25"
+      ],
+      "answer": 1,
+      "explain": "$|\\vec{v}| = \\sqrt{3^2 + 4^2} = \\sqrt{25} = 5$. Adding the components (7) or forgetting the square root (25) are common slips."
+    },
+    {
+      "q": "What is the magnitude of $(-6, 8)$?",
+      "options": [
+        "14",
+        "10",
+        "2",
+        "$\\sqrt{2}$"
+      ],
+      "answer": 1,
+      "explain": "Squaring removes the sign: $\\sqrt{(-6)^2 + 8^2} = \\sqrt{36 + 64} = 10$."
+    },
+    {
+      "q": "The page's N-dimensional example is $(3, 4, 12)$. What is its magnitude?",
+      "options": [
+        "169",
+        "19",
+        "13",
+        "12.6"
+      ],
+      "answer": 2,
+      "explain": "$\\sqrt{9 + 16 + 144} = \\sqrt{169} = 13$ — the same Pythagorean rule, just with more squared terms."
+    },
+    {
+      "q": "Why does the magnitude formula work in any number of dimensions?",
+      "options": [
+        "It is the Pythagorean theorem applied repeatedly: add up all squared components, then take the square root",
+        "Because the magnitude is the average of the components",
+        "Because the magnitude is the largest component",
+        "It only works in 2D and 3D; higher dimensions need a different formula"
+      ],
+      "answer": 0,
+      "explain": "$|\\vec{v}| = \\sqrt{v_1^2 + v_2^2 + \\cdots + v_n^2}$ — the page calls it the Pythagorean theorem, supercharged for any number of dimensions."
+    }
+  ]
+}

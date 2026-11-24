@@ -1,0 +1,49 @@
+{
+  "page": 88,
+  "questions": [
+    {
+      "q": "A study reports a 95% confidence interval $[42.9, 56.1]$ for a mean $\\mu$. Which statement is correct?",
+      "options": [
+        "There is a 95% probability that $\\mu$ lies in $[42.9, 56.1]$",
+        "95% of the data points lie in $[42.9, 56.1]$",
+        "If the study were repeated many times, about 95% of the intervals built this way would contain $\\mu$",
+        "The sample mean has a 95% chance of being in the interval"
+      ],
+      "answer": 2,
+      "explain": "$\\mu$ is fixed, so this particular interval either contains it or not. The 95% is a property of the *procedure* — exactly what the 100-interval coverage plot shows. The interval is about the mean, not individual data points."
+    },
+    {
+      "q": "What is a p-value?",
+      "options": [
+        "The probability that $H_0$ is true given the data",
+        "The probability, assuming $H_0$ is true, of a test statistic at least as extreme as the one observed",
+        "The probability of making a Type II error",
+        "The size of the effect divided by its standard error"
+      ],
+      "answer": 1,
+      "explain": "It is the tail area of the null distribution beyond the observed statistic (the shaded region in the A/B lab). It is *not* $P(H_0\\mid\\text{data})$; the last option describes the $z$ statistic itself."
+    },
+    {
+      "q": "An A/B test has 80% power to detect a 1-percentage-point lift. Roughly how many users per arm do you need for the same power if the true lift is only 0.5 points?",
+      "options": [
+        "The same number",
+        "About 2× as many",
+        "About 4× as many",
+        "About 8× as many"
+      ],
+      "answer": 2,
+      "explain": "The required sample size scales like $1/\\Delta^2$: halving the effect size quadruples $n$, because the standard error only shrinks like $1/\\sqrt n$."
+    },
+    {
+      "q": "You run 20 independent tests at $\\alpha = 0.05$ where no real effect exists. What is the probability of at least one 'significant' result, and what Bonferroni threshold would you use?",
+      "options": [
+        "5%; keep $\\alpha = 0.05$",
+        "About 64%; use $0.05/20 = 0.0025$",
+        "100%; use $0.05 \\times 20 = 1$",
+        "About 36%; use $0.05/\\sqrt{20}$"
+      ],
+      "answer": 1,
+      "explain": "$1 - 0.95^{20} \\approx 0.64$. Bonferroni tests each hypothesis at $\\alpha/m = 0.0025$, which keeps the family-wise error rate at or below 5%."
+    }
+  ]
+}

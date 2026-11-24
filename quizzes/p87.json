@@ -1,0 +1,49 @@
+{
+  "page": 87,
+  "questions": [
+    {
+      "q": "In the likelihood $L(p) = p^h(1-p)^{n-h}$ for coin flips, what is held fixed and what varies?",
+      "options": [
+        "The data ($h$ heads in $n$ flips) are fixed; the parameter $p$ varies",
+        "The parameter $p$ is fixed; the number of heads $h$ varies",
+        "Both are fixed — the likelihood is a single number",
+        "Nothing is fixed: $L(p)$ is a probability distribution over $p$ that integrates to 1"
+      ],
+      "answer": 0,
+      "explain": "Likelihood reads the probability formula 'backwards': the observed data are plugged in and we ask which $p$ makes them most probable. It is *not* a distribution over $p$ — it need not integrate to 1."
+    },
+    {
+      "q": "You flip a coin 3 times and see 0 heads. What does maximum likelihood estimate, and what goes wrong?",
+      "options": [
+        "$\\hat p = 0.5$, because there is too little data to move away from a fair coin",
+        "$\\hat p = 0$, so a future head gets probability 0 and an infinite log-loss $-\\ln 0$",
+        "$\\hat p = 1/5$, the Laplace-smoothed value",
+        "$\\hat p = 1/3$, because one more flip might have been heads"
+      ],
+      "answer": 1,
+      "explain": "The MLE is $h/n = 0/3 = 0$ — it overfits the tiny sample and declares heads impossible. A Beta(2, 2) prior (MAP) gives $(h+1)/(n+2) = 1/5$ instead; that is a *prior*, not the MLE."
+    },
+    {
+      "q": "The Gaussian MLE of the variance is $\\hat\\sigma^2 = \\frac{1}{n}\\sum(x_i-\\bar x)^2$. With $n = 2$ samples, what is $\\mathbb E[\\hat\\sigma^2]$ on average?",
+      "options": [
+        "$\\sigma^2$ — the MLE is unbiased",
+        "$2\\sigma^2$",
+        "$\\sigma^2/2$",
+        "$\\sigma^2/4$"
+      ],
+      "answer": 2,
+      "explain": "$\\mathbb E[\\hat\\sigma^2_{\\text{MLE}}] = \\frac{n-1}{n}\\sigma^2$, which is $\\sigma^2/2$ for $n = 2$: deviations from $\\bar x$ are smaller than from the true $\\mu$. Dividing by $n-1$ ($s^2$) removes the bias."
+    },
+    {
+      "q": "Training a binary classifier by minimizing the average binary cross-entropy $-\\frac1n\\sum[y_i\\ln p_i + (1-y_i)\\ln(1-p_i)]$ is the same as…",
+      "options": [
+        "Minimizing the mean squared error between labels and probabilities",
+        "Maximizing the Bernoulli log-likelihood of the labels",
+        "Maximizing the entropy of the predictions",
+        "Finding the MAP estimate with a Gaussian prior on the weights"
+      ],
+      "answer": 1,
+      "explain": "BCE is exactly $-\\ell/n$ for a Bernoulli model, so minimizing it maximizes the likelihood. MSE corresponds to a *Gaussian* likelihood; adding a Gaussian prior (weight decay) would make it MAP rather than plain MLE."
+    }
+  ]
+}

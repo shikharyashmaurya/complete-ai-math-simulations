@@ -1,0 +1,49 @@
+{
+  "page": 24,
+  "questions": [
+    {
+      "q": "$P(A) = 0.7$ and $P(B) = 0.5$. Which value of $P(A \\cap B)$ is actually possible?",
+      "options": [
+        "$0.1$",
+        "$0.3$",
+        "$0.6$",
+        "$0.75$"
+      ],
+      "answer": 1,
+      "explain": "The overlap is boxed in: $\\max(0, P(A)+P(B)-1) \\le P(A \\cap B) \\le \\min(P(A), P(B))$, i.e. $[0.2, 0.5]$. $0.1$ would make $P(A \\cup B) = 1.1 > 1$; $0.6$ and $0.75$ exceed $P(B)$ — the overlap can't be bigger than either event."
+    },
+    {
+      "q": "$A$ and $B$ are mutually exclusive with $P(A) = 0.3$ and $P(B) = 0.4$. Which statement is true?",
+      "options": [
+        "They are independent, since one doesn't affect the other",
+        "$P(A \\cup B) = 0.3 + 0.4 - 0.12 = 0.58$",
+        "$P(A \\mid B) = 0 \\ne P(A)$, so they are dependent",
+        "$P(A \\cap B) = 0.3 \\times 0.4 = 0.12$"
+      ],
+      "answer": 2,
+      "explain": "Disjoint means $P(A \\cap B) = 0$, so $P(A \\cup B) = 0.7$ and $P(A \\mid B) = 0$: learning B happened rules A out — strong dependence. The $0.12$ options wrongly apply the independence product rule."
+    },
+    {
+      "q": "You run 10 independent significance tests at $\\alpha = 0.05$, and in truth nothing is going on. What is the probability of **at least one** false positive?",
+      "options": [
+        "$0.05$",
+        "$10 \\times 0.05 = 0.50$",
+        "$0.95^{10} \\approx 0.60$",
+        "$1 - 0.95^{10} \\approx 0.40$"
+      ],
+      "answer": 3,
+      "explain": "Complement trick: $P(\\text{none}) = 0.95^{10} \\approx 0.599$, so $P(\\ge 1) = 1 - 0.599 \\approx 0.401$. $10 \\times 0.05$ is the union bound — an upper limit, not the exact value — and $0.95^{10}$ is the probability of *no* false positive."
+    },
+    {
+      "q": "$P(A) = 0.3$, $P(B) = 0.2$, $P(A \\cap B) = 0.1$. What is $P(A^c \\cap B^c)$ (neither happens)?",
+      "options": [
+        "$0.6$",
+        "$0.56$",
+        "$0.5$",
+        "$0.9$"
+      ],
+      "answer": 0,
+      "explain": "De Morgan: $A^c \\cap B^c = (A \\cup B)^c$, so $P = 1 - (0.3 + 0.2 - 0.1) = 0.6$. $0.56 = 0.7 \\times 0.8$ assumes independence, $0.5$ forgets the overlap, and $0.9 = 1 - P(A \\cap B)$ is $P(A^c \\cup B^c)$ — the other law."
+    }
+  ]
+}

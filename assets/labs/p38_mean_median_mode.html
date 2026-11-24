@@ -1,0 +1,532 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    color: white;
+    font-family: 'Inter', system-ui, sans-serif;
+    user-select: none;
+    overflow: hidden;
+  }
+  #app {
+    position: relative;
+    width: 100%;
+    height: 640px;
+    background: linear-gradient(145deg, #111827, #1f2937);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .dashboard {
+    display: flex;
+    gap: 30px;
+    margin-top: 30px;
+    z-index: 10;
+  }
+  .metric {
+    background: rgba(255,255,255,0.03);
+    padding: 15px 30px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    min-width: 160px;
+    max-width: 260px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .metric .label {
+    font-size: 14px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 5px;
+  }
+  .metric .value {
+    font-size: 36px;
+    font-weight: 800;
+  }
+  .metric .sub {
+    font-size: 12px;
+    color: #9ca3af;
+    min-height: 15px;
+  }
+  .controls-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    align-items: center;
+    z-index: 10;
+  }
+  .controls-row button {
+    background: rgba(99, 102, 241, 0.2);
+    color: #c7d2fe;
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .controls-row button:hover { background: rgba(99, 102, 241, 0.35); }
+  .controls-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .controls-row .hint { font-size: 12px; color: #9ca3af; }
+  #mean-val { color: #ef4444; } /* Red */
+  #median-val { color: #06b6d4; } /* Cyan */
+  #mode-val { color: #eab308; } /* Gold */
+ 
+  .canvas-container {
+    position: relative;
+    flex-grow: 1;
+    width: 100%;
+    margin-top: 20px;
+  }
+  .axis {
+    position: absolute;
+    bottom: 100px;
+    left: 8%;
+    right: 8%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+  .tick {
+    position: absolute;
+    bottom: -30px;
+    transform: translateX(-50%);
+    color: #9ca3af;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tick-mark {
+    position: absolute;
+    bottom: 0px;
+    width: 2px;
+    background: rgba(255,255,255,0.4);
+    transform: translateX(-50%);
+  }
+ 
+  .point {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    background: radial-gradient(circle at 30% 30%, #a78bfa, #6366f1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4), inset 0 -3px 5px rgba(0,0,0,0.2);
+    transition: left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 5;
+    touch-action: none;
+  }
+  .point:focus-visible {
+    outline: 3px solid #fbbf24;
+    outline-offset: 2px;
+  }
+  .point.dragging {
+    transition: none;
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.3);
+    box-shadow: 0 15px 25px rgba(99, 102, 241, 0.6);
+    z-index: 100;
+  }
+ 
+  .marker {
+    position: absolute;
+    transition: left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+  }
+ 
+  /* Mean uses a triangle pointing UP, starting below the axis */
+  #mean-marker {
+    top: calc(100% - 100px); /* Top edge is exactly ON the axis */
+    z-index: 2;
+  }
+  #mean-triangle {
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 12px solid #ef4444; /* Triangle points UP; short enough to stay above tick labels */
+  }
+  #mean-label {
+    color: #ef4444;
+    font-weight: bold;
+    margin-top: 26px; /* drop the label below the tick numbers */
+    background: rgba(239, 68, 68, 0.15);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+ 
+  /* Median uses a vertical line going UP from the axis */
+  #median-marker {
+    bottom: 100px; /* Bottom edge is exactly ON the axis */
+    height: 260px; /* recomputed in JS so the label stays below the dataset box */
+    border-left: 2px dashed #06b6d4;
+    z-index: 1;
+  }
+  #median-label {
+    position: absolute;
+    top: -35px;
+    background: rgba(6, 182, 212, 0.15);
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #06b6d4;
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+ 
+  .mode-highlight {
+    position: absolute;
+    bottom: 100px; /* Starts ON axis, grows UP */
+    width: 38px;
+    background: rgba(234, 179, 8, 0.15);
+    border: 2px dashed rgba(234, 179, 8, 0.6);
+    border-bottom: none;
+    border-top-left-radius: 19px;
+    border-top-right-radius: 19px;
+    transform: translateX(-50%);
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+    z-index: 0;
+  }
+ 
+  .array-display {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    color: #d1d5db;
+    background: rgba(0,0,0,0.4);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="dashboard">
+    <div class="metric"><div class="label">Mean</div><div class="value" id="mean-val">0</div><div class="sub" id="mean-sub"></div></div>
+    <div class="metric"><div class="label">Median</div><div class="value" id="median-val">0</div><div class="sub" id="median-sub"></div></div>
+    <div class="metric"><div class="label">Mode</div><div class="value" id="mode-val">0</div><div class="sub" id="mode-sub"></div></div>
+  </div>
+  <div class="controls-row">
+    <button id="btn-add">+ Add point</button>
+    <button id="btn-remove">− Remove point</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span class="hint">Drag a dot, or click it and use ← / → keys</span>
+  </div>
+ 
+  <div class="canvas-container" id="canvas">
+    <div class="array-display" id="array-display">[0]</div>
+    <div class="axis" id="axis"></div>
+    <div class="marker" id="mean-marker">
+      <div id="mean-triangle"></div>
+      <div id="mean-label">Mean</div>
+    </div>
+    <div class="marker" id="median-marker">
+      <div id="median-label">Median</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MIN_VAL = 0;
+  const MAX_VAL = 30;           // room to the right of the data for outlier experiments
+  const POINT_SPACING = 32;     // preferred vertical spacing for stacked dots
+  const DOT = 26;               // dot diameter (matches .point CSS)
+  const AXIS_BOTTOM = 100;      // px from canvas bottom to the axis
+  const TOP_RESERVE = 60;       // px kept free at the top for the dataset box
+  const MIN_POINTS = 2;
+  const MAX_POINTS = 20;
+
+  let dataPoints = [];
+  // Strategic initial values to clearly separate Mean, Median, Mode
+  const initialVals = [2, 3, 3, 4, 6, 8, 14, 18, 18, 18, 19];
+
+  const canvas = document.getElementById('canvas');
+  const axis = document.getElementById('axis');
+  const btnAdd = document.getElementById('btn-add');
+  const btnRemove = document.getElementById('btn-remove');
+  const btnReset = document.getElementById('btn-reset');
+  let modeHighlights = [];
+  let lastMedian = 0;
+
+  // 1. Create Ticks on Axis
+  for (let i = MIN_VAL; i <= MAX_VAL; i++) {
+    let pct = (i - MIN_VAL) / (MAX_VAL - MIN_VAL) * 100;
+    if (i % 5 === 0) {
+      let tick = document.createElement('div');
+      tick.className = 'tick';
+      tick.style.left = pct + '%';
+      tick.innerText = i;
+      axis.appendChild(tick);
+    }
+
+    let mark = document.createElement('div');
+    mark.className = 'tick-mark';
+    mark.style.left = pct + '%';
+    mark.style.height = (i % 5 === 0) ? '12px' : '6px';
+    axis.appendChild(mark);
+  }
+
+  // 2. Create Mode Highlights (n points can have at most floor(n/2) tied modes)
+  for (let i = 0; i < Math.floor(MAX_POINTS / 2); i++) {
+    let mhl = document.createElement('div');
+    mhl.className = 'mode-highlight';
+    mhl.style.opacity = 0;
+    canvas.appendChild(mhl);
+    modeHighlights.push(mhl);
+  }
+
+  // Helper Math
+  function getXFromVal(val) {
+    const axisRect = axis.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    if (axisRect.width === 0) return 0; // Guard for uninitialized
+    const width = axisRect.width;
+    const leftOffset = axisRect.left - canvasRect.left;
+    return leftOffset + ((val - MIN_VAL) / (MAX_VAL - MIN_VAL)) * width;
+  }
+
+  function getValFromX(x) {
+    const axisRect = axis.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const width = axisRect.width;
+    if (width === 0) return MIN_VAL;
+    const leftOffset = axisRect.left - canvasRect.left;
+    let val = MIN_VAL + ((x - leftOffset) / width) * (MAX_VAL - MIN_VAL);
+    return clampVal(Math.round(val));
+  }
+
+  function clampVal(v) {
+    return Math.max(MIN_VAL, Math.min(MAX_VAL, v));
+  }
+
+  // 3. Points
+  function createPoint(val) {
+    let el = document.createElement('div');
+    el.className = 'point';
+    el.tabIndex = 0;
+    el.setAttribute('role', 'slider');
+    el.setAttribute('aria-valuemin', MIN_VAL);
+    el.setAttribute('aria-valuemax', MAX_VAL);
+    canvas.appendChild(el);
+
+    let point = { el: el, val: val, isDragging: false };
+    dataPoints.push(point);
+
+    // Drag Events
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      el.focus();
+      point.isDragging = true;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      el.style.zIndex = 100;
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!point.isDragging) return;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      let x = e.clientX - canvasRect.left;
+      let y = e.clientY - canvasRect.top;
+
+      // Update visual DOM position instantly
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+
+      // Update underlying mathematical value and re-layout others
+      let newVal = getValFromX(x);
+      if (newVal !== point.val) {
+        point.val = newVal;
+        updateStatsAndLayout();
+      }
+    });
+
+    function finishDrag(e, releaseCapture) {
+      if (!point.isDragging) return;
+      point.isDragging = false;
+      el.classList.remove('dragging');
+      el.style.zIndex = 5;
+      if (releaseCapture && el.hasPointerCapture(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId);
+      }
+      updateStatsAndLayout();
+    }
+
+    el.addEventListener('pointerup', (e) => finishDrag(e, true));
+    el.addEventListener('pointercancel', (e) => finishDrag(e, false));
+    el.addEventListener('lostpointercapture', (e) => finishDrag(e, false));
+
+    // Keyboard access: arrows move the focused dot by 1
+    el.addEventListener('keydown', (e) => {
+      let delta = 0;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = 1;
+      if (delta === 0) return;
+      e.preventDefault();
+      point.val = clampVal(point.val + delta);
+      updateStatsAndLayout();
+    });
+    return point;
+  }
+
+  function removePoint(point) {
+    point.el.remove();
+    dataPoints = dataPoints.filter(p => p !== point);
+  }
+
+  function resetPoints() {
+    dataPoints.slice().forEach(removePoint);
+    initialVals.forEach(v => createPoint(v));
+    updateStatsAndLayout();
+  }
+
+  btnAdd.addEventListener('click', () => {
+    if (dataPoints.length >= MAX_POINTS) return;
+    createPoint(clampVal(Math.round(lastMedian)));
+    updateStatsAndLayout();
+  });
+  btnRemove.addEventListener('click', () => {
+    if (dataPoints.length <= MIN_POINTS) return;
+    removePoint(dataPoints[dataPoints.length - 1]);
+    updateStatsAndLayout();
+  });
+  btnReset.addEventListener('click', resetPoints);
+
+  // 4. Core Logic: Math & Layout
+  function fmt(v) {
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  }
+
+  function updateStatsAndLayout() {
+    let vals = dataPoints.map(p => p.val);
+    vals.sort((a,b) => a - b);
+    const n = vals.length;
+
+    // --- MATH ---
+    // Mean
+    let sum = vals.reduce((a,b) => a+b, 0);
+    let mean = sum / n;
+
+    // Median
+    let median;
+    let mid = Math.floor(n / 2);
+    let medianNote;
+    if (n % 2 === 0) {
+      median = (vals[mid-1] + vals[mid]) / 2;
+      medianNote = `n=${n} (even): avg of ${vals[mid-1]} & ${vals[mid]}`;
+    } else {
+      median = vals[mid];
+      medianNote = `n=${n} (odd): value #${mid + 1} in order`;
+    }
+    lastMedian = median;
+
+    // Mode
+    let counts = {};
+    vals.forEach(v => counts[v] = (counts[v] || 0) + 1);
+    let maxCount = 0;
+    for (let v in counts) {
+      if (counts[v] > maxCount) maxCount = counts[v];
+    }
+    let modes = [];
+    for (let v in counts) {
+      if (counts[v] === maxCount) modes.push(Number(v));
+    }
+
+    // --- UI UPDATES ---
+    document.getElementById('mean-val').innerText = mean.toFixed(1);
+    document.getElementById('mean-sub').innerText = `${sum} ÷ ${n}`;
+    document.getElementById('median-val').innerText = fmt(median);
+    document.getElementById('median-sub').innerText = medianNote;
+
+    const modeValEl = document.getElementById('mode-val');
+    if (maxCount <= 1) {
+      modeValEl.innerText = "None";
+      document.getElementById('mode-sub').innerText = 'every value is unique';
+      modes = []; // clear to hide highlights
+    } else {
+      modeValEl.innerText = modes.join(', ');
+      document.getElementById('mode-sub').innerText = `appears ${maxCount}×` + (modes.length > 1 ? ` (${modes.length}-way tie)` : '');
+    }
+    // Shrink the mode text when many tied modes would overflow the card
+    const modeLen = modeValEl.innerText.length;
+    modeValEl.style.fontSize = modeLen > 18 ? '18px' : (modeLen > 9 ? '24px' : '');
+
+    document.getElementById('array-display').innerText = `Dataset: [${vals.join(', ')}]`;
+    btnAdd.disabled = n >= MAX_POINTS;
+    btnRemove.disabled = n <= MIN_POINTS;
+
+    // Vertical budget: keep stacks between the axis and the dataset box (which may wrap onto 2+ lines)
+    const canvasHeight = canvas.getBoundingClientRect().height;
+    const arrayBox = document.getElementById('array-display');
+    const topReserve = Math.max(TOP_RESERVE, arrayBox.offsetTop + arrayBox.offsetHeight + 12);
+    const avail = Math.max(80, canvasHeight - AXIS_BOTTOM - topReserve);
+    const medianHeight = Math.max(40, avail - 40);
+    const stackRoom = medianHeight - 10;
+    const spacing = maxCount > 1 ? Math.min(POINT_SPACING, Math.max(6, (stackRoom - DOT) / (maxCount - 1))) : POINT_SPACING;
+
+    // Move Markers
+    document.getElementById('mean-marker').style.left = getXFromVal(mean) + 'px';
+    const medianMarker = document.getElementById('median-marker');
+    medianMarker.style.left = getXFromVal(median) + 'px';
+    medianMarker.style.height = medianHeight + 'px';
+
+    // Update Mode Highlights
+    modeHighlights.forEach(mhl => mhl.style.opacity = 0);
+    modes.forEach((modeVal, i) => {
+      if (i < modeHighlights.length) {
+        let mhl = modeHighlights[i];
+        mhl.style.left = getXFromVal(modeVal) + 'px';
+        mhl.style.height = ((maxCount - 1) * spacing + DOT + 12) + 'px';
+        mhl.style.opacity = 1;
+      }
+    });
+
+    // Layout Points (Stacking); a dot being dragged doesn't reserve a slot
+    let currentCounts = {};
+    for (let i = MIN_VAL; i <= MAX_VAL; i++) currentCounts[i] = 0;
+
+    dataPoints.forEach(p => {
+      p.el.setAttribute('aria-valuenow', p.val);
+      p.el.setAttribute('aria-label', `Data point with value ${p.val}`);
+      if (p.isDragging) return;
+      let count = currentCounts[p.val]++;
+      p.el.style.left = getXFromVal(p.val) + 'px';
+      let bottomOffset = AXIS_BOTTOM + DOT / 2 + count * spacing;
+      p.el.style.top = (canvasHeight - bottomOffset) + 'px';
+    });
+  }
+
+  initialVals.forEach(v => createPoint(v));
+
+  // 5. Lifecycle
+  const ro = new ResizeObserver(() => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      updateStatsAndLayout();
+    }
+  });
+  ro.observe(document.getElementById('app'));
+</script>
+</body>
+</html>

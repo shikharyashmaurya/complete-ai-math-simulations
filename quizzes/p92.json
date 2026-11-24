@@ -1,0 +1,18 @@
+{"page": 92, "questions": [
+  {"q": "Constant-rate SGD on $f(w) = \\tfrac12\\lambda w^2$ with gradient noise σ settles at an excess loss of $\\eta\\sigma^2 / (2(2-\\eta\\lambda))$. With $\\eta\\lambda$ small, what does halving η do to this floor?",
+   "options": ["Nothing — the floor depends only on σ", "Roughly halves it", "Quarters it", "Doubles it, because steps get noisier"],
+   "answer": 1,
+   "explain": "For small $\\eta\\lambda$ the floor is about $\\eta\\sigma^2/4$, proportional to η. That is why decaying schedules end below the constant one in Lab 2."},
+  {"q": "In the warmup demo, $f(w) = \\tfrac12 w^2 + \\tfrac14 w^4$ and a step multiplies $w$ by $1-\\eta(1+w^2)$. Starting at $w_0 = 3$, which constant rates avoid blowing up?",
+   "options": ["$\\eta < 2$", "$\\eta < 0.2$", "$\\eta < 1$", "Any η, because the quartic has a single minimum"],
+   "answer": 1,
+   "explain": "$|w|$ grows whenever $\\eta(1+w^2) > 2$; at $w_0 = 3$ that means $\\eta < 2/10 = 0.2$. Near the minimum $\\eta < 2$ would be fine, which is why warming up to a larger η works."},
+  {"q": "The inverse-square-root schedule is $\\eta_{\\max}\\min\\big(s/W,\\ \\sqrt{W/s}\\big)$ with $s = t+1$. What is η at $s = 4W$?",
+   "options": ["$\\eta_{\\max}/4$", "$\\eta_{\\max}/2$", "$\\eta_{\\max}$", "$4\\,\\eta_{\\max}$"],
+   "answer": 1,
+   "explain": "After warmup $\\eta = \\eta_{\\max}\\sqrt{W/s} = \\eta_{\\max}\\sqrt{1/4} = \\eta_{\\max}/2$: quadrupling the step count halves the rate."},
+  {"q": "Why do LLM pretraining runs typically combine linear warmup with cosine decay?",
+   "options": ["Warmup avoids unstable large steps while the loss is sharp and Adam's statistics are unreliable; the decay lowers the SGD noise floor at the end", "Warmup increases the batch size; cosine decay reduces the model size", "Cosine decay is the only schedule that converges", "Warmup is needed only because the data is shuffled"],
+   "answer": 0,
+   "explain": "The start of training has high curvature (η < 2/λ allows only small steps) and immature optimizer statistics; later, shrinking η reduces the noise-driven loss floor. Warmup + cosine does both."}
+]}

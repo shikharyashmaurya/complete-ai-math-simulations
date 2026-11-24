@@ -1,0 +1,49 @@
+{
+  "page": 32,
+  "questions": [
+    {
+      "q": "Flip $n = 4$ fair coins ($p = 0.5$). Using $P(X = k) = \\binom{n}{k} p^k (1-p)^{n-k}$, what is $P(X = 2)$?",
+      "options": [
+        "$0.25$",
+        "$0.5$",
+        "$0.0625$",
+        "$0.375$"
+      ],
+      "answer": 3,
+      "explain": "$\\binom{4}{2} = 6$ arrangements, each with probability $0.5^4 = 1/16$, so $6/16 = 0.375$. $0.0625$ forgets the $\\binom{n}{k}$ factor (counts only one arrangement)."
+    },
+    {
+      "q": "In the Binomial PMF, what does the factor $\\binom{n}{k}$ count?",
+      "options": [
+        "The number of different ways to arrange $k$ heads among $n$ flips",
+        "The probability that all $k$ chosen flips land heads",
+        "The expected number of heads",
+        "The number of tails"
+      ],
+      "answer": 0,
+      "explain": "$p^k$ and $(1-p)^{n-k}$ give the probability of *one* specific sequence; $\\binom{n}{k}$ multiplies by how many sequences have exactly $k$ heads."
+    },
+    {
+      "q": "A biased coin has $p = 0.3$. What is the probability of exactly 3 heads in $n = 10$ flips?",
+      "options": [
+        "$0.3$",
+        "About $0.027$",
+        "About $0.267$",
+        "About $0.0009$"
+      ],
+      "answer": 2,
+      "explain": "$\\binom{10}{3}(0.3)^3(0.7)^7 = 120 \\times 0.027 \\times 0.0824 \\approx 0.267$. $0.027 = 0.3^3$ ignores both the tails factor and the arrangements."
+    },
+    {
+      "q": "What happens to the Binomial histogram as the number of coins $n$ grows (with $p$ not too extreme)?",
+      "options": [
+        "It becomes flat (uniform)",
+        "It becomes increasingly bell-shaped — a hint of the Central Limit Theorem",
+        "It collapses onto $k = 0$",
+        "It always stays perfectly symmetric regardless of $p$"
+      ],
+      "answer": 1,
+      "explain": "A Binomial count is a sum of $n$ Bernoulli trials, so for large $n$ it looks Normal — fastest when $p$ is near $0.5$. For skewed $p$ it is asymmetric at small $n$."
+    }
+  ]
+}

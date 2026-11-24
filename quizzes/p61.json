@@ -1,0 +1,49 @@
+{
+  "page": 61,
+  "questions": [
+    {
+      "q": "For $A = \\begin{bmatrix} 2 & 1 \\\\ 1 & 2 \\end{bmatrix}$, is $\\mathbf{v} = [1,\\ 1]^T$ an eigenvector, and if so with which eigenvalue?",
+      "options": [
+        "Yes, $\\lambda = 1$",
+        "Yes, $\\lambda = 2$",
+        "No, $A\\mathbf{v}$ is rotated off the line",
+        "Yes, $\\lambda = 3$"
+      ],
+      "answer": 3,
+      "explain": "$A\\mathbf{v} = [3,\\ 3]^T = 3\\mathbf{v}$, so $\\mathbf{v}$ stays on its line and is scaled by $3$. ($\\lambda = 1$ is the other eigenvalue, belonging to $[-1,\\ 1]^T$.)"
+    },
+    {
+      "q": "Using trace $T = a + d$ and determinant $D = ad - bc$, what are the eigenvalues of $A = \\begin{bmatrix} 4 & 1 \\\\ 2 & 3 \\end{bmatrix}$?",
+      "options": [
+        "$4$ and $3$",
+        "$7$ and $10$",
+        "$5$ and $2$",
+        "$1$ and $2$"
+      ],
+      "answer": 2,
+      "explain": "$T = 7$, $D = 12 - 2 = 10$, so $\\lambda = \\frac{7 \\pm \\sqrt{49 - 40}}{2} = \\frac{7 \\pm 3}{2} = 5, 2$. The diagonal entries $4, 3$ are eigenvalues only for triangular matrices; $7$ and $10$ are $T$ and $D$ themselves."
+    },
+    {
+      "q": "Which preset in the sandbox has **no real** eigenvector at all?",
+      "options": [
+        "Shear",
+        "Rotation",
+        "Identity",
+        "Reflection"
+      ],
+      "answer": 1,
+      "explain": "A pure rotation turns every real direction, so $T^2 - 4D < 0$ and the eigenvalues are complex ($\\alpha \\pm \\beta i$). Shear still has one eigenvector line, Identity has every direction, and Reflection has two."
+    },
+    {
+      "q": "Why must $\\det(A - \\lambda I) = 0$ when solving for eigenvalues?",
+      "options": [
+        "$(A - \\lambda I)\\mathbf{v} = \\mathbf{0}$ needs a **non-zero** solution $\\mathbf{v}$, which exists only if $A - \\lambda I$ is singular",
+        "Because eigenvalues are always zero",
+        "Because $A$ itself must be singular to have eigenvectors",
+        "Because the determinant of any matrix minus $I$ is zero"
+      ],
+      "answer": 0,
+      "explain": "If $A - \\lambda I$ were invertible, the only solution would be $\\mathbf{v} = \\mathbf{0}$, which is excluded. $A$ itself need not be singular (e.g. the reflection has $\\det = -1$)."
+    }
+  ]
+}

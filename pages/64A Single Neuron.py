@@ -1,655 +1,230 @@
+import math
+import sys
+from pathlib import Path
+
 import streamlit as st
-import streamlit.components.v1 as components
+
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common.assets import load_lab  # noqa: E402
+from common.mathutils import sigmoid  # noqa: E402
+from common.nav import safe_page_link  # noqa: E402
 
 st.set_page_config(page_title="A Single Neuron", layout="wide")
 
 
 def render_neuron_lab():
-    html_code = """
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:sans-serif;background:#0f172a;color:#f8fafc;padding:10px;overflow-x:hidden;}
-.outer{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
-.title-card{background:rgba(30,41,59,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-.title-card h2{font-size:22px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f472b6,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.mode-toggle{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:4px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;}
-.mbtn{background:transparent;color:#94a3b8;border:none;padding:8px 12px;font-size:11px;font-weight:700;border-radius:8px;cursor:pointer;transition:.2s;}
-.mbtn:hover{color:#e2e8f0;}
-.mbtn.active{background:#1e293b;color:#fbbf24;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:1px solid rgba(251,191,36,0.3);}
-.mbtn[data-m="math"].active{color:#38bdf8;border-color:rgba(56,189,248,0.3);}
-.mbtn[data-m="contrib"].active{color:#34d399;border-color:rgba(52,211,153,0.3);}
-.main-grid{display:grid;grid-template-columns:1fr 1.45fr;gap:20px;}
-@media(max-width:920px){.main-grid{grid-template-columns:1fr;}}
-.panel{background:rgba(30,41,59,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;}
-.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:6px;}
-.preset-grid{display:grid;grid-template-columns:1fr;gap:8px;}
-.pbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#cbd5e1;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;transition:.2s;line-height:1.4;}
-.pbtn:hover{background:rgba(255,255,255,0.08);}
-.pbtn.active{background:rgba(251,191,36,0.1);border-color:#fbbf24;color:#fde68a;box-shadow:0 0 16px rgba(251,191,36,0.15);}
-.pbtn small{display:block;font-weight:600;color:#64748b;margin-top:3px;font-size:10px;}
-.pbtn.active small{color:#a8a29e;}
-.slider-box{background:rgba(0,0,0,0.2);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.04);margin-bottom:8px;}
-.srow{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;}
-.srow .val{font-family:monospace;font-weight:900;font-size:15px;}
-input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;cursor:pointer;}
-.in-sl::-webkit-slider-thumb{background:#4ade80;box-shadow:0 0 8px #4ade80;}
-.w-sl::-webkit-slider-thumb{background:#fbbf24;box-shadow:0 0 8px #fbbf24;}
-.b-sl::-webkit-slider-thumb{background:#f472b6;box-shadow:0 0 8px #f472b6;}
-.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.abtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#cbd5e1;padding:9px 6px;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;transition:.2s;}
-.abtn:hover{background:rgba(255,255,255,0.08);}
-.abtn.active{background:rgba(56,189,248,0.12);border-color:#38bdf8;color:#7dd3fc;}
-.pipeline{background:rgba(0,0,0,0.28);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.05);font-family:monospace;font-size:12px;line-height:1.7;}
-.pipe-step{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.06);}
-.pipe-step:last-child{border:none;}
-.pipe-step.dim{color:#64748b;}
-.pipe-step.hot{color:#fde68a;font-weight:800;}
-.pipe-step.out{color:#34d399;font-weight:900;font-size:14px;}
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.metric{background:rgba(0,0,0,0.22);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.04);}
-.metric.full{grid-column:1/-1;}
-.metric .mt{font-size:10px;font-weight:800;text-transform:uppercase;color:#64748b;letter-spacing:1px;}
-.metric .mv{font-size:22px;font-weight:900;font-family:monospace;margin-top:4px;}
-.metric .ms{font-size:10px;color:#94a3b8;margin-top:2px;}
-.fire-btn{width:100%;background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(244,114,182,0.2));color:#fde68a;border:1px solid rgba(251,191,36,0.4);padding:13px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;transition:.2s;letter-spacing:0.5px;}
-.fire-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,191,36,0.2);}
-.fire-btn.on{background:rgba(244,114,182,0.15);color:#fbcfe8;border-color:rgba(244,114,182,0.5);}
-.canvas-col{display:flex;flex-direction:column;gap:10px;}
-.status-banner{text-align:center;padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);color:#94a3b8;line-height:1.45;transition:.25s;}
-.status-banner.fire{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.35);color:#fde68a;}
-canvas{background:#090d16;border:2px solid rgba(255,255,255,0.08);border-radius:16px;display:block;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.35);}
-.mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.mini-lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:4px;text-align:center;}
-.legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:11px;padding:8px 12px;border-radius:20px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.04);}
-.leg{display:flex;align-items:center;gap:6px;}
-.leg-dot{width:10px;height:10px;border-radius:50%;}
-</style>
-</head>
-<body>
-<div class="outer">
-  <div class="title-card" style="display:flex">
-    <h2>🧠 ONE NEURON — The Smallest Decision Maker</h2>
-    <div class="mode-toggle" id="mode-btns">
-      <button class="mbtn active" data-m="flow" onclick="setMode('flow')">⚡ Signal Flow</button>
-      <button class="mbtn" data-m="math" onclick="setMode('math')">🔢 Dot Product</button>
-      <button class="mbtn" data-m="contrib" onclick="setMode('contrib')">📊 Contributions</button>
-    </div>
-  </div>
+    html_code = load_lab("p64_neuron")
+    st.iframe(html_code, height="content")
 
-  <div class="main-grid">
-    <div class="panel">
-      <div>
-        <div class="lbl">Pick a Story (Preset)</div>
-        <div class="preset-grid" id="preset-btns">
-          <button class="pbtn active" data-p="study" onclick="loadPreset('study',this)">
-            📚 Will I study tonight?
-            <small>Tiredness · Homework load · Coffee boost</small>
-          </button>
-          <button class="pbtn" data-p="spam" onclick="loadPreset('spam',this)">
-            📧 Is this email spam?
-            <small>ALL CAPS ratio · !!! marks · Unknown sender</small>
-          </button>
-          <button class="pbtn" data-p="game" onclick="loadPreset('game',this)">
-            🎮 Should I play outside?
-            <small>Weather · Homework done · Friend invited</small>
-          </button>
-        </div>
-      </div>
 
-      <div id="input-sliders"></div>
+# ---------------------------------------------------------------------------
+# Case study (merged from the former "64A Single Neuron2" page): a cat detector
+# ---------------------------------------------------------------------------
+CAT_FEATURES = ("📐 Ear pointiness (x₁)", "🐱 Whisker length (x₂)", "🔊 Barking volume (x₃)")
+CAT_ACTIVATIONS = ("Sigmoid", "Binary Step", "ReLU", "Tanh")
 
-      <div>
-        <div class="lbl">Weights (importance of each input)</div>
-        <div id="weight-sliders"></div>
-      </div>
-
-      <div class="slider-box">
-        <div class="srow"><span style="color:#f472b6">Bias b</span><span class="val" id="b-val" style="color:#f472b6">0.00</span></div>
-        <input type="range" class="b-sl" id="bias-sl" min="-3" max="3" step="0.1" value="0" oninput="onBias()">
-        <div style="font-size:10px;color:#64748b;margin-top:6px">Shifts the decision threshold — like needing extra motivation when tired.</div>
-      </div>
-
-      <div>
-        <div class="lbl">Activation (squash z into output)</div>
-        <div class="act-grid" id="act-btns">
-          <button class="abtn" data-a="relu" onclick="setAct('relu',this)">ReLU</button>
-          <button class="abtn active" data-a="sigmoid" onclick="setAct('sigmoid',this)">Sigmoid</button>
-          <button class="abtn" data-a="step" onclick="setAct('step',this)">Step</button>
-          <button class="abtn" data-a="linear" onclick="setAct('linear',this)">Linear</button>
-        </div>
-      </div>
-
-      <div class="metric-grid">
-        <div class="metric">
-          <div class="mt">Pre-activation z</div>
-          <div class="mv" id="z-val" style="color:#38bdf8">0.00</div>
-          <div class="ms">w·x + b</div>
-        </div>
-        <div class="metric">
-          <div class="mt">Output y</div>
-          <div class="mv" id="y-val" style="color:#34d399">0.00</div>
-          <div class="ms" id="y-label">activation(z)</div>
-        </div>
-        <div class="metric full">
-          <div class="mt" id="decision-label">Decision</div>
-          <div class="mv" id="dec-val" style="color:#fbbf24;font-size:18px">—</div>
-        </div>
-      </div>
-
-      <button class="fire-btn" id="fire-btn" onclick="toggleFire()">⚡ FIRE THE NEURON</button>
-
-      <div class="pipeline" id="pipeline"></div>
-    </div>
-
-    <div class="canvas-col">
-      <div class="status-banner" id="status">Adjust inputs & weights, then press FIRE to watch the signal travel.</div>
-      <canvas id="cvs" width="720" height="420"></canvas>
-      <div class="mini-row">
-        <div>
-          <div class="mini-lbl">Activation curve (z → y)</div>
-          <canvas id="cvs-act" width="340" height="140"></canvas>
-        </div>
-        <div>
-          <div class="mini-lbl" id="mini2-lbl">Weighted contributions</div>
-          <canvas id="cvs-mini" width="340" height="140"></canvas>
-        </div>
-      </div>
-      <div class="legend">
-        <div class="leg"><div class="leg-dot" style="background:#4ade80"></div> Inputs x</div>
-        <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div> Weights w</div>
-        <div class="leg"><div class="leg-dot" style="background:#f472b6"></div> Bias b</div>
-        <div class="leg"><div class="leg-dot" style="background:#38bdf8"></div> Sum z</div>
-        <div class="leg"><div class="leg-dot" style="background:#34d399"></div> Output y</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const PRESETS = {
-  study: {
-    labels: ['Tiredness', 'Homework hrs', 'Coffee cups'],
-    inputs: [0.7, 0.5, 0.2],
-    weights: [-1.8, 1.4, 0.9],
-    bias: -0.3,
-    inMin: [0,0,0], inMax: [1,3,3],
-    decision: (y) => y > 0.5 ? 'Yes — hit the books! 📖' : 'Nah — couch wins 🛋️',
-    thresh: 0.5
-  },
-  spam: {
-    labels: ['CAPS ratio', '!!! count', 'Unknown sender'],
-    inputs: [0.6, 0.4, 0.8],
-    weights: [2.2, 1.5, 1.8],
-    bias: -1.2,
-    inMin: [0,0,0], inMax: [1,5,1],
-    decision: (y) => y > 0.5 ? 'Spam folder 🗑️' : 'Inbox ✅',
-    thresh: 0.5
-  },
-  game: {
-    labels: ['Nice weather', 'Homework done', 'Friend invited'],
-    inputs: [0.8, 0.3, 0.9],
-    weights: [1.2, -1.5, 2.0],
-    bias: 0.2,
-    inMin: [0,0,0], inMax: [1,1,1],
-    decision: (y) => y > 0.5 ? 'Go play! ⚽' : 'Stay in & grind 💻',
-    thresh: 0.5
-  }
-};
-
-const INPUT_NAMES = ['x₁', 'x₂', 'x₃'];
-const WEIGHT_NAMES = ['w₁', 'w₂', 'w₃'];
-const COLORS = { in: '#4ade80', w: '#fbbf24', b: '#f472b6', z: '#38bdf8', y: '#34d399' };
-
-let preset = 'study';
-let mode = 'flow';
-let act = 'sigmoid';
-let firing = false;
-let fireT = 0;
-let fireAnim = null;
-
-const x = [0.7, 0.5, 0.2];
-const w = [-1.8, 1.4, 0.9];
-let bias = -0.3;
-
-const cvs = document.getElementById('cvs');
-const ctx = cvs.getContext('2d');
-const cAct = document.getElementById('cvs-act');
-const ctxA = cAct.getContext('2d');
-const cMini = document.getElementById('cvs-mini');
-const ctxM = cMini.getContext('2d');
-
-function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
-function relu(z) { return Math.max(0, z); }
-function step(z) { return z >= 0 ? 1 : 0; }
-function linear(z) { return z; }
-
-function activate(z) {
-  if (act === 'relu') return relu(z);
-  if (act === 'sigmoid') return sigmoid(z);
-  if (act === 'step') return step(z);
-  return linear(z);
+CAT_ANIMALS = {
+    "🐱 Siamese Cat": {
+        "x": (1.0, 1.0, 0.0),
+        "is_cat": True,
+        "desc": "Pointy ears, long whiskers, no barking — a textbook cat.",
+    },
+    "🐶 Golden Retriever": {
+        "x": (0.1, 0.2, 1.0),
+        "is_cat": False,
+        "desc": "Floppy ears, barely any whiskers, loud bark. Should NOT trigger the detector.",
+    },
+    "🐰 Fluffy Bunny": {
+        "x": (1.0, 0.9, 0.0),
+        "is_cat": False,
+        "desc": "Pointy ears, long whiskers, silent — on these three features it looks almost exactly like a cat.",
+    },
+    "🦁 Majestic Lion": {
+        "x": (0.8, 1.0, 0.0),
+        "is_cat": True,
+        "desc": "A big cat: slightly rounder ears, great whiskers, no barking. Should fire.",
+    },
+    "🤖 Robo-Dog": {
+        "x": (0.9, 0.1, 0.8),
+        "is_cat": False,
+        "desc": "Pointy metal ears, but it barks — the negative barking weight should shut it down.",
+    },
 }
 
-function actName() {
-  if (act === 'relu') return 'ReLU';
-  if (act === 'sigmoid') return 'σ';
-  if (act === 'step') return 'Step';
-  return 'Linear';
+CAT_DESIGNS = {
+    "start": {"label": "① Starting design", "w": (4.0, 5.0, -8.0), "b": -3.0},
+    "bias_only": {"label": "② Bias-only fix", "w": (4.0, 5.0, -8.0), "b": -8.7},
+    "reweighted": {"label": "③ Re-weighted fix", "w": (0.0, 10.0, -8.0), "b": -9.5},
 }
 
-function dotSum() {
-  let s = 0;
-  for (let i = 0; i < 3; i++) s += w[i] * x[i];
-  return s;
+
+def _set_design(key):
+    design = CAT_DESIGNS[key]
+    for i, wi in enumerate(design["w"], start=1):
+        st.session_state[f"p64_w{i}"] = wi
+    st.session_state.p64_b = design["b"]
+
+
+def _load_animal(name):
+    """Full preset: the animal's features plus a reset to the starting neuron design."""
+    for i, xi in enumerate(CAT_ANIMALS[name]["x"], start=1):
+        st.session_state[f"p64_x{i}"] = xi
+    _set_design("start")
+    st.session_state.p64_act = "Sigmoid"
+
+
+def _init_cat_state():
+    if "p64_x1" not in st.session_state:
+        _load_animal("🐱 Siamese Cat")
+    for key, default in (
+        ("p64_x2", 1.0), ("p64_x3", 0.0), ("p64_w1", 4.0), ("p64_w2", 5.0),
+        ("p64_w3", -8.0), ("p64_b", -3.0), ("p64_act", "Sigmoid"),
+    ):
+        st.session_state.setdefault(key, default)
+    if st.session_state.p64_act not in CAT_ACTIVATIONS:
+        st.session_state.p64_act = "Sigmoid"
+
+
+def neuron_forward(xs, ws, b, activation):
+    z = sum(xi * wi for xi, wi in zip(xs, ws)) + b
+    if activation == "Sigmoid":
+        a = float(sigmoid(z))
+    elif activation == "Binary Step":
+        a = 1.0 if z >= 0 else 0.0
+    elif activation == "ReLU":
+        a = max(0.0, z)
+    else:
+        a = math.tanh(z)
+    return z, a
+
+
+ACT_FORMULA = {
+    "Sigmoid": ("σ", "1 / (1 + e^(−z))", "probability-like (0–1) but NOT a calibrated confidence"),
+    "Binary Step": ("step", "1 if z ≥ 0 else 0", "a hard 0/1 vote — the 1958 perceptron's rule"),
+    "ReLU": ("ReLU", "max(0, z)", "an unbounded score ≥ 0, not a probability"),
+    "Tanh": ("tanh", "(e^z − e^(−z)) / (e^z + e^(−z))", "a score between −1 and 1, not a probability"),
 }
 
-function zVal() { return dotSum() + bias; }
 
-function buildSliders() {
-  const p = PRESETS[preset];
-  const inDiv = document.getElementById('input-sliders');
-  const wDiv = document.getElementById('weight-sliders');
-  inDiv.innerHTML = '<div class="lbl">Inputs (signals arriving)</div>';
-  wDiv.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const mn = p.inMin[i], mx = p.inMax[i];
-    inDiv.innerHTML += `
-      <div class="slider-box">
-        <div class="srow"><span style="color:#4ade80">${p.labels[i]} (${INPUT_NAMES[i]})</span>
-        <span class="val" id="x${i}-val" style="color:#4ade80">${x[i].toFixed(2)}</span></div>
-        <input type="range" class="in-sl" id="x${i}-sl" min="${mn}" max="${mx}" step="${(mx-mn)/20 || 0.05}" value="${x[i]}"
-          oninput="onInput(${i})">
-      </div>`;
-    wDiv.innerHTML += `
-      <div class="slider-box">
-        <div class="srow"><span style="color:#fbbf24">${WEIGHT_NAMES[i]} on ${p.labels[i]}</span>
-        <span class="val" id="w${i}-val" style="color:#fbbf24">${w[i].toFixed(2)}</span></div>
-        <input type="range" class="w-sl" id="w${i}-sl" min="-3" max="3" step="0.1" value="${w[i]}"
-          oninput="onWeight(${i})">
-      </div>`;
-  }
-  document.getElementById('bias-sl').value = bias;
-  document.getElementById('b-val').textContent = bias.toFixed(2);
-}
+def render_cat_case_study():
+    _init_cat_state()
 
-function loadPreset(name, btn) {
-  preset = name;
-  const p = PRESETS[name];
-  for (let i = 0; i < 3; i++) { x[i] = p.inputs[i]; w[i] = p.weights[i]; }
-  bias = p.bias;
-  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
-  const activeBtn = btn || document.querySelector(`.pbtn[data-p="${name}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-  buildSliders();
-  updateAll();
-}
+    st.markdown(
+        "Design a **cat-detector neuron** with three hand-made features. "
+        "Each animal button is a *full preset*: it loads the animal's features **and** resets the neuron "
+        "to the starting design (w = [4, 5, −8], b = −3, sigmoid) so results are reproducible. "
+        "The design buttons then change only the weights and bias."
+    )
 
-function onInput(i) {
-  x[i] = parseFloat(document.getElementById(`x${i}-sl`).value);
-  document.getElementById(`x${i}-val`).textContent = x[i].toFixed(2);
-  updateAll();
-}
-function onWeight(i) {
-  w[i] = parseFloat(document.getElementById(`w${i}-sl`).value);
-  document.getElementById(`w${i}-val`).textContent = w[i].toFixed(2);
-  updateAll();
-}
-function onBias() {
-  bias = parseFloat(document.getElementById('bias-sl').value);
-  document.getElementById('b-val').textContent = bias.toFixed(2);
-  updateAll();
-}
+    st.markdown("##### Step 1 — pick an animal")
+    animal_cols = st.columns(len(CAT_ANIMALS))
+    for idx, (name, info) in enumerate(CAT_ANIMALS.items()):
+        with animal_cols[idx]:
+            st.button(
+                name, key=f"p64_animal_{idx}", help=info["desc"], width="stretch",
+                on_click=_load_animal, args=(name,),
+            )
 
-function setAct(a, btn) {
-  act = a;
-  document.querySelectorAll('.abtn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  updateAll();
-}
+    st.markdown("##### Step 2 — pick (or tweak) a neuron design")
+    design_cols = st.columns(len(CAT_DESIGNS))
+    for idx, (key, design) in enumerate(CAT_DESIGNS.items()):
+        with design_cols[idx]:
+            w_txt = ", ".join(f"{v:g}" for v in design["w"])
+            st.button(
+                design["label"], key=f"p64_design_{key}", width="stretch",
+                help=f"w = [{w_txt}], b = {design['b']:g}",
+                on_click=_set_design, args=(key,),
+            )
 
-function setMode(m) {
-  mode = m;
-  document.querySelectorAll('#mode-btns .mbtn').forEach(b => {
-    b.classList.toggle('active', b.dataset.m === m);
-  });
-  document.getElementById('mini2-lbl').textContent =
-    m === 'math' ? 'Dot product as projection (2D slice)' :
-    m === 'contrib' ? 'Each wᵢxᵢ contribution' : 'Weighted contributions';
-  draw();
-}
+    left, right = st.columns([1, 1.4], gap="large")
+    with left:
+        st.markdown("**Inputs (features)**")
+        for i, label in enumerate(CAT_FEATURES, start=1):
+            st.slider(label, 0.0, 1.0, step=0.05, key=f"p64_x{i}")
+        st.markdown("**Weights and bias**")
+        for i, label in enumerate(("w₁ on ears", "w₂ on whiskers", "w₃ on barking"), start=1):
+            st.slider(label, -10.0, 10.0, step=0.5, key=f"p64_w{i}")
+        st.slider("Bias b", -15.0, 15.0, step=0.1, key="p64_b")
+        st.selectbox("Activation f", CAT_ACTIVATIONS, key="p64_act")
 
-function toggleFire() {
-  firing = !firing;
-  const btn = document.getElementById('fire-btn');
-  btn.textContent = firing ? '⏹ STOP' : '⚡ FIRE THE NEURON';
-  btn.classList.toggle('on', firing);
-  if (firing) {
-    fireT = 0;
-    if (fireAnim) cancelAnimationFrame(fireAnim);
-    animateFire();
-  }
-}
+    xs = tuple(float(st.session_state[f"p64_x{i}"]) for i in (1, 2, 3))
+    ws = tuple(float(st.session_state[f"p64_w{i}"]) for i in (1, 2, 3))
+    b = float(st.session_state.p64_b)
+    activation = st.session_state.p64_act
+    z, a = neuron_forward(xs, ws, b, activation)
+    fires = z >= 0
+    symbol, formula, meaning = ACT_FORMULA[activation]
+    matched = next(
+        (n for n, info in CAT_ANIMALS.items() if all(abs(u - v) < 1e-6 for u, v in zip(xs, info["x"]))),
+        None,
+    )
 
-function animateFire() {
-  if (!firing) return;
-  fireT += 0.025;
-  if (fireT >= 1) fireT = 0;
-  draw();
-  fireAnim = requestAnimationFrame(animateFire);
-}
+    with right:
+        st.markdown("**Step-by-step forward pass**")
+        products = [xi * wi + 0.0 for xi, wi in zip(xs, ws)]  # + 0.0 turns -0.0 into 0.0
+        breakdown = (
+            "z = " + " + ".join(f"({xi:.2f})({wi:+.1f})" for xi, wi in zip(xs, ws)) + f" + ({b:+.1f})\n"
+            "  = " + " ".join(f"{p:+.2f}" for p in products) + f" {b:+.2f}\n"
+            f"  = {z:+.4f}\n\n"
+            f"a = {symbol}(z) = {formula}\n"
+            f"  = {a:.4f}\n\n"
+            f"decision rule: z ≥ 0  →  {'FIRES (cat)' if fires else 'SILENT (not a cat)'}"
+        )
+        st.code(breakdown, language=None)
+        st.caption(f"Output a is {meaning}. The decision on this page always uses z ≥ 0.")
 
-function updatePipeline(z, y) {
-  const terms = [];
-  for (let i = 0; i < 3; i++) terms.push(`(${w[i].toFixed(2)})(${x[i].toFixed(2)})`);
-  const sum = dotSum();
-  const p = PRESETS[preset];
-  const dec = p.decision(y);
-  document.getElementById('pipeline').innerHTML = `
-    <div class="pipe-step">① Multiply: ${terms.join(' + ')}</div>
-    <div class="pipe-step hot">② Sum (dot product): ${sum.toFixed(3)}</div>
-    <div class="pipe-step">③ Add bias: ${sum.toFixed(3)} + (${bias.toFixed(2)}) = <b style="color:#38bdf8">${z.toFixed(3)}</b></div>
-    <div class="pipe-step">④ ${actName()}(z) = <b style="color:#34d399">${y.toFixed(3)}</b></div>
-    <div class="pipe-step out">⑤ ${dec}</div>`;
-}
+        if matched is not None:
+            truth = CAT_ANIMALS[matched]["is_cat"]
+            correct = truth == fires
+            verdict = (
+                f"**{matched}** — neuron says **{'CAT' if fires else 'NOT A CAT'}**; "
+                f"truth: **{'cat' if truth else 'not a cat'}** → {'✅ correct' if correct else '❌ wrong'}."
+            )
+            (st.success if correct else st.error)(verdict)
+            st.caption(CAT_ANIMALS[matched]["desc"])
+        else:
+            st.info(f"Custom animal — neuron says **{'CAT' if fires else 'NOT A CAT'}**.")
+        st.caption("This is a toy rule on three made-up features, not a validated real-world cat classifier.")
 
-function updateAll() {
-  const z = zVal();
-  const y = activate(z);
-  document.getElementById('z-val').textContent = z.toFixed(2);
-  document.getElementById('y-val').textContent = y.toFixed(2);
-  document.getElementById('y-label').textContent = actName() + '(z)';
-  const p = PRESETS[preset];
-  document.getElementById('dec-val').textContent = p.decision(y);
-  updatePipeline(z, y);
-  if (!firing) draw();
-}
+    st.markdown("#### 💡 Why bias alone can't fix the Bunny")
+    start_w = CAT_DESIGNS["start"]["w"]
+    ranking = sorted(
+        ((sum(xi * wi for xi, wi in zip(info["x"], start_w)), name) for name, info in CAT_ANIMALS.items()),
+        reverse=True,
+    )
+    rank_txt = " > ".join(f"{name} {score:+.1f}" for score, name in ranking)
+    st.markdown(
+        f"With the starting weights $\\mathbf{{w}} = (4, 5, -8)$ the dot products rank the animals as: {rank_txt}.\n\n"
+        "The bias adds the **same** number to every animal, so it only slides the cut-off along this ranking — "
+        "it can never reorder it. Because the Bunny (+8.5) scores *above* the Lion (+8.2), any bias that lets the "
+        "Lion through ($b \\ge -8.2$) also lets the Bunny through, and any bias that rejects the Bunny "
+        "($b < -8.5$, e.g. the bias-only fix $b = -8.7$) also rejects the Lion. "
+        "To separate them we must change the **weights**: with $\\mathbf{w} = (0, 10, -8)$ only whiskers and barking matter, "
+        "the Siamese and Lion score 10 and the Bunny 9, and $b = -9.5$ splits them."
+    )
 
-function drawNeuronFlow(progress) {
-  const W = cvs.width, H = cvs.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const inX = 70, sumX = 340, actX = 500, outX = 640;
-  const inYs = [90, 210, 330];
-  const sumY = 210;
-
-  // Title
-  ctx.fillStyle = '#64748b';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('FORWARD PASS', W/2, 28);
-
-  function node(x, y, r, color, label, sub) {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = color + '22';
-    ctx.fill();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, x, y + 5);
-    if (sub) {
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '600 10px sans-serif';
-      ctx.fillText(sub, x, y + r + 16);
-    }
-  }
-
-  function edge(x1, y1, x2, y2, color, alpha, label, pulse) {
-    ctx.globalAlpha = alpha;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2 + Math.abs(label) * 0.3;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    const cx = (x1 + x2) / 2;
-    ctx.quadraticCurveTo(cx, y1, x2, y2);
-    ctx.stroke();
-    if (pulse !== undefined && pulse >= 0) {
-      const t = Math.max(0, Math.min(1, pulse));
-      const px = x1 + (x2 - x1) * t;
-      const py = y1 + (y2 - y1) * t;
-      ctx.beginPath();
-      ctx.arc(px, py, 7, 0, Math.PI * 2);
-      ctx.fillStyle = '#fde68a';
-      ctx.fill();
-      ctx.shadowColor = '#fde68a';
-      ctx.shadowBlur = 12;
-    }
-    ctx.shadowBlur = 0;
-    if (label !== undefined && Math.abs(label) > 0.01) {
-      ctx.fillStyle = color;
-      ctx.font = 'bold 11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(label.toFixed(2), cx, (y1 + y2) / 2 - 8);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  const p = PRESETS[preset];
-  const z = zVal();
-  const y = activate(z);
-  const prog = progress || 0;
-
-  // Edges inputs → sum
-  for (let i = 0; i < 3; i++) {
-    const contrib = w[i] * x[i];
-    const pulse = firing ? Math.max(0, Math.min(1, (prog - i * 0.2) * 2)) : -1;
-    const alpha = 0.35 + Math.min(1, Math.abs(contrib) / 3) * 0.5;
-    edge(inX + 28, inYs[i], sumX - 32, sumY, COLORS.w, alpha, contrib, pulse);
-  }
-
-  // sum → activation
-  const p2 = firing ? Math.max(0, Math.min(1, (prog - 0.65) * 3)) : -1;
-  edge(sumX + 32, sumY, actX - 36, sumY, COLORS.z, 0.7, z, p2);
-
-  // bias arrow into sum
-  ctx.fillStyle = COLORS.b;
-  ctx.font = 'bold 12px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(`b=${bias.toFixed(2)}`, sumX, sumY - 52);
-  ctx.beginPath();
-  ctx.moveTo(sumX, sumY - 42);
-  ctx.lineTo(sumX, sumY - 30);
-  ctx.strokeStyle = COLORS.b;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // activation → output
-  const p3 = firing ? Math.max(0, Math.min(1, (prog - 0.85) * 5)) : -1;
-  edge(actX + 36, sumY, outX - 28, sumY, COLORS.y, 0.8, y, p3);
-
-  // Input nodes
-  for (let i = 0; i < 3; i++) {
-    node(inX, inYs[i], 28, COLORS.in, x[i].toFixed(2), p.labels[i]);
-    ctx.fillStyle = COLORS.w;
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`w=${w[i].toFixed(1)}`, inX - 38, inYs[i] + 4);
-  }
-
-  // Sum
-  node(sumX, sumY, 34, COLORS.z, 'Σ', 'weighted sum');
-  ctx.fillStyle = '#38bdf8';
-  ctx.font = 'bold 13px monospace';
-  ctx.fillText(`z=${z.toFixed(2)}`, sumX, sumY + 52);
-
-  // Activation box
-  ctx.fillStyle = 'rgba(56,189,248,0.08)';
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2;
-  roundRect(actX - 40, sumY - 38, 80, 76, 12);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#7dd3fc';
-  ctx.font = 'bold 12px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(actName(), actX, sumY - 6);
-  ctx.font = '10px sans-serif';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('activation', actX, sumY + 10);
-
-  // Output
-  node(outX, sumY, 30, COLORS.y, y.toFixed(2), 'output y');
-
-  // Mode overlays
-  if (mode === 'math') {
-    ctx.fillStyle = 'rgba(15,23,42,0.85)';
-    ctx.fillRect(12, 44, 200, 72);
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 12px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('w · x = Σ wᵢxᵢ', 22, 68);
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px monospace';
-    ctx.fillText(`${dotSum().toFixed(2)} + b = ${z.toFixed(2)}`, 22, 88);
-    ctx.fillStyle = '#64748b';
-    ctx.font = '10px sans-serif';
-    ctx.fillText('Same as one row of', 22, 106);
-    ctx.fillText('matrix × vector!', 22, 120);
-  }
-}
-
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function drawActivationCurve() {
-  const W = cAct.width, H = cAct.height;
-  ctxA.clearRect(0, 0, W, H);
-  const pad = 24;
-  const zNow = zVal();
-  const yNow = activate(zNow);
-
-  ctxA.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctxA.lineWidth = 1;
-  ctxA.beginPath();
-  ctxA.moveTo(pad, H/2);
-  ctxA.lineTo(W - pad, H/2);
-  ctxA.moveTo(W/2, pad);
-  ctxA.lineTo(W/2, H - pad);
-  ctxA.stroke();
-
-  ctxA.strokeStyle = '#38bdf8';
-  ctxA.lineWidth = 2.5;
-  ctxA.beginPath();
-  for (let i = 0; i <= 200; i++) {
-    const z = -4 + (8 * i) / 200;
-    const y = activate(z);
-    const px = pad + (i / 200) * (W - 2 * pad);
-    const py = H - pad - ((y + 0.5) / (act === 'linear' ? 5 : 1.5)) * (H - 2 * pad);
-    if (i === 0) ctxA.moveTo(px, py);
-    else ctxA.lineTo(px, py);
-  }
-  ctxA.stroke();
-
-  const px = pad + ((zNow + 4) / 8) * (W - 2 * pad);
-  const py = H - pad - ((yNow + 0.5) / (act === 'linear' ? 5 : 1.5)) * (H - 2 * pad);
-  ctxA.fillStyle = '#fde68a';
-  ctxA.beginPath();
-  ctxA.arc(px, py, 7, 0, Math.PI * 2);
-  ctxA.fill();
-  ctxA.fillStyle = '#94a3b8';
-  ctxA.font = '10px sans-serif';
-  ctxA.textAlign = 'center';
-  ctxA.fillText('your z', px, py - 12);
-}
-
-function drawMini() {
-  const W = cMini.width, H = cMini.height;
-  ctxM.clearRect(0, 0, W, H);
-  const pad = 28;
-  const contribs = [0, 1, 2].map(i => w[i] * x[i]);
-  const maxC = Math.max(0.5, ...contribs.map(Math.abs));
-
-  if (mode === 'math') {
-    // 2D: show w vector and x vector, projection
-    const ox = W * 0.35, oy = H * 0.55;
-    const scale = 38;
-    const xv = [x[0], x[1]], wv = [w[0], w[1]];
-    const xLen = Math.hypot(xv[0], xv[1]) || 1;
-    const wLen = Math.hypot(wv[0], wv[1]) || 1;
-    const dot = xv[0] * wv[0] + xv[1] * wv[1];
-    const proj = (dot / (wLen * wLen)) * wv;
-
-    function arrow(x1, y1, x2, y2, col, lbl) {
-      ctxM.strokeStyle = col;
-      ctxM.fillStyle = col;
-      ctxM.lineWidth = 2.5;
-      ctxM.beginPath();
-      ctxM.moveTo(x1, y1);
-      ctxM.lineTo(x2, y2);
-      ctxM.stroke();
-      ctxM.font = 'bold 10px monospace';
-      ctxM.fillText(lbl, x2 + 6, y2);
-    }
-    arrow(ox, oy, ox + xv[0] * scale, oy - xv[1] * scale, COLORS.in, 'x');
-    arrow(ox, oy, ox + wv[0] * scale * 0.7, oy - wv[1] * scale * 0.7, COLORS.w, 'w');
-    arrow(ox, oy, ox + proj[0] * scale * 0.7, oy - proj[1] * scale * 0.7, '#fde68a', 'proj');
-    ctxM.fillStyle = '#94a3b8';
-    ctxM.font = '10px sans-serif';
-    ctxM.fillText('x₁,x₂ slice of dot product', pad, 18);
-    return;
-  }
-
-  const barW = (W - 2 * pad) / 3 - 12;
-  for (let i = 0; i < 3; i++) {
-    const bx = pad + i * (barW + 12);
-    const h = (contribs[i] / maxC) * (H - 2 * pad) * 0.85;
-    const baseY = H - pad;
-    ctxM.fillStyle = contribs[i] >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)';
-    if (h >= 0) ctxM.fillRect(bx, baseY - h, barW, h);
-    else ctxM.fillRect(bx, baseY, barW, -h);
-    ctxM.fillStyle = '#94a3b8';
-    ctxM.font = '10px monospace';
-    ctxM.textAlign = 'center';
-    ctxM.fillText(WEIGHT_NAMES[i] + 'x' + (i + 1), bx + barW / 2, H - 8);
-    ctxM.fillStyle = '#f8fafc';
-    ctxM.font = 'bold 11px monospace';
-    ctxM.fillText(contribs[i].toFixed(2), bx + barW / 2, baseY - h - (h >= 0 ? 8 : -14));
-  }
-}
-
-function draw() {
-  const prog = firing ? fireT : 1;
-  drawNeuronFlow(prog);
-  drawActivationCurve();
-  drawMini();
-  const z = zVal();
-  const y = activate(z);
-  const st = document.getElementById('status');
-  if (firing) {
-    st.className = 'status-banner fire';
-    st.textContent = 'Signal traveling: inputs → multiply → sum → +bias → activation → output';
-  } else {
-    st.className = 'status-banner';
-    st.textContent = `z = ${z.toFixed(2)} → y = ${activate(z).toFixed(2)} · ${PRESETS[preset].decision(y)}`;
-  }
-}
-
-buildSliders();
-loadPreset('study', document.querySelector('.pbtn.active'));
-</script>
-</body>
-</html>
-"""
-    components.html(html_code, height=920, scrolling=True)
+    designs = [(d["label"], d["w"], d["b"]) for d in CAT_DESIGNS.values()]
+    designs.append(("Your sliders", ws, b))
+    header = "| Animal | Truth | " + " | ".join(f"{lbl} (b = {bb:g})" for lbl, _, bb in designs) + " |"
+    sep = "|---|---|" + "---|" * len(designs)
+    rows = [header, sep]
+    for name, info in CAT_ANIMALS.items():
+        cells = []
+        for _, dw, db in designs:
+            zz = sum(xi * wi for xi, wi in zip(info["x"], dw)) + db
+            ok = (zz >= 0) == info["is_cat"]
+            cells.append(f"z = {zz:+.2f} {'✅' if ok else '❌'}")
+        rows.append(f"| {name} | {'cat' if info['is_cat'] else 'not cat'} | " + " | ".join(cells) + " |")
+    st.markdown("\n".join(rows))
+    st.caption(
+        "✅ = the neuron's decision (z ≥ 0 → cat) matches the truth. The re-weighted fix only wins by ±0.5 "
+        "because the Bunny differs from a cat by just 0.1 in whisker length — better *features* (e.g. 'hops?') "
+        "would separate them far more robustly than any choice of weights."
+    )
 
 
 def main():
@@ -664,9 +239,9 @@ def main():
         2. **Weight** each input: multiply by $w_i$
         3. **Sum** everything — that's the **dot product** $\\mathbf{w} \\cdot \\mathbf{x}$
         4. **Shift** by a **bias** $b$
-        5. **Activate** — squash the result through a nonlinear function to produce output $y$
+        5. **Activate** — pass the result through a (usually nonlinear) function to produce output $y$
 
-        One neuron = one row of a matrix multiply, plus a bias, plus a squashing function. That's the whole bridge from linear algebra to AI.
+        One neuron = one row of a matrix multiply, plus a bias, plus an activation function. That's the whole bridge from linear algebra to AI.
         """
     )
 
@@ -674,7 +249,8 @@ def main():
     st.markdown("### 1) The Neuron Lab ⚡")
     st.markdown(
         "Pick a story preset, drag inputs and weights, choose an activation, then press **FIRE THE NEURON** "
-        "to watch the signal flow. Switch modes to see the dot product view or per-input contributions."
+        "to watch the signal flow. Switch modes to see the dot product as a projection or a waterfall of contributions. "
+        "Every story uses the same decision rule: **yes when z ≥ 0** (equivalently σ(z) ≥ 0.5)."
     )
     render_neuron_lab()
     st.divider()
@@ -690,12 +266,14 @@ def main():
 
 | Step | Formula | Meaning |
 |------|---------|---------|
-| Weight | $w_i x_i$ | How much input $i$ matters |
+| Weight | $w_i x_i$ | How much input $i$ matters (size of $\lvert w_i \rvert$) and in which direction (sign) |
 | Sum | $z = \sum_i w_i x_i$ | Dot product $\mathbf{w}\cdot\mathbf{x}$ |
 | Bias | $z \leftarrow z + b$ | Shift the decision boundary |
-| Activate | $y = f(z)$ | Nonlinear output (ReLU, sigmoid, …) |
+| Activate | $y = f(z)$ | Output (ReLU, sigmoid, tanh, …) |
 
 With 3 inputs, $\mathbf{w}$ is a **row vector** and $\mathbf{x}$ is a **column vector** — same as **one row** of matrix $\times$ vector from Page 12.
+
+Only the sigmoid output lies in $(0, 1)$ and *looks* like a probability — and even then it is not a calibrated confidence unless the neuron was trained (and checked) for that. ReLU outputs are unbounded; step outputs are just 0 or 1.
 """
         )
 
@@ -706,15 +284,23 @@ With 3 inputs, $\mathbf{w}$ is a **row vector** and $\mathbf{x}$ is a **column v
             """
 | Biology | Math |
 |---------|------|
-| Signals arriving | Inputs $\\mathbf{x}$ |
+| Signals arriving (dendrites) | Inputs $\\mathbf{x}$ |
 | Synapse strength | Weights $\\mathbf{w}$ |
-| Cell body integrates | Sum + bias $z$ |
-| Fires or stays quiet | Activation $f(z)$ |
+| Cell body (soma) integrates | Sum + bias $z$ |
+| Fires an all-or-nothing spike down the axon | Activation $f(z)$ |
 
-**Negative weights** mean “this input pushes *against* firing.”
-**Bias** means the neuron can fire even when all inputs are zero — a built-in tendency.
+**Negative weights** mean “this input pushes *against* firing” (like inhibitory synapses).
+**Bias** sets a built-in tendency: with $b > 0$ the neuron can fire even when all inputs are zero; with $b < 0$ it needs strong evidence.
 """
         )
+        with st.expander("Where the analogy breaks"):
+            st.markdown(
+                "Artificial neurons are only *loosely inspired* by biology — not a one-to-one model of a real cell. "
+                "A real neuron's action potential is all-or-nothing (closest to the **step** activation), "
+                "it fires in time as a train of spikes, and its synapses change chemically. "
+                "Sigmoid, tanh and ReLU produce graded numbers instead of spikes, and modern networks add "
+                "operations (e.g. attention, normalization) with no direct biological counterpart."
+            )
 
     st.divider()
 
@@ -731,17 +317,20 @@ With 3 inputs, $\mathbf{w}$ is a **row vector** and $\mathbf{x}$ is a **column v
     with c2:
         st.markdown("#### 📊 Contributions Mode")
         st.write(
-            "Switch to **Contributions** to see each $w_i x_i$ as a bar — "
-            "green pushes the sum up, red pulls it down. "
-            "The dot product is just adding these bars."
+            "Switch to **Contributions** to see a waterfall: start at 0, add each $w_i x_i$, then the bias — "
+            "the last bar is $z$. Green pushes up, red pulls down, and the main canvas names the biggest influence."
         )
     with c3:
         st.markdown("#### 🔢 Dot Product Mode")
         st.write(
-            "Switch to **Dot Product** for a 2D slice: "
-            "vector $\\mathbf{x}$ projected onto $\\mathbf{w}$. "
+            "Switch to **Dot Product** for a 2D slice ($x_1, x_2$ only): "
+            "vector $\\mathbf{x}$, weight vector $\\mathbf{w}$ and the projection of $\\mathbf{x}$ onto $\\mathbf{w}$. "
             "Same geometry as Page 6 — now inside a neuron."
         )
+
+    st.divider()
+    st.markdown("### 2) Case Study: Build a Cat Detector 🐱")
+    render_cat_case_study()
 
     st.divider()
 
@@ -756,14 +345,15 @@ With 3 inputs, $\mathbf{w}$ is a **row vector** and $\mathbf{x}$ is a **column v
     with a2:
         st.markdown("#### 🎛️ Weights Are Learned")
         st.write(
-            "Here you set weights by hand. In training (Pages 50–56, 70), "
+            "Here you set weights by hand — the cat detector shows how fiddly that is. In training (Pages 50–56, 70), "
             "**gradient descent** nudges every $w_i$ and $b$ until predictions improve."
         )
     with a3:
         st.markdown("#### ➡️ Next: Activations")
         st.write(
-            "This page previews ReLU & sigmoid. "
-            "Page 65 compares them side by side — and Page 66 shows why stacking layers **without** nonlinear activations still gives one big linear map."
+            "This page previews ReLU, sigmoid and tanh. "
+            "Page 65 compares them side by side, Page 66 shows why stacking linear layers **without** nonlinear "
+            "activations collapses into a single affine map, and Page 67 builds whole networks from matrix layers."
         )
 
     st.divider()
@@ -774,6 +364,7 @@ With 3 inputs, $\mathbf{w}$ is a **row vector** and $\mathbf{x}$ is a **column v
         "</div>",
         unsafe_allow_html=True,
     )
+    safe_page_link("pages/65Activation Functions Compared.py", "Next: 65 · Activation Functions Compared", icon="➡️")
 
 
 if __name__ == "__main__":

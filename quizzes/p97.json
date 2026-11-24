@@ -1,0 +1,14 @@
+{"page": 97, "questions": [
+  {"q": "$E$ is a $V \\times d$ embedding table and $\\mathbf{o}$ is the one-hot (row) vector for token $i$. What is $\\mathbf{o}E$?",
+   "options": ["The sum of all rows of $E$", "Row $i$ of $E$ — which is why embedding layers are implemented as a lookup", "Column $i$ of $E$", "A $V \\times d$ matrix with only row $i$ kept"], "answer": 1,
+   "explain": "All entries of $\\mathbf{o}$ are 0 except a single 1 at position $i$, so the product picks out exactly row $i$ (a $d$-vector). Indexing the row gives the same numbers without the $O(Vd)$ multiplication."},
+  {"q": "Cosine similarity between $\\mathbf{u} = (2, 0)$ and $\\mathbf{v} = (5, 0)$ is:",
+   "options": ["$0.4$", "$10$", "$1$", "$0$"], "answer": 2,
+   "explain": "Cosine similarity only looks at direction: $\\frac{10}{2 \\cdot 5} = 1$. The dot product (10) grows with length — that is why retrieval systems usually rank by cosine (or normalise the vectors first)."},
+  {"q": "When people report that king − man + woman ≈ queen in real word embeddings, what important detail is usually involved?",
+   "options": ["The input words king, man, woman are excluded from the candidates — otherwise the nearest vector is often king itself", "The result is always exactly equal to the queen vector", "It only works with one-hot vectors", "The vectors must first be projected to 2D with PCA"], "answer": 0,
+   "explain": "Real embeddings are noisy, so the offset is only roughly parallel and the closest vector is frequently one of the inputs. The analogy is approximate, often fails, and can reflect biases in the training text."},
+  {"q": "For sinusoidal positional encodings, what does the dot product $PE_p \\cdot PE_q$ depend on?",
+   "options": ["Only on $p + q$", "Only on the offset $p - q$, since it equals $\\sum_i \\cos(\\omega_i (p - q))$", "Only on $\\max(p, q)$", "Nothing — it is always 0 for $p \\ne q$"], "answer": 1,
+   "explain": "Using $\\sin a \\sin b + \\cos a \\cos b = \\cos(a - b)$ for each frequency $\\omega_i$, the dot product is $\\sum_i \\cos(\\omega_i (p - q))$: a function of the relative distance only, peaking at $d/2$ when $p = q$."}
+]}

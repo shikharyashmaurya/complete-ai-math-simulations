@@ -57,25 +57,31 @@ def predict_linear(X: np.ndarray, w: np.ndarray, b: float) -> np.ndarray:
     return np.where(s >= 0.0, 1.0, -1.0)
 
 
-def best_line_bruteforce(X: np.ndarray, y: np.ndarray, n_ang: int = 720, n_b: int = 121) -> tuple[np.ndarray, float, int]:
-    """Grid search (angle, bias) minimizing misclassifications — numpy only."""
-    best_err = 10**9
-    best_w = np.array([1.0, 0.0])
-    best_b = 0.0
-    thetas = np.linspace(-np.pi, np.pi, n_ang, endpoint=False)
-    for th in thetas:
-        w = np.array([np.cos(th), np.sin(th)])
-        proj = X @ w
-        bmin, bmax = -float(np.max(proj)) - 1.0, -float(np.min(proj)) + 1.0
-        bs = np.linspace(bmin, bmax, n_b)
-        for bb in bs:
-            pred = predict_linear(X, w, bb)
-            err = int(np.sum(pred != y))
-            if err < best_err:
-                best_err = err
-                best_w = w.copy()
-                best_b = float(bb)
-    return best_w, best_b, best_err
+def best_line_bruteforce(
+    X: np.ndarray,
+    y: np.ndarray,
+    b_min: float,
+    b_max: float,
+    b_step: float,
+) -> tuple[int, float, int]:
+    """Exhaustive search over every setting the sliders can make (integer angle in degrees,
+    bias on the slider grid). Minimizes misclassifications; ties go to the line with the
+    largest margin, so the answer never runs straight through a data point.
+    Returns (theta_deg, b, errors) — exactly reproducible with the sliders."""
+    bs = np.round(np.arange(b_min, b_max + b_step / 2, b_step), 2)
+    best = (10**9, -np.inf, 0, 0.0)  # (errors, margin, theta_deg, b)
+    for th_deg in range(-180, 180):
+        th = np.deg2rad(th_deg)
+        proj = X @ np.array([np.cos(th), np.sin(th)])
+        S = proj[:, None] + bs[None, :]  # (n_points, n_biases)
+        pred = np.where(S >= 0.0, 1.0, -1.0)
+        errs = np.sum(pred != y[:, None], axis=0)
+        margins = np.min(np.abs(S), axis=0)
+        k = int(np.lexsort((-margins, errs))[0])
+        cand = (int(errs[k]), float(margins[k]), th_deg, float(bs[k]))
+        if cand[0] < best[0] or (cand[0] == best[0] and cand[1] > best[1] + 1e-12):
+            best = cand
+    return best[2], best[3], best[0]
 
 
 def draw_classifier_panel(
@@ -106,7 +112,8 @@ def draw_classifier_panel(
         Gx, Gy = np.meshgrid(gx, gy)
         Z = Gx * w[0] + Gy * w[1] + b
         # custom two-tone colormap: negative vs positive side of the half-plane
-        cmap = LinearSegmentedColormap.from_list("half", ["#1e3a5f", "#5b1e3a"], N=256)
+        # negative side -> pink team (class -), positive side -> blue team (class +)
+        cmap = LinearSegmentedColormap.from_list("half", ["#5b1e3a", "#1e3a5f"], N=256)
         ax.contourf(Gx, Gy, Z, levels=[-1e9, 0.0, 1e9], cmap=cmap, alpha=0.55)
         ax.contour(Gx, Gy, Z, levels=[0.0], colors=[ACC_LINE], linewidths=2.6, linestyles="-")
 
@@ -160,7 +167,7 @@ def draw_classifier_panel(
 def render_intro():
     st.title("Page 21: Why Non-linearity? — The Straight-Line Ceiling")
     st.markdown(
-        f"""
+        """
         You already know **linear** rules: tweak **w**, slide **b**, and you get a **flat** decision boundary — a **single straight cut** through space.
 
         This page is a tiny **escape room**: can that one straight cut ever win? Spoiler for two classic shapes: **nope**. That frustration is exactly why neural nets reach for **bends** (ReLU, sigmoid, stacks of layers…) later.
@@ -176,7 +183,7 @@ def main():
         """
         **Try this**
         - Spin **angle** and **bias** until your eyes hurt — on **XOR** and **rings**, the yellow line is still “too straight”.
-        - Hit **Best straight line (grid search)** to watch the computer brute-force the *least bad* line — often still embarrassingly wrong.
+        - Hit **Best straight line (grid search)** to watch the computer try every slider setting and keep the *least bad* line — often still embarrassingly wrong.
         - Toggle **Paint the half-planes** to see the classifier’s “two-color world”.
 
         **Why it matters for AI**
@@ -201,30 +208,32 @@ def main():
         with c1:
             st.subheader("Twiddle the laser")
             # Button must run *before* sliders: Streamlit disallows mutating a widget's session_state after it exists.
+            st.session_state.setdefault("p21_xor_theta", 35)
+            st.session_state.setdefault("p21_xor_b", -0.35)
             if st.button("Best straight line (grid search)", key="p21_xor_best"):
                 Xx_btn, yy_btn = xor_dataset()
-                w_best, b_best, err_best = best_line_bruteforce(Xx_btn, yy_btn)
-                st.session_state["p21_xor_theta"] = int(np.rad2deg(np.arctan2(w_best[1], w_best[0])))
-                st.session_state["p21_xor_b"] = float(np.round(b_best, 4))
-                st.session_state["p21_xor_best_msg"] = f"Brute-force says: **{err_best}** mistake(s) is the best you can do with one line here."
+                th_best, b_best, err_best = best_line_bruteforce(Xx_btn, yy_btn, -2.2, 2.2, 0.05)
+                st.session_state["p21_xor_theta"] = th_best
+                st.session_state["p21_xor_b"] = b_best
+                st.session_state["p21_xor_best_msg"] = (
+                    f"Brute-force over every slider setting says: **{err_best}** mistake(s) is the best you can do with one line here."
+                )
             if "p21_xor_best_msg" in st.session_state:
                 st.success(st.session_state["p21_xor_best_msg"])
-            theta_deg = st.slider("angle of normal vector (°)", -180, 180, 35, 1, key="p21_xor_theta")
-            b_xor = st.slider("bias b (slides the line)", -2.2, 2.2, -0.35, 0.05, key="p21_xor_b")
+            theta_deg = st.slider("angle of normal vector (°)", -180, 180, step=1, key="p21_xor_theta")
+            b_xor = st.slider("bias b (slides the line)", -2.2, 2.2, step=0.05, key="p21_xor_b")
             paint_xor = st.toggle("Paint the half-planes", value=True, key="p21_xor_paint")
 
         th = np.deg2rad(float(theta_deg))
         w = np.array([np.cos(th), np.sin(th)], dtype=float)
 
         Xx, yy = xor_dataset()
-        pred = predict_linear(Xx, w, b_xor)
-        wrong = int(np.sum(pred != yy))
 
         with c2:
             st.subheader("Battlefield")
             fig, ax = plt.subplots(figsize=(10.2, 6.0))
             fig.patch.set_facecolor(BG)
-            draw_classifier_panel(
+            wrong = draw_classifier_panel(
                 ax,
                 Xx,
                 yy,
@@ -236,13 +245,13 @@ def main():
                 paint_xor,
             )
             plt.tight_layout()
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig, width="stretch")
             plt.close(fig)
 
         st.metric("Misclassified points", f"{wrong} / 4")
 
         st.info(
-            "Those **pink halos** are honest mistakes: the line picked a side, and the point disagreed. On XOR, **some** halo traffic is unavoidable — not because you are bad at sliders, because the task is **not line-separable** (the best single line still leaves **2** wrong — try the grid-search button)."
+            "Those **red halos** are honest mistakes: the line picked a side, and the point disagreed. On XOR, **some** halo traffic is unavoidable — not because you are bad at sliders, because the task is **not line-separable**: the best single line still leaves **1** of the 4 points wrong (e.g. cut off one corner) — try the grid-search button."
         )
 
     with tab_rings:
@@ -259,29 +268,33 @@ def main():
         c1, c2 = st.columns((1.05, 2.0), gap="large")
         with c1:
             st.subheader("Twiddle the laser")
+            st.session_state.setdefault("p21_ring_theta", 125)
+            st.session_state.setdefault("p21_ring_b", 0.0)
             if st.button("Best straight line (grid search)", key="p21_ring_best"):
-                w_best, b_best, err_best = best_line_bruteforce(Xr, yr, n_ang=540, n_b=140)
-                st.session_state["p21_ring_theta"] = int(np.rad2deg(np.arctan2(w_best[1], w_best[0])))
-                st.session_state["p21_ring_b"] = float(np.round(b_best, 3))
+                th_best, b_best, err_best = best_line_bruteforce(Xr, yr, -1.4, 1.4, 0.05)
+                st.session_state["p21_ring_theta"] = th_best
+                st.session_state["p21_ring_b"] = b_best
                 st.session_state["p21_ring_best_msg"] = (
                     f"Even the computer’s best line leaves **{err_best}** wrong out of {Xr.shape[0]} — geometry beats optimism."
                 )
+                st.session_state["p21_ring_best_seed"] = int(seed)
+            if st.session_state.get("p21_ring_best_seed") != int(seed):
+                # The stored result belongs to a different point cloud: drop it.
+                st.session_state.pop("p21_ring_best_msg", None)
             if "p21_ring_best_msg" in st.session_state:
                 st.warning(st.session_state["p21_ring_best_msg"])
-            theta_deg2 = st.slider("angle of normal vector (°)", -180, 180, 125, 1, key="p21_ring_theta")
-            b_ring = st.slider("bias b", -1.4, 1.4, 0.0, 0.05, key="p21_ring_b")
+            theta_deg2 = st.slider("angle of normal vector (°)", -180, 180, step=1, key="p21_ring_theta")
+            b_ring = st.slider("bias b", -1.4, 1.4, step=0.05, key="p21_ring_b")
             paint_ring = st.toggle("Paint the half-planes", value=True, key="p21_ring_paint")
 
         th2 = np.deg2rad(float(theta_deg2))
         w2 = np.array([np.cos(th2), np.sin(th2)], dtype=float)
-        pred2 = predict_linear(Xr, w2, b_ring)
-        wrong2 = int(np.sum(pred2 != yr))
 
         with c2:
             st.subheader("Battlefield")
             fig, ax = plt.subplots(figsize=(10.2, 6.0))
             fig.patch.set_facecolor(BG)
-            draw_classifier_panel(
+            wrong2 = draw_classifier_panel(
                 ax,
                 Xr,
                 yr,
@@ -293,7 +306,7 @@ def main():
                 paint_ring,
             )
             plt.tight_layout()
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig, width="stretch")
             plt.close(fig)
 
         st.caption("Halos mark misclassified samples — watch them bloom when the line slices through the donut.")
@@ -302,7 +315,7 @@ def main():
 
     with tab_recap:
         st.markdown(
-            f"""
+            """
             ### Recap in one breath
             - **Linear classifiers** = **one hyperplane** → **two half-spaces**. Powerful, fast, interpretable — but **topologically polite**.
             - Some toy datasets are **tiny** yet **already rude** to half-spaces (XOR is the poster child).
@@ -319,10 +332,10 @@ def main():
         with st.expander("Optional micro-proof (why XOR hates one line)", expanded=False):
             st.markdown(
                 r"""
-                Label points in $\{\,0,1\,\}^2$ with XOR signs: **+1** on \((0,1)\) and \((1,0)\); **−1** on \((0,0)\) and \((1,1)\).
-                For the score \(s(x,y)=w_1x+w_2y+b\), the two positive labels require \(s(1,0)>0\) and \(s(0,1)>0\), while the negative labels require \(s(0,0)<0\) and \(s(1,1)<0\).
-                But \(s(1,0)+s(0,1)=s(0,0)+s(1,1)=w_1+w_2+2b\), so the same sum would have to be both positive and negative — a contradiction.
-                Hence **no** single thresholded line separates all four — time to invite a **bendy** friend.
+                Label points in $\{\,0,1\,\}^2$ with XOR signs: **+1** on $(0,1)$ and $(1,0)$; **−1** on $(0,0)$ and $(1,1)$.
+                For the score $s(x,y)=w_1x+w_2y+b$, the two positive labels require $s(1,0)\ge 0$ and $s(0,1)\ge 0$, while the negative labels require $s(0,0)<0$ and $s(1,1)<0$.
+                But $s(1,0)+s(0,1)=s(0,0)+s(1,1)=w_1+w_2+2b$, so the same sum would have to be both $\ge 0$ and $<0$ — a contradiction.
+                Hence **no** single thresholded line separates all four — at least **1** point is always wrong (and 1 is achievable: cut off a single corner). Time to invite a **bendy** friend.
                 """
             )
 

@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Dot Product — Algebraic View", layout="wide")
 
+
+def paren(n: int) -> str:
+    """Wrap negative numbers in parentheses so '2 × -3' reads as '2 × (-3)'."""
+    return f"({n})" if n < 0 else str(n)
+
+
 st.title("Dot Product — Algebraic View")
 st.write(
     "The dot product is the algebraic handshake between two vectors: "
@@ -17,10 +23,10 @@ with st.container():
     col1, col2 = st.columns([1, 1])
     with col1:
         st.subheader("Choose two vectors")
-        a0 = st.slider("a₁ (x of vector a)", -5, 5, 2)
-        a1 = st.slider("a₂ (y of vector a)", -5, 5, 1)
-        b0 = st.slider("b₁ (x of vector b)", -5, 5, 1)
-        b1 = st.slider("b₂ (y of vector b)", -5, 5, 2)
+        a0 = st.slider("a₁ (x of vector a)", -5, 5, 2, key="p07_a1")
+        a1 = st.slider("a₂ (y of vector a)", -5, 5, 1, key="p07_a2")
+        b0 = st.slider("b₁ (x of vector b)", -5, 5, 1, key="p07_b1")
+        b1 = st.slider("b₂ (y of vector b)", -5, 5, 2, key="p07_b2")
 
         a = np.array([a0, a1], dtype=float)
         b = np.array([b0, b1], dtype=float)
@@ -34,9 +40,10 @@ with st.container():
         st.subheader("Algebraic calculation")
         st.latex(r"\mathbf{a} \cdot \mathbf{b} = a_1 b_1 + a_2 b_2")
         st.write("Multiply each matching component, then add the results:")
-        st.write(f"{a0} × {b0} + {a1} × {b1}")
+        st.write(f"{paren(a0)} × {paren(b0)} + {paren(a1)} × {paren(b1)}")
         dot = a0 * b0 + a1 * b1
-        st.write(f"= {a0 * b0} + {a1 * b1}")
+        second = a1 * b1
+        st.write(f"= {a0 * b0} {'-' if second < 0 else '+'} {abs(second)}")
         st.markdown(f"**Dot product = {dot}**")
 
         st.write("")
@@ -62,10 +69,11 @@ with col3:
     ax.axvline(0, color="gray", linewidth=0.8)
     ax.quiver(0, 0, a[0], a[1], angles="xy", scale_units="xy", scale=1, color="tab:blue", label="a")
     ax.quiver(0, 0, b[0], b[1], angles="xy", scale_units="xy", scale=1, color="tab:orange", label="b")
-    if np.linalg.norm(a) > 1e-6:
-        a_hat = a / np.linalg.norm(a)
-        proj_length = np.dot(b, a_hat)
-        projection = proj_length * a_hat
+    if np.linalg.norm(b) > 1e-6:
+        # Same convention as the Geometric View page: the shadow of a falling on b
+        b_hat = b / np.linalg.norm(b)
+        proj_length = np.dot(a, b_hat)
+        projection = proj_length * b_hat
         ax.quiver(
             0,
             0,
@@ -76,18 +84,20 @@ with col3:
             scale=1,
             color="tab:green",
             alpha=0.7,
-            label="projection of b onto a",
+            label="projection (shadow) of a onto b",
         )
-        ax.plot([projection[0], b[0]], [projection[1], b[1]], color="gray", linestyle="--", alpha=0.7)
+        ax.plot([projection[0], a[0]], [projection[1], a[1]], color="gray", linestyle="--", alpha=0.7)
     ax.set_aspect("equal")
     ax.grid(True, linestyle=":", alpha=0.5)
     ax.legend(loc="upper left")
     ax.set_title("Vectors and projection")
     st.pyplot(fig)
+    plt.close(fig)
 
 with col4:
     st.markdown(
-        "The algebraic dot product gives the same answer as the geometric idea of how much of b points in the direction of a."
+        "The algebraic dot product gives the same answer as the geometric idea of how much of a points in the direction of b "
+        "(the green shadow length times |b|)."
     )
     length_a = np.linalg.norm(a)
     length_b = np.linalg.norm(b)
@@ -106,16 +116,18 @@ st.write("---")
 
 st.subheader("What the numbers mean")
 st.write(
-    "If each matching component points in the same direction, it contributes a positive amount. "
-    "If a component of one vector goes the opposite way, that direction subtracts from the total. "
-    "If the dot product is zero, the vectors are perpendicular — they do not agree in any coordinate direction."
+    "If both vectors move the same way along an axis, that pair of components contributes a positive amount. "
+    "If they move opposite ways along an axis, that pair subtracts from the total. "
+    "If the dot product of two non-zero vectors is zero, the vectors are perpendicular: the agreements and "
+    "disagreements cancel out exactly. For example, (1, 1) · (1, -1) = 1 - 1 = 0 even though both point right."
 )
 
-st.write("### Quick rules")
+st.write("### Quick rules (for non-zero vectors)")
 st.write(
     "- Positive dot product = vectors are somewhat aligned (acute angle).\n"
-    "- Zero dot product = vectors are perpendicular.\n"
-    "- Negative dot product = vectors point against each other (obtuse angle)."
+    "- Zero dot product = vectors are perpendicular (90°).\n"
+    "- Negative dot product = vectors point against each other (obtuse angle).\n"
+    "- If either vector is the zero vector, the dot product is 0 but there is no angle to talk about."
 )
 
 st.write("---")

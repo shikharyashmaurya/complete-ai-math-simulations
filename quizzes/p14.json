@@ -1,0 +1,49 @@
+{
+  "page": 14,
+  "questions": [
+    {
+      "q": "What do the **columns** of a 2×2 matrix $M$ tell you?",
+      "options": [
+        "Where the basis vectors $\\hat{\\imath}$ and $\\hat{\\jmath}$ land",
+        "Where the origin moves to",
+        "The area of the unit square",
+        "The rotation angle and the scale factor"
+      ],
+      "answer": 0,
+      "explain": "$M\\hat{\\imath}$ is the first column and $M\\hat{\\jmath}$ the second; once you know them, linearity fixes the rest of the grid. The origin never moves."
+    },
+    {
+      "q": "With the preset **Stretch X, Squash Y**, $M = \\begin{bmatrix} 1.5 & 0 \\\\ 0 & 0.5 \\end{bmatrix}$. Where does the point $(2, 1)$ go?",
+      "options": [
+        "$(3.5, 0.5)$",
+        "$(1.5, 0.5)$",
+        "$(3, 0.5)$",
+        "$(1.3, 2)$"
+      ],
+      "answer": 2,
+      "explain": "$M(2, 1)^T = (1.5 \\cdot 2 + 0,\\; 0 + 0.5 \\cdot 1) = (3, 0.5)$."
+    },
+    {
+      "q": "In $M = H\\,R\\,S$ (shear · rotation · scale), which transformation acts on a vector $x$ **first**?",
+      "options": [
+        "$H$ (shear)",
+        "All act at the same time, so order does not matter",
+        "$R$ (rotation)",
+        "$S$ (scale)"
+      ],
+      "answer": 3,
+      "explain": "Matrices act right-to-left: $M x = H(R(Sx))$, so the point is scaled first, then rotated, then sheared — and order matters."
+    },
+    {
+      "q": "The preset **Collapse to line (Singular)** is $\\begin{bmatrix} 1 & 1 \\\\ 1 & 1 \\end{bmatrix}$. What does $\\det(M) = 0$ mean here?",
+      "options": [
+        "The plane is flipped like a mirror",
+        "The whole plane is squashed onto a line, so area becomes 0",
+        "The plane is rotated by 0°",
+        "Nothing changes"
+      ],
+      "answer": 1,
+      "explain": "Both columns point along $(1, 1)$, so every point lands on that one line: space collapses to a lower dimension and $|\\det| = 0$."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "page": 16,
+  "questions": [
+    {
+      "q": "Which matrix is the identity $I_3$?",
+      "options": [
+        "$\\begin{bmatrix} 0 & 0 & 1 \\\\ 0 & 1 & 0 \\\\ 1 & 0 & 0 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 0 & 0 & 0 \\\\ 0 & 0 & 0 \\\\ 0 & 0 & 0 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 1 & 1 & 1 \\\\ 1 & 1 & 1 \\\\ 1 & 1 & 1 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 1 & 0 & 0 \\\\ 0 & 1 & 0 \\\\ 0 & 0 & 1 \\end{bmatrix}$"
+      ],
+      "answer": 3,
+      "explain": "Identity has 1s on the main diagonal and 0s everywhere else. The all-ones matrix is not \"multiply by 1\"; the anti-diagonal one swaps components."
+    },
+    {
+      "q": "With $v = (3, -2, 1.5)$, what is $(I_3 v)_2$, the second component of $I_3 v$?",
+      "options": [
+        "$-2$",
+        "$1$",
+        "$2.5$",
+        "$0$"
+      ],
+      "answer": 0,
+      "explain": "Row 2 of $I_3$ is $(0, 1, 0)$, so $(Iv)_2 = 0 \\cdot 3 + 1 \\cdot (-2) + 0 \\cdot 1.5 = -2$: it selects exactly $v_2$. Summing all components (2.5) is the all-ones-row trap."
+    },
+    {
+      "q": "For a square matrix $A$, which statement is true?",
+      "options": [
+        "$A I = I A = A$",
+        "$I A = A^T$",
+        "$A I = A$ but $I A = I$",
+        "$A I = I$"
+      ],
+      "answer": 0,
+      "explain": "Identity is the neutral element of matrix multiplication, on the left and on the right — the matrix version of multiplying by 1."
+    },
+    {
+      "q": "Geometrically, what does the identity transformation do to the plane?",
+      "options": [
+        "Scales it by 1 in x and 0 in y",
+        "Rotates it by 90°",
+        "Reflects it across the line $y = x$",
+        "Nothing — no rotation, no scaling, no shear, no flip"
+      ],
+      "answer": 3,
+      "explain": "Every vector comes out unchanged, so positions, lengths, angles and directions are all preserved."
+    }
+  ]
+}

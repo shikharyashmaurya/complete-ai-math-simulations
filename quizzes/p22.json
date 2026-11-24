@@ -1,0 +1,49 @@
+{
+  "page": 22,
+  "questions": [
+    {
+      "q": "What does ReLU output for the input $x = -2.5$, and what does Leaky ReLU (slope 0.1 for $x < 0$) output?",
+      "options": [
+        "ReLU: $0$; Leaky ReLU: $-2.5$",
+        "ReLU: $-2.5$; Leaky ReLU: $0$",
+        "ReLU: $0$; Leaky ReLU: $-0.25$",
+        "ReLU: $2.5$; Leaky ReLU: $0.25$"
+      ],
+      "answer": 2,
+      "explain": "ReLU $= \\max(0, x)$ blocks negatives; Leaky ReLU lets a small fraction through: $0.1 \\times (-2.5) = -0.25$. Returning $2.5$ is the absolute value."
+    },
+    {
+      "q": "In the Stitch Lab, Lane A is $y = 0.5x + 2$ for $x < a$ with gate $a = -2$, and Lane B has slope $m_2 = -1$. Which intercept $b_2$ makes the curve continuous at $a$?",
+      "options": [
+        "$b_2 = 1$",
+        "$b_2 = -1$",
+        "$b_2 = -4$",
+        "$b_2 = 2$"
+      ],
+      "answer": 1,
+      "explain": "Use $b_2 = (m_1 - m_2)\\,a + b_1 = 1.5 \\cdot (-2) + 2 = -1$. Check: both pieces give $y = 1$ at $x = -2$, so the jump is 0."
+    },
+    {
+      "q": "The jump at a gate is shown as **right piece minus left piece**. What does a reading of $+1.50$ mean?",
+      "options": [
+        "The curve steps down by 1.5",
+        "The two pieces have slopes that differ by 1.5",
+        "The function is continuous at that gate",
+        "The curve steps up by 1.5 as you cross the gate from left to right"
+      ],
+      "answer": 3,
+      "explain": "A positive signed jump means the right piece starts 1.5 higher than where the left piece ended; continuity requires a jump of $0.00$."
+    },
+    {
+      "q": "In the XOR lab, Auto-Solve sets $h_1 = \\max(0, x + y - 0.5)$, $h_2 = \\max(0, x + y - 1.5)$ and $\\text{out} = h_1 - 3h_2 - 0.1$. What is the output at the point $(1, 1)$?",
+      "options": [
+        "$-0.1$ (class −)",
+        "$1.4$ (class +)",
+        "$-1.6$ (class −)",
+        "$0.4$ (class +)"
+      ],
+      "answer": 0,
+      "explain": "$h_1 = 1.5$, $h_2 = 0.5$, so out $= 1.5 - 1.5 - 0.1 = -0.1$: subtracting the second ReLU folds the output back down. Ignoring $h_2$ gives 1.4."
+    }
+  ]
+}

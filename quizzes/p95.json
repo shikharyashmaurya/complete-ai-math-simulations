@@ -1,0 +1,18 @@
+{"page": 95, "questions": [
+  {"q": "After the normalisation step $\\hat x_i=(x_i-\\mu_B)/\\sqrt{\\sigma_B^2+\\varepsilon}$, why does BatchNorm apply $y_i=\\gamma\\hat x_i+\\beta$ with learnable $\\gamma,\\beta$?",
+   "options": ["To undo the effect of $\\varepsilon$ only", "So the network can choose any mean and scale — even recover the original $x$ with $\\gamma=\\sqrt{\\sigma_B^2+\\varepsilon}$, $\\beta=\\mu_B$", "To make the output always have mean 0 and variance 1", "Because $\\hat x$ is not differentiable"],
+   "answer": 1,
+   "explain": "Forcing every feature to mean 0 / variance 1 could limit what the layer can represent. $\\gamma$ and $\\beta$ restore that freedom; the page's 'undo' checkbox shows $y=x$ exactly."},
+  {"q": "Inputs have standard deviation $\\sigma$. How does the typical fluctuation (standard deviation) of the batch mean $\\mu_B$ depend on the batch size $B$?",
+   "options": ["It is $\\sigma$ for every $B$", "It is $\\sigma/B$", "It is $\\sigma/\\sqrt{B}$", "It grows like $\\sqrt{B}$"],
+   "answer": 2,
+   "explain": "The mean of $B$ independent samples has variance $\\sigma^2/B$. That is why tiny batches give noisy batch statistics and BN struggles with them."},
+  {"q": "At inference time, which statistics does a BatchNorm layer (in eval mode) use?",
+   "options": ["The mean and variance of the current test batch", "Running averages of $\\mu_B$ and $\\sigma_B^2$ collected during training with a momentum update", "Always mean 0 and variance 1", "The statistics of the first training batch"],
+   "answer": 1,
+   "explain": "Running estimates $\\hat\\mu\\leftarrow(1-m)\\hat\\mu+m\\,\\mu_B$ (and similarly for the variance) make inference deterministic and independent of other examples, even for a single input."},
+  {"q": "For a matrix of activations with rows = examples and columns = features, what does LayerNorm normalise over (compared to BatchNorm)?",
+   "options": ["Each column over the batch, like BatchNorm", "Each row over its features — each example on its own, independent of the batch", "The whole matrix at once", "Only the first feature"],
+   "answer": 1,
+   "explain": "BatchNorm standardises each feature (column) across the batch; LayerNorm standardises each example (row) across its features, so it works with batch size 1 — one reason transformers use LayerNorm or RMSNorm."}
+]}

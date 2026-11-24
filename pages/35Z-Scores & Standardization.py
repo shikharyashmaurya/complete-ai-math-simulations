@@ -87,7 +87,7 @@ def local_css():
     .section-header {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #c7d2fe;
         margin: 0 0 16px 0;
         display: flex;
         align-items: center;
@@ -95,6 +95,19 @@ def local_css():
     }
     </style>
     """, unsafe_allow_html=True)
+
+def format_percent(p: float) -> str:
+    if p > 99.99:
+        return ">99.99%"
+    if p < 0.01:
+        return "<0.01%"
+    return f"{p:.2f}%" if (p > 99.0 or p < 1.0) else f"{p:.1f}%"
+
+
+def curve_points(lo: float, hi: float, width: float) -> int:
+    # Keep ~100 samples per σ so the bell stays smooth when the axis is stretched far out.
+    return int(np.clip((hi - lo) / width * 100, 500, 20000))
+
 
 def render_hero():
     st.markdown("""
@@ -120,16 +133,18 @@ def render_interactive_ruler():
 
     with left:
         st.markdown("### 🎛️ Customize Your Distribution")
-        mu = st.slider("Mean (μ) — The Average", min_value=0.0, max_value=100.0, value=70.0, step=1.0, key="z_mean")
-        sigma = st.slider("Std Deviation (σ) — The Spread", min_value=1.0, max_value=30.0, value=10.0, step=1.0, key="z_sigma")
+        mu = st.slider("Mean (μ) — The Average", min_value=0.0, max_value=100.0, value=70.0, step=1.0, key="p35_mean")
+        sigma = st.slider("Std Deviation (σ) — The Spread", min_value=1.0, max_value=30.0, value=10.0, step=1.0, key="p35_sigma")
        
         st.markdown("### 🎯 Pick Your Data Point")
-        x_val = st.slider("Data Point (x)", min_value=-20.0, max_value=160.0, value=85.0, step=0.5, key="z_x_val")
+        x_val = st.slider("Data Point (x)", min_value=-20.0, max_value=160.0, value=85.0, step=0.5, key="p35_x_val")
        
         # Calculate Z-score
         diff = x_val - mu
         z_score = diff / sigma
+        # Φ(z) is only a valid percentile if the data are (approximately) Normal.
         percentile = norm.cdf(z_score) * 100
+        percentile_str = format_percent(percentile)
        
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -143,9 +158,9 @@ def render_interactive_ruler():
             <div class="stat-label" style="color: #94a3b8;">Final Z-Score</div>
             <div class="stat-val" style="color: #10b981;">{z_score:+.2f}</div>
             <div style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px; line-height: 1.5;">
-                Your point is exactly <strong>{abs(z_score):.2f} standard deviations</strong>
+                Your point is <strong>{abs(z_score):.2f} standard deviations</strong>
                 {'above' if z_score >= 0 else 'below'} the mean.<br>
-                <span style="color: #94a3b8; font-size: 0.85rem;">Percentile: <strong>{percentile:.1f}%</strong> (higher than {percentile:.1f}% of values)</span>
+                <span style="color: #94a3b8; font-size: 0.85rem;">Percentile <em>if the data are Normal</em>: <strong>{percentile_str}</strong> (≈ {percentile_str} of a Normal population lies below x)</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -158,7 +173,7 @@ def render_interactive_ruler():
             # Raw Distribution Plot
             x_min_plot = min(mu - 4*sigma, x_val - 0.5*sigma)
             x_max_plot = max(mu + 4*sigma, x_val + 0.5*sigma)
-            x_raw = np.linspace(x_min_plot, x_max_plot, 500)
+            x_raw = np.linspace(x_min_plot, x_max_plot, curve_points(x_min_plot, x_max_plot, sigma))
             y_raw = norm.pdf(x_raw, mu, sigma)
            
             fig_raw = go.Figure()
@@ -195,7 +210,7 @@ def render_interactive_ruler():
             step = sigma if x_val >= mu else -sigma
             num_full_steps = min(int(abs((x_val - mu) / sigma)), 6)
            
-            for i in range(num_full_steps):
+            for _ in range(num_full_steps):
                 fig_raw.add_annotation(
                     x=current_x + step/2, y=max(y_raw)*0.1,
                     text="1σ", showarrow=False, font=dict(color="#f8fafc", size=12)
@@ -215,7 +230,12 @@ def render_interactive_ruler():
                 )
                 fig_raw.add_shape(type="line", x0=current_x, y0=max(y_raw)*0.07, x1=current_x, y1=max(y_raw)*0.09, line=dict(color="#f8fafc", width=2), opacity=0.5)
                 fig_raw.add_shape(type="line", x0=x_val, y0=max(y_raw)*0.07, x1=x_val, y1=max(y_raw)*0.09, line=dict(color="#f8fafc", width=2), opacity=0.5)
-
+            elif num_full_steps == 6 and abs(z_score) > 6:
+                fig_raw.add_annotation(
+                    x=current_x, y=max(y_raw)*0.16,
+                    text=f"… ruler stops at 6σ (x is {abs(z_score):.1f}σ away)", showarrow=False,
+                    xanchor="left" if step > 0 else "right", font=dict(color="#fbbf24", size=12)
+                )
             fig_raw.update_layout(
                 title=f"The Raw Data (μ = {mu:.1f}, σ = {sigma:.1f}, x = {x_val:.1f})",
                 xaxis=dict(title="Original Value (x)", gridcolor='rgba(51,65,85,0.4)'),
@@ -229,7 +249,7 @@ def render_interactive_ruler():
             # Standardized Plot
             z_min_plot = min(-4.0, z_score - 0.5)
             z_max_plot = max(4.0, z_score + 0.5)
-            x_std = np.linspace(z_min_plot, z_max_plot, 500)
+            x_std = np.linspace(z_min_plot, z_max_plot, curve_points(z_min_plot, z_max_plot, 1.0))
             y_std = norm.pdf(x_std, 0, 1)
            
             fig_std = go.Figure()
@@ -259,15 +279,12 @@ def render_interactive_ruler():
                 font=dict(color="#34d399", size=14, family="sans-serif")
             )
            
-            # Ruler marks
-            r_min = max(-6, int(np.floor(z_min_plot)))
-            r_max = min(6, int(np.ceil(z_max_plot)))
-            for i in range(r_min, r_max + 1):
-                fig_std.add_annotation(x=i, y=-0.02, text=str(i), showarrow=False, font=dict(color="#94a3b8", size=12))
+            # Integer z ticks (one per σ) while the axis is short enough to stay readable
+            z_dtick = 1 if (z_max_plot - z_min_plot) <= 16 else None
                
             fig_std.update_layout(
                 title=f"Standard Normal Distribution (Z = {z_score:+.2f})",
-                xaxis=dict(title="Z-Score (Standard Deviations from Mean)", gridcolor='rgba(51,65,85,0.4)', range=[z_min_plot, z_max_plot]),
+                xaxis=dict(title="Z-Score (Standard Deviations from Mean)", gridcolor='rgba(51,65,85,0.4)', range=[z_min_plot, z_max_plot], dtick=z_dtick),
                 yaxis=dict(title="Density", gridcolor='rgba(51,65,85,0.4)'),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#f8fafc'), margin=dict(t=40, b=40), height=400, showlegend=False
@@ -278,7 +295,8 @@ def render_interactive_ruler():
     <div class="insight-box">
     <p>
     <strong>Notice the trick?</strong><br>
-    The shape of the shaded area is <strong>exactly the same</strong> in both graphs. Standardization doesn't change the underlying probability or distribution shape; it simply shifts the center to 0 and scales the width to 1. It gives us a universal coordinate system!
+    The shape of the shaded area is <strong>exactly the same</strong> in both graphs. Standardization doesn't change the underlying probability or distribution shape; it simply shifts the center to 0 and scales the width to 1. It gives us a universal coordinate system!<br><br>
+    <strong>Caveat:</strong> a Z-score can be computed for <em>any</em> data, but reading it as a percentile with the bell-curve area Φ(z) is only valid when the data are (approximately) <strong>Normal</strong>. Standardizing skewed data keeps it skewed — it does not make it Normal.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -330,7 +348,7 @@ def render_ai_context():
         ("⚖️ Feature Scaling", "#8b5cf6",
          "Imagine predicting house prices based on Square Footage (1000s) and Number of Bedrooms (1 to 5). Without standardization, the huge numbers of Square Footage will overpower the tiny Bedroom numbers. Z-scores put all features on a level playing field!"),
         ("⚡ Faster Gradient Descent", "#ef4444",
-         "When features are on vastly different scales, the loss landscape becomes a long, skinny valley. Gradient descent bounces back and forth, learning slowly. Standardized data creates a nice round bowl shape, allowing the model to slide directly to the minimum!"),
+         "When features are on vastly different scales, the loss landscape becomes a long, skinny valley. Gradient descent bounces back and forth, learning slowly. Standardized features give a much rounder bowl (correlated features can still leave it somewhat tilted), so the model can head far more directly to the minimum!"),
         ("🧠 Activation Functions", "#14b8a6",
          "Many activation functions (like Sigmoid or Tanh) 'saturate' and stop learning if inputs are too large or too small. Keeping inputs centered around 0 with a variance of 1 ensures the neurons stay in their active, learning 'sweet spot'.")
     ]

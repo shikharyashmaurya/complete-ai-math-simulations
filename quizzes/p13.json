@@ -1,0 +1,49 @@
+{
+  "page": 13,
+  "questions": [
+    {
+      "q": "$A$ is $3 \\times 4$ and $B$ is $4 \\times 2$. What is the shape of $C = A B$?",
+      "options": [
+        "$3 \\times 2$",
+        "It cannot be multiplied",
+        "$4 \\times 4$",
+        "$3 \\times 4$"
+      ],
+      "answer": 0,
+      "explain": "$A_{m \\times n} B_{n \\times p} = C_{m \\times p}$: the inner 4s match and cancel, leaving $3 \\times 2$."
+    },
+    {
+      "q": "Which pair of shapes **cannot** be multiplied as $A B$?",
+      "options": [
+        "$A: 2 \\times 3$, $B: 2 \\times 3$",
+        "$A: 4 \\times 1$, $B: 1 \\times 4$",
+        "$A: 2 \\times 3$, $B: 3 \\times 4$",
+        "$A: 3 \\times 3$, $B: 3 \\times 3$"
+      ],
+      "answer": 0,
+      "explain": "The inner dimensions must match: a row of $A$ has 3 numbers but a column of $B$ has only 2, so they cannot be paired up for a dot product."
+    },
+    {
+      "q": "Compute $C[1, 2]$ for $A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}$ and $B = \\begin{bmatrix} 0 & 1 \\\\ 1 & -1 \\end{bmatrix}$.",
+      "options": [
+        "$1$",
+        "$2$",
+        "$-1$",
+        "$-2$"
+      ],
+      "answer": 2,
+      "explain": "$C[1,2]$ = row 1 of $A$ · column 2 of $B$ $= 1 \\cdot 1 + 2 \\cdot (-1) = -1$. Using column 1 instead gives 2."
+    },
+    {
+      "q": "For $A$ of shape $(m, n)$ and $B$ of shape $(n, p)$, how many multiply-then-add terms go into one output cell $C[i, j]$?",
+      "options": [
+        "$n$",
+        "$m \\times p$",
+        "$m$",
+        "$p$"
+      ],
+      "answer": 0,
+      "explain": "$C[i, j] = \\sum_k A[i, k]\\,B[k, j]$ runs over the shared inner index $k = 1, \\dots, n$."
+    }
+  ]
+}

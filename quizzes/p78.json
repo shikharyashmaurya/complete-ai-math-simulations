@@ -1,0 +1,18 @@
+{"page": 78, "questions": [
+  {"q": "A 2×2 matrix $A = U\\Sigma V^\\top$ is applied to the unit circle. What are the lengths of the semi-axes of the resulting ellipse?",
+   "options": ["The eigenvalues $|\\lambda_1|, |\\lambda_2|$", "The singular values $\\sigma_1, \\sigma_2$", "The diagonal entries of $A$", "Always 1 and $\\det A$"],
+   "answer": 1,
+   "explain": "$V^\\top$ only rotates/reflects the circle, $\\Sigma$ stretches it to an axis-aligned ellipse with semi-axes $\\sigma_1, \\sigma_2$, and $U$ rotates it. Eigenvalues coincide in size only for symmetric matrices."},
+  {"q": "For the shear $A = \\begin{bmatrix}1 & 1\\\\ 0 & 1\\end{bmatrix}$, how do singular values and eigenvalues compare?",
+   "options": ["Both are 1, 1", "Eigenvalues 1, 1; singular values ≈ 1.618, 0.618", "Eigenvalues ≈ 1.618, 0.618; singular values 1, 1", "They are always equal"],
+   "answer": 1,
+   "explain": "The shear is triangular, so $\\lambda = 1, 1$. But it is not symmetric: $\\sigma_i^2$ are the eigenvalues of $A^\\top A$, giving $\\sigma \\approx 1.618, 0.618$ (still $\\sigma_1\\sigma_2 = |\\det A| = 1$)."},
+  {"q": "A 64×64 image has singular values $\\sigma_1 \\ge \\sigma_2 \\ge \\dots$. By Eckart–Young, what is the Frobenius error of the best rank-$k$ approximation $A_k$?",
+   "options": ["$\\sigma_{k}$", "$\\sqrt{\\sum_{i>k} \\sigma_i^2}$", "$\\sum_{i\\le k} \\sigma_i$", "$k/64$"],
+   "answer": 1,
+   "explain": "Truncating the SVD drops the terms $\\sigma_i u_i v_i^\\top$ for $i>k$, and $\\lVert A - A_k\\rVert_F^2 = \\sum_{i>k}\\sigma_i^2$. The spectral-norm error is $\\sigma_{k+1}$ — no rank-$k$ matrix does better."},
+  {"q": "$A = \\begin{bmatrix}1 & 1\\\\ 1 & 1+\\varepsilon\\end{bmatrix}$ with tiny $\\varepsilon$. Why is solving $Ax = b$ risky?",
+   "options": ["Because $\\det A$ is negative", "Because $\\sigma_{\\min}$ is tiny, so the condition number $\\kappa = \\sigma_{\\max}/\\sigma_{\\min}$ is huge and small errors in $b$ are amplified", "Because $A$ is not symmetric", "It is not risky: $A$ is invertible for every $\\varepsilon \\neq 0$"],
+   "answer": 1,
+   "explain": "Invertible is not the same as well-conditioned. With $\\varepsilon = 10^{-6}$, $\\kappa \\approx 4\\times10^6$: a nudge of 0.001 in $b$ moves $x$ by about 1000 in each component."}
+]}

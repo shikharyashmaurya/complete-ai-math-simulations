@@ -1,9 +1,15 @@
-import math
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(page_title="Unit Vectors & Normalization", layout="wide")
+
+
+def sq(value, spec=".2f"):
+    """LaTeX for value squared, with negatives in parentheses: (-3.00)^2 instead of the ambiguous -3.00^2."""
+    value = float(value) + 0.0  # turns -0.0 into 0.0
+    text = format(value, spec)
+    return f"({text})^2" if value < 0 else f"{text}^2"
 
 st.title("🧮 Unit Vectors & Normalization")
 st.markdown("""
@@ -19,12 +25,12 @@ st.markdown("Pick a 2D vector. Watch how dividing by its length shrinks (or stre
 
 col1, col2 = st.columns([2, 1])
 with col2:
-    x2 = st.slider("x component", -10.0, 10.0, 3.0, 0.1, key="x2")
-    y2 = st.slider("y component", -10.0, 10.0, 4.0, 0.1, key="y2")
+    x2 = st.slider("x component", -10.0, 10.0, 3.0, 0.1, key="p05_x2")
+    y2 = st.slider("y component", -10.0, 10.0, 4.0, 0.1, key="p05_y2")
     step2 = st.slider(
         "Animation step (Original → Unit)",
         0.0, 1.0, 1.0, 0.05,
-        key="step2",
+        key="p05_step2",
         help="0 = original vector, 1 = normalized unit vector"
     )
 
@@ -109,16 +115,16 @@ if mag2 > 1e-9:
     uy2 = y2 / mag2
 
     st.markdown("#### 📝 How to normalize this vector (step by step):")
-    st.latex(r"\textbf{Step 1 (Length): } |\vec{v}| = \sqrt{x^2 + y^2} = \sqrt{%.2f^2 + %.2f^2} = \mathbf{%.2f}" % (x2, y2, mag2))
+    st.latex(r"\textbf{Step 1 (Length): } |\vec{v}| = \sqrt{x^2 + y^2} = \sqrt{%s + %s} = \mathbf{%.2f}" % (sq(x2), sq(y2), mag2))
     st.latex(r"\textbf{Step 2 (Divide): } \hat{v} = \left(\frac{x}{|\vec{v}|}, \frac{y}{|\vec{v}|}\right) = \left(\frac{%.2f}{%.2f}, \frac{%.2f}{%.2f}\right) = \mathbf{(%.2f, %.2f)}" % (x2, mag2, y2, mag2, ux2, uy2))
-    st.latex(r"\textbf{Step 3 (Verify): } |\hat{v}| = \sqrt{%.2f^2 + %.2f^2} = \mathbf{1.00}" % (ux2, uy2))
+    st.latex(r"\textbf{Step 3 (Verify): } |\hat{v}| = \sqrt{%s + %s} = \mathbf{1.00}" % (sq(ux2), sq(uy2)))
 
-    if mag2 > 1.05:
+    if np.isclose(mag2, 1.0, atol=5e-3):
+        st.success(f"Length is already **{mag2:.2f}**, so this is (almost exactly) a unit vector — dividing barely changes it.")
+    elif mag2 > 1.0:
         st.success(f"Original length was **{mag2:.2f}** (> 1), so dividing by {mag2:.2f} **shrank** it to **1.00**!")
-    elif mag2 < 0.95:
-        st.info(f"Original length was **{mag2:.2f}** (< 1), so dividing by {mag2:.2f} **stretched** it out to **1.00**!")
     else:
-        st.success("Length is already **1.00**!")
+        st.info(f"Original length was **{mag2:.2f}** (< 1), so dividing by {mag2:.2f} **stretched** it out to **1.00**!")
 else:
     st.warning("A zero vector (0, 0) has length 0, so dividing by 0 is undefined!")
 
@@ -133,13 +139,13 @@ st.markdown("Now add a z-component! Dividing by the 3D length places the arrow d
 
 col3, col4 = st.columns([2, 1])
 with col4:
-    x3 = st.slider("x component (3D)", -10.0, 10.0, 2.0, 0.1, key="x3")
-    y3 = st.slider("y component (3D)", -10.0, 10.0, 3.0, 0.1, key="y3")
-    z3 = st.slider("z component (3D)", -10.0, 10.0, 6.0, 0.1, key="z3")
+    x3 = st.slider("x component (3D)", -10.0, 10.0, 2.0, 0.1, key="p05_x3")
+    y3 = st.slider("y component (3D)", -10.0, 10.0, 3.0, 0.1, key="p05_y3")
+    z3 = st.slider("z component (3D)", -10.0, 10.0, 6.0, 0.1, key="p05_z3")
     step3 = st.slider(
         "Animation step (3D)",
         0.0, 1.0, 1.0, 0.05,
-        key="step3",
+        key="p05_step3",
         help="0 = original vector, 1 = normalized unit vector"
     )
 
@@ -220,7 +226,7 @@ if mag3 > 1e-9:
     uy3 = y3 / mag3
     uz3 = z3 / mag3
 
-    st.latex(r"|\vec{v}| = \sqrt{x^2 + y^2 + z^2} = \sqrt{%.2f^2 + %.2f^2 + %.2f^2} = %.2f" % (x3, y3, z3, mag3))
+    st.latex(r"|\vec{v}| = \sqrt{x^2 + y^2 + z^2} = \sqrt{%s + %s + %s} = %.2f" % (sq(x3), sq(y3), sq(z3), mag3))
     st.latex(r"\hat{v} = \left(\frac{x}{|\vec{v}|}, \frac{y}{|\vec{v}|}, \frac{z}{|\vec{v}|}\right) = \mathbf{(%.2f, %.2f, %.2f)}" % (ux3, uy3, uz3))
     st.success(f"The 3D unit vector is **({ux3:.2f}, {uy3:.2f}, {uz3:.2f})** with magnitude **1.00**")
 else:
@@ -237,7 +243,7 @@ st.markdown("""
 Type in a list of numbers (your vector), and see it normalized instantly. Try 4D, 5D, or word embeddings!
 """)
 
-vec_str = st.text_input("Enter vector components, separated by commas", "3, 4, 12")
+vec_str = st.text_input("Enter vector components, separated by commas", "3, 4, 12", key="p05_vec_str")
 try:
     if len(vec_str) > 2048:
         raise ValueError("The vector input is too long.")
@@ -247,14 +253,18 @@ try:
     if not np.isfinite(components).all():
         raise ValueError("Vector components must be finite.")
     vec = np.array(components)
-    magN = float(np.linalg.norm(vec))
-    if not np.isfinite(magN):
-        raise ValueError("The vector magnitude is outside the supported numeric range.")
-
-    if magN > 1e-9:
-        unitN = vec / magN
-        st.latex(r"|\vec{v}| = \sqrt{" + " + ".join([f"{v:.2f}^2" for v in vec]) + f"}} = {magN:.2f}")
-        st.latex(r"\hat{v} = \frac{\vec{v}}{" + f"{magN:.2f}" + r"} = \mathbf{[" + ", ".join([f"{u:.2f}" for u in unitN]) + "]}")
+    # Only the exact zero vector is un-normalizable. Rescale by the largest entry first so tiny
+    # vectors such as [1e-200, 0] do not underflow to a length of 0.
+    scale = float(np.max(np.abs(vec)))
+    if scale > 0:
+        scaled_norm = float(np.linalg.norm(vec / scale))
+        magN = scale * scaled_norm
+        if not np.isfinite(magN):
+            raise ValueError("The vector magnitude is outside the supported numeric range.")
+        unitN = (vec / scale) / scaled_norm
+        spec = ".2f" if 0.01 <= magN < 1e6 else ".3g"
+        st.latex(r"|\vec{v}| = \sqrt{" + " + ".join(sq(v, spec) for v in vec) + r"} = " + format(magN, spec))
+        st.latex(r"\hat{v} = \frac{\vec{v}}{" + format(magN, spec) + r"} = \mathbf{[" + ", ".join([f"{u:.2f}" for u in unitN]) + "]}")
         st.success(f"Unit Vector: **{np.round(unitN, 2).tolist()}** (Length = {float(np.linalg.norm(unitN)):.2f})")
     else:
         st.warning("Zero vector cannot be normalized (division by zero).")
@@ -272,27 +282,43 @@ st.markdown("""
 Guess whether normalizing this random vector will **shrink** it or **stretch** it!
 """)
 
-if 'rand_norm_vec' not in st.session_state:
-    dim = np.random.randint(2, 5)
-    st.session_state.rand_norm_vec = np.random.uniform(-5.0, 5.0, size=dim).round(1)
 
-if st.button("New Random Vector"):
-    dim = np.random.randint(2, 5)
-    st.session_state.rand_norm_vec = np.random.uniform(-5.0, 5.0, size=dim).round(1)
+def p05_draw_vector(draw_number):
+    rng = np.random.default_rng(draw_number)
+    dim = int(rng.integers(2, 5))
+    vec = rng.uniform(-5.0, 5.0, size=dim).round(1)
+    # Mix in short vectors too, so "stretch" is sometimes the right answer
+    if rng.random() < 0.4:
+        vec = (vec / 10).round(2)
+    if not np.any(vec):
+        vec[0] = 0.5
+    return vec.tolist()
 
-rand_vec = st.session_state.rand_norm_vec
+
+if "p05_rand_norm_vec" not in st.session_state:
+    st.session_state.p05_rand_draws = 0
+    st.session_state.p05_rand_norm_vec = p05_draw_vector(0)
+
+if st.button("New Random Vector", key="p05_new_vector"):
+    st.session_state.p05_rand_draws += 1
+    st.session_state.p05_rand_norm_vec = p05_draw_vector(st.session_state.p05_rand_draws)
+
+rand_vec = np.array(st.session_state.p05_rand_norm_vec)
 st.write(f"Random vector: `{rand_vec.tolist()}`")
 
-guess = st.radio("Will normalization shrink or stretch it?", ["Shrink it (length > 1)", "Stretch it (length < 1)"])
-if st.button("Check My Answer"):
+guess = st.radio("Will normalization shrink or stretch it?", ["Shrink it (length > 1)", "Stretch it (length < 1)"],
+                 key="p05_guess")
+if st.button("Check My Answer", key="p05_check_answer"):
     actual_len = float(np.linalg.norm(rand_vec))
-    is_shrink = actual_len > 1.0
-
-    if (guess.startswith("Shrink") and is_shrink) or (guess.startswith("Stretch") and not is_shrink):
-        st.balloons()
-        st.success(f"Correct! Length is **{actual_len:.2f}**, so dividing by {actual_len:.2f} {'shrinks' if is_shrink else 'stretches'} it to 1.00!")
+    if np.isclose(actual_len, 1.0, atol=5e-3):
+        st.info(f"Trick question! The length is **{actual_len:.2f}**, already a unit vector, so normalizing changes nothing.")
     else:
-        st.warning(f"Not quite! The length is **{actual_len:.2f}**, which is {'greater' if is_shrink else 'less'} than 1.0, so it {'shrinks' if is_shrink else 'stretches'}.")
+        is_shrink = actual_len > 1.0
+        if (guess.startswith("Shrink") and is_shrink) or (guess.startswith("Stretch") and not is_shrink):
+            st.balloons()
+            st.success(f"Correct! Length is **{actual_len:.2f}**, so dividing by {actual_len:.2f} {'shrinks' if is_shrink else 'stretches'} it to 1.00!")
+        else:
+            st.warning(f"Not quite! The length is **{actual_len:.2f}**, which is {'greater' if is_shrink else 'less'} than 1.0, so it {'shrinks' if is_shrink else 'stretches'}.")
 
 st.divider()
 
@@ -304,5 +330,5 @@ st.header("🤔 Why Does This Matter?")
 st.markdown("""
 * **Pure direction without scale:** Normalizing removes the size of the vector while keeping its exact direction.
 * **Cosine similarity in AI:** When comparing embeddings in AI (like search queries and documents), normalizing them first makes cosine similarity simply equal to the dot product!
-* **Stops exploding numbers:** In deep neural networks, normalizing vectors (like LayerNorm in Transformers) prevents numbers from blowing up to infinity or vanishing to zero.
+* **Keeping numbers in a healthy range:** Deep networks rescale their activations so values neither blow up nor vanish. Layers like LayerNorm in Transformers are a cousin of this idea — they subtract the mean and divide by the standard deviation (so the result has length about $\\sqrt{d}$, not exactly 1), while explicit L2 normalization like on this page is used for embeddings and cosine similarity.
 """)

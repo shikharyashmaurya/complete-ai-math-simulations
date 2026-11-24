@@ -1,0 +1,49 @@
+{
+  "page": 40,
+  "questions": [
+    {
+      "q": "For $X = [1, 2, 3]$ and $Y = [2, 4, 9]$, what is the **sample** covariance $\\frac{1}{n-1}\\sum (x_i - \\bar{x})(y_i - \\bar{y})$?",
+      "options": [
+        "$\\approx 2.33$",
+        "$7$",
+        "$3.5$",
+        "$0$"
+      ],
+      "answer": 2,
+      "explain": "$\\bar{x} = 2$, $\\bar{y} = 5$; products of deviations: $(-1)(-3) + (0)(-1) + (1)(4) = 7$. Sample: $7/2 = 3.5$. $\\approx 2.33 = 7/3$ is the population version (divide by $n$)."
+    },
+    {
+      "q": "A point lies to the left of $\\bar{x}$ (below average X) but above $\\bar{y}$ (above average Y). How does it affect the covariance?",
+      "options": [
+        "It decreases it (red zone): its product $(x_i - \\bar{x})(y_i - \\bar{y})$ is negative",
+        "It increases it (green zone)",
+        "It has no effect",
+        "It makes the covariance undefined"
+      ],
+      "answer": 0,
+      "explain": "One deviation is negative and the other positive, so the product is negative. Points where both are above or both below average add positive contributions."
+    },
+    {
+      "q": "In the lab, you switch X from metres to centimetres. What happens to the covariance and to the shape of the cloud?",
+      "options": [
+        "Both stay the same",
+        "The covariance shrinks ×100",
+        "The covariance flips sign",
+        "The covariance grows ×100, but the cloud (and the correlation $r$) stay exactly the same"
+      ],
+      "answer": 3,
+      "explain": "Every $x_i - \\bar{x}$ is multiplied by 100, so the covariance is too. The relationship is unchanged — covariance's size depends on units, which motivates the correlation $r$."
+    },
+    {
+      "q": "Two variables have covariance exactly $0$. What can you conclude?",
+      "options": [
+        "They are independent",
+        "They have no *linear* co-variation, but they may still be strongly (non-linearly) dependent",
+        "One of them is constant",
+        "Their means are both zero"
+      ],
+      "answer": 1,
+      "explain": "Zero covariance alone does not imply independence: e.g. $Y = X^2$ with $X$ symmetric around 0 has zero covariance even though $X$ determines $Y$."
+    }
+  ]
+}

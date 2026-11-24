@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:sans-serif;background:#0f172a;color:white;overflow:hidden;}
+.lab-container{display:flex;flex-direction:column;height:100vh;padding:20px;gap:20px;}
+.header{display:flex;justify-content:space-between;align-items:center;}
+.title-group h2{font-size:24px;font-weight:900;color:#f8fafc;margin:0;}
+.title-group p{font-size:14px;color:#94a3b8;}
+
+.main-layout{display:flex;flex:1;gap:20px;min-height:0;}
+.sidebar{flex:0.35;display:flex;flex-direction:column;gap:15px;overflow-y:auto;padding-right:10px;}
+.canvas-area{flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;position:relative;overflow:hidden;cursor:crosshair;}
+
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:15px;}
+.label-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;font-weight:700;}
+.val-pill{background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:5px;font-family:monospace;color:#a78bfa;}
+
+input[type=range]{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;-webkit-appearance:none;margin:10px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:#a78bfa;border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(167,139,250,0.5);}
+
+.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+button{background:rgba(255,255,255,0.05);color:white;border:1px solid rgba(255,255,255,0.1);padding:10px;border-radius:8px;font-weight:700;cursor:pointer;transition:0.2s;font-size:13px;}
+button:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);}
+button.primary{background:#a78bfa;color:#0f172a;border:none;}
+button.primary:hover{background:#c4b5fd;}
+
+.legend{display:flex;gap:15px;margin-top:10px;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
+.dot{width:10px;height:10px;border-radius:50%;}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-box{background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:4px;}
+.stat-val{font-size:16px;font-weight:900;font-family:monospace;}
+
+#overlay{position:absolute;top:20px;right:20px;pointer-events:none;text-align:right;}
+.mini-batch-viz{display:grid;grid-template-columns:repeat(16, 8px);gap:4px;margin-top:5px;}
+.batch-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.12);}
+.batch-dot.active{background:#fbbf24;box-shadow:0 0 5px #fbbf24;}
+.check-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#cbd5e1;cursor:pointer;}
+.check-row input{accent-color:#a78bfa;width:16px;height:16px;}
+
+/* Custom styles for specific optimizers */
+.color-batch { color: #38bdf8; } /* Light Blue */
+.color-sgd { color: #fb7185; }   /* Rose/Pink */
+.bg-batch { background: #38bdf8; }
+.bg-sgd { background: #fb7185; }
+
+</style>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="title-group">
+            <h2>SGD Race Lab 🏁</h2>
+            <p>Stochastic vs. Batch Gradient Descent</p>
+        </div>
+        <div class="legend">
+            <div class="leg-item"><div class="dot bg-batch"></div><span class="color-batch">Full Batch (Smooth)</span></div>
+            <div class="leg-item"><div class="dot bg-sgd"></div><span class="color-sgd">SGD / Mini-Batch (Noisy)</span></div>
+            <div class="leg-item"><span style="color:#fde047;">★</span><span style="color:#fde047;">Global minima</span></div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="card">
+                <div class="label-row"><span>Learning Rate (η)</span><span id="lr-val" class="val-pill">0.08</span></div>
+                <input type="range" id="lr-slider" min="0.01" max="0.3" step="0.01" value="0.08">
+                
+                <div class="label-row"><span>Batch Size</span><span id="batch-val" class="val-pill">4</span></div>
+                <input type="range" id="batch-slider" min="1" max="64" step="1" value="4">
+                <p style="font-size:11px; color:#64748b; margin-top:-5px;">Dataset = 64 examples. 1 = Pure SGD, 64 = Full Batch</p>
+            </div>
+
+            <div class="card">
+                <div class="label-row"><span>Momentum (both optimizers)</span><span id="mom-val" class="val-pill">0.50</span></div>
+                <input type="range" id="mom-slider" min="0" max="0.95" step="0.05" value="0.5">
+                <label class="check-row"><input type="checkbox" id="equal-compute"> ⚖️ Equal compute: SGD takes 64/B steps per full-batch step</label>
+            </div>
+
+            <div class="btn-group">
+                <button id="reset-btn">Reset</button>
+                <button id="play-btn" class="primary">Play</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Batch Loss (all data)</div>
+                    <div id="loss-batch" class="stat-val color-batch">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">SGD Loss (all data)</div>
+                    <div id="loss-sgd" class="stat-val color-sgd">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Batch: examples used</div>
+                    <div id="ex-batch" class="stat-val color-batch">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">SGD: examples used</div>
+                    <div id="ex-sgd" class="stat-val color-sgd">0</div>
+                </div>
+            </div>
+
+            <div class="card" style="background:rgba(251,191,36,0.05); border-color:rgba(251,191,36,0.2);">
+                <div class="stat-label" style="color:#fbbf24;">Current Mini-Batch (64 training examples)</div>
+                <div class="mini-batch-viz" id="batch-dots"></div>
+                <p style="font-size:11px; color:#d97706; margin-top:8px; line-height:1.4;">
+                    Each step, SGD averages the gradients of a <b>random subset</b> (lit dots) of the 64 examples, reshuffling every epoch. This estimate is "noisy", so the path is jumpy, but each step is much cheaper to calculate!
+                </p>
+            </div>
+        </div>
+
+        <div class="canvas-area" id="canvas-container">
+            <canvas id="main-canvas"></canvas>
+            <div id="overlay">
+                <div style="font-size:10px; color:#64748b; text-transform:uppercase;">Landscape (average loss over all 64 examples)</div>
+                <div style="font-size:14px; font-weight:800;">Non-Convex Valley</div>
+                <div style="font-size:11px; color:#94a3b8;">Click to move the start</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvas-container');
+
+// State
+let width = 1, height = 1;
+let isPlaying = false;
+let lr = 0.08;
+let batchSize = 4;
+let momentum = 0.5;
+let equalCompute = false;
+
+// Optimization paths
+let pathBatch = [];
+let pathSGD = [];
+let posBatch = {x: 0, y: 0};
+let posSGD = {x: 0, y: 0};
+let velBatch = {x: 0, y: 0};
+let velSGD = {x: 0, y: 0};
+let examplesBatch = 0;
+let examplesSGD = 0;
+let currentBatch = [];
+let order = [];
+
+// ---------- Synthetic training set (64 examples) ----------
+// Each example i has its own loss surface
+//   l_i(x, y) = 0.1(x² + y²) − 0.2(a_i·x + b_i·y) + A·sin(2x − 2c_i) + B·cos(2y − 2d_i)
+// The offsets a_i, b_i average to 0 and the phases are symmetric (Σ sin 2c_i = 0),
+// with A = 0.5 / mean(cos 2c_i) and B = 0.5 / mean(cos 2d_i). So the average over the
+// whole dataset is exactly the landscape that is drawn:
+//   L(x, y) = (1/64) Σ l_i = 0.1(x² + y²) + 0.5(sin 2x + cos 2y)
+const N_DATA = 64;
+function mulberry32(a) {
+    return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+const data = (() => {
+    const rand = mulberry32(56); // fixed seed: same dataset on every load
+    const gauss = () => {
+        let u = 0;
+        while (u === 0) u = rand();
+        const v = rand();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    };
+    // Offsets: centred and scaled to a standard deviation of exactly 6
+    const standardize = (v) => {
+        const m = v.reduce((s, x) => s + x, 0) / N_DATA;
+        const sd = Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / N_DATA);
+        return v.map(x => 6 * (x - m) / sd);
+    };
+    const a = standardize(Array.from({length: N_DATA}, gauss));
+    const b = standardize(Array.from({length: N_DATA}, gauss));
+    // Phases: evenly spread over [-1.05, 1.05] (symmetric); d is a shuffled copy of c
+    const c = Array.from({length: N_DATA}, (_, k) => 1.05 * (2 * (k + 0.5) / N_DATA - 1));
+    const d = c.slice();
+    for (let i = N_DATA - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [d[i], d[j]] = [d[j], d[i]];
+    }
+    const kx = c.reduce((s, v) => s + Math.cos(2 * v), 0) / N_DATA;
+    const ky = d.reduce((s, v) => s + Math.cos(2 * v), 0) / N_DATA;
+    return {a, b, c, d, A: 0.5 / kx, B: 0.5 / ky};
+})();
+
+// Full-dataset loss (what the landscape shows)
+function getLoss(x, y) {
+    return 0.1 * (x*x + y*y) + 0.5 * (Math.sin(2*x) + Math.cos(2*y));
+}
+
+// Average gradient of the examples listed in idx
+function batchGrad(idx, x, y) {
+    let dx = 0, dy = 0;
+    for (const i of idx) {
+        dx += 0.2 * x - 0.2 * data.a[i] + 2 * data.A * Math.cos(2*x - 2*data.c[i]);
+        dy += 0.2 * y - 0.2 * data.b[i] - 2 * data.B * Math.sin(2*y - 2*data.d[i]);
+    }
+    return {dx: dx / idx.length, dy: dy / idx.length};
+}
+
+const ALL = Array.from({length: N_DATA}, (_, i) => i);
+
+// Sample a mini-batch without replacement; reshuffle each epoch (drop the remainder)
+function nextBatch(B) {
+    if (order.length < B) {
+        order = ALL.slice();
+        for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [order[i], order[j]] = [order[j], order[i]];
+        }
+    }
+    return order.splice(0, B);
+}
+
+// Global minima of L (checked numerically): x ≈ -0.714, y ≈ ±1.426, L ≈ -0.720
+const GLOBAL_MINIMA = [{x: -0.7138, y: 1.4262}, {x: -0.7138, y: -1.4262}];
+
+let landscapeCanvas = null;
+
+function drawLandscape() {
+    if (!landscapeCanvas) {
+        landscapeCanvas = document.createElement('canvas');
+    }
+    landscapeCanvas.width = width;
+    landscapeCanvas.height = height;
+    const lctx = landscapeCanvas.getContext('2d');
+    
+    const step = 4;
+    for(let x=0; x<width; x+=step) {
+        for(let y=0; y<height; y+=step) {
+            const world = screenToWorld(x, y);
+            const loss = getLoss(world.wx, world.wy);
+            // Color based on loss: deep blue to light blue
+            const t = Math.max(0, Math.min(1.6, (loss + 1.5) / 5));
+            const r = Math.floor(15 + t * 40);
+            const g = Math.floor(23 + t * 60);
+            const b = Math.floor(42 + t * 100);
+            lctx.fillStyle = `rgb(${r},${g},${b})`;
+            lctx.fillRect(x, y, step, step);
+        }
+    }
+}
+
+function resize() {
+    width = Math.max(1, container.clientWidth);
+    height = Math.max(1, container.clientHeight);
+    canvas.width = width;
+    canvas.height = height;
+    landscapeCanvas = null; // force redraw
+    drawLandscape();
+    draw();
+}
+
+// Math orientation: +y points up on screen
+function worldToScreen(wx, wy) {
+    const scale = Math.min(width, height) / 10;
+    return {
+        x: width/2 + wx * scale,
+        y: height/2 - wy * scale
+    };
+}
+
+function screenToWorld(sx, sy) {
+    const scale = Math.min(width, height) / 10;
+    return {
+        wx: (sx - width/2) / scale,
+        wy: (height/2 - sy) / scale
+    };
+}
+
+function reset(wx = -4, wy = -4) {
+    posBatch = {x: wx, y: wy};
+    posSGD = {x: wx, y: wy};
+    velBatch = {x: 0, y: 0};
+    velSGD = {x: 0, y: 0};
+    pathBatch = [{...posBatch}];
+    pathSGD = [{...posSGD}];
+    examplesBatch = 0;
+    examplesSGD = 0;
+    currentBatch = [];
+    order = [];
+    updateStats();
+    updateBatchDots();
+    draw();
+}
+
+const MAX_PATH_BATCH = 600;
+const MAX_PATH_SGD = 6000;
+
+function step() {
+    // 1. Full-batch update: average gradient over all 64 examples
+    const gB = batchGrad(ALL, posBatch.x, posBatch.y);
+    velBatch.x = momentum * velBatch.x - lr * gB.dx;
+    velBatch.y = momentum * velBatch.y - lr * gB.dy;
+    posBatch.x += velBatch.x;
+    posBatch.y += velBatch.y;
+    pathBatch.push({...posBatch});
+    examplesBatch += N_DATA;
+
+    // 2. Mini-batch SGD update(s): gradient of a random subset of the examples.
+    //    With "equal compute", SGD may take 64/B cheap steps per expensive full-batch step.
+    const sgdSteps = equalCompute ? Math.max(1, Math.round(N_DATA / batchSize)) : 1;
+    for (let k = 0; k < sgdSteps; k++) {
+        currentBatch = nextBatch(batchSize);
+        const gS = batchGrad(currentBatch, posSGD.x, posSGD.y);
+        velSGD.x = momentum * velSGD.x - lr * gS.dx;
+        velSGD.y = momentum * velSGD.y - lr * gS.dy;
+        posSGD.x += velSGD.x;
+        posSGD.y += velSGD.y;
+        pathSGD.push({...posSGD});
+        examplesSGD += batchSize;
+    }
+
+    if (pathBatch.length > MAX_PATH_BATCH) pathBatch.splice(0, pathBatch.length - MAX_PATH_BATCH);
+    if (pathSGD.length > MAX_PATH_SGD) pathSGD.splice(0, pathSGD.length - MAX_PATH_SGD);
+
+    if (![posBatch.x, posBatch.y, posSGD.x, posSGD.y].every(Number.isFinite)) {
+        pause();
+        reset(-4, -4);
+    }
+}
+
+function updateStats() {
+    const lB = getLoss(posBatch.x, posBatch.y);
+    const lS = getLoss(posSGD.x, posSGD.y);
+    document.getElementById('loss-batch').innerText = lB.toFixed(3);
+    document.getElementById('loss-sgd').innerText = lS.toFixed(3);
+    document.getElementById('ex-batch').innerText = examplesBatch.toLocaleString();
+    document.getElementById('ex-sgd').innerText = examplesSGD.toLocaleString();
+}
+
+// One dot per training example; lit = in the current mini-batch
+const batchDotsEl = document.getElementById('batch-dots');
+const batchDots = ALL.map(() => {
+    const dot = document.createElement('div');
+    dot.className = 'batch-dot';
+    batchDotsEl.appendChild(dot);
+    return dot;
+});
+
+function updateBatchDots() {
+    const active = new Set(currentBatch);
+    batchDots.forEach((dot, i) => dot.classList.toggle('active', active.has(i)));
+}
+
+function drawStar(cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+        const ang = -Math.PI / 2 + i * Math.PI / 5;
+        const rad = i % 2 === 0 ? r : r * 0.45;
+        const px = cx + rad * Math.cos(ang), py = cy + rad * Math.sin(ang);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#fde047';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(15,23,42,0.8)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function draw() {
+    // 1. Draw cached landscape
+    if (landscapeCanvas) {
+        ctx.drawImage(landscapeCanvas, 0, 0);
+    } else {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0,0,width,height);
+    }
+    
+    // Mark the true global minima of the full-dataset loss
+    GLOBAL_MINIMA.forEach(m => {
+        const s = worldToScreen(m.x, m.y);
+        drawStar(s.x, s.y, 9);
+    });
+
+    // Draw Paths
+    drawPath(pathBatch, '#38bdf8', 2);
+    drawPath(pathSGD, 'rgba(251,113,133,0.85)', 1.5);
+
+    // Draw Heads
+    const pB = worldToScreen(posBatch.x, posBatch.y);
+    ctx.beginPath();
+    ctx.arc(pB.x, pB.y, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#38bdf8';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    const pS = worldToScreen(posSGD.x, posSGD.y);
+    ctx.beginPath();
+    ctx.arc(pS.x, pS.y, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#fb7185';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#fb7185';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+}
+
+function drawPath(path, color, lineW) {
+    if(path.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineW;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    
+    const start = worldToScreen(path[0].x, path[0].y);
+    ctx.moveTo(start.x, start.y);
+    for(let i=1; i<path.length; i++) {
+        const p = worldToScreen(path[i].x, path[i].y);
+        ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+}
+
+// Animation: fixed 60 optimizer steps per second (independent of screen refresh
+// rate); the loop only runs while playing.
+const STEP_MS = 1000 / 60;
+let rafId = null, lastT = null, acc = 0;
+
+function loop(t) {
+    rafId = null;
+    if (!isPlaying) return;
+    if (lastT === null) lastT = t;
+    acc += Math.min(250, t - lastT);
+    lastT = t;
+    let n = 0;
+    while (acc >= STEP_MS && n < 5 && isPlaying) {
+        step();
+        acc -= STEP_MS;
+        n++;
+    }
+    if (n === 5) acc = 0;
+    updateStats();
+    updateBatchDots();
+    draw();
+    if (isPlaying) rafId = requestAnimationFrame(loop);
+}
+
+const playBtn = document.getElementById('play-btn');
+function play() {
+    isPlaying = true;
+    lastT = null; acc = 0;
+    playBtn.innerText = 'Pause';
+    playBtn.classList.remove('primary');
+    if (rafId === null) rafId = requestAnimationFrame(loop);
+}
+function pause() {
+    isPlaying = false;
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    playBtn.innerText = 'Play';
+    playBtn.classList.add('primary');
+}
+
+// Controls
+document.getElementById('lr-slider').oninput = (e) => {
+    lr = parseFloat(e.target.value);
+    document.getElementById('lr-val').innerText = lr.toFixed(2);
+};
+document.getElementById('batch-slider').oninput = (e) => {
+    batchSize = parseInt(e.target.value, 10);
+    document.getElementById('batch-val').innerText = batchSize;
+};
+document.getElementById('mom-slider').oninput = (e) => {
+    momentum = parseFloat(e.target.value);
+    document.getElementById('mom-val').innerText = momentum.toFixed(2);
+};
+document.getElementById('equal-compute').onchange = (e) => {
+    equalCompute = e.target.checked;
+};
+
+playBtn.onclick = () => { if (isPlaying) pause(); else play(); };
+
+document.getElementById('reset-btn').onclick = () => {
+    reset(-4, -4);
+};
+
+canvas.onclick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const world = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+    reset(world.wx, world.wy);
+};
+
+// Init
+window.addEventListener('resize', resize);
+window.addEventListener('pagehide', pause);
+resize();
+reset(-4, -4);
+
+</script>
+</body>
+</html>

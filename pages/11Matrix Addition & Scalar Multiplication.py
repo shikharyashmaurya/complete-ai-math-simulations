@@ -1,44 +1,28 @@
+import functools
+import sys
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
+
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common.mathutils import close_enough, fmt_factor, fmt_num, fmt_signed  # noqa: E402
+from common.matrix_display import matrix_html, partial_matrix, row_major_cells  # noqa: E402
 
 
 st.set_page_config(page_title="Matrix Addition & Scalar Multiplication", layout="wide")
 
-
-def matrix_to_html(matrix, title, highlight=None, color="#60a5fa"):
-    rows, cols = matrix.shape
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:20px;">
-    """
-    for i in range(rows):
-        html += "<tr>"
-        for j in range(cols):
-            bg = "transparent"
-            if highlight is not None and (i, j) in highlight:
-                bg = color
-            html += (
-                f"<td style='border:1px solid #475569;padding:8px 12px;text-align:center;"
-                f"min-width:46px;background:{bg};'>{matrix[i, j]:.1f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
+matrix_to_html = functools.partial(
+    matrix_html, theme="lab", cell_style="fill", precision=1, font_size=20, cell_padding="8px 12px", min_width=46
+)
 
 
-def build_random_matrix(rows, cols, low=-5, high=9):
-    return np.random.randint(low, high, size=(rows, cols)).astype(float)
-
-
-def step_coordinates(step, rows, cols):
-    coords = []
-    for idx in range(step):
-        r = idx // cols
-        c = idx % cols
-        if r < rows:
-            coords.append((r, c))
-    return coords
+def build_random_matrix(rows, cols, seed, low=-5, high=9):
+    return np.random.default_rng(seed).integers(low, high, size=(rows, cols)).astype(float)
 
 
 def render_intro():
@@ -68,13 +52,10 @@ def render_addition_section(A, B):
         min_value=0,
         max_value=total_cells,
         value=min(2, total_cells),
-        key="add_step",
+        key="p11_add_step",
     )
-    solved = step_coordinates(step, rows, cols)
-
-    partial = np.full_like(C, np.nan)
-    for r, c in solved:
-        partial[r, c] = C[r, c]
+    solved = row_major_cells(step, rows, cols)
+    partial = partial_matrix(C, solved)
 
     left, mid, right = st.columns([1, 0.25, 1], vertical_alignment="top")
     with left:
@@ -84,9 +65,8 @@ def render_addition_section(A, B):
     with mid:
         st.markdown("<div style='text-align:center;font-size:42px;padding-top:80px;'>=</div>", unsafe_allow_html=True)
     with right:
-        shown = np.where(np.isnan(partial), 0.0, partial)
         st.markdown(
-            matrix_to_html(shown, "A + B (partial)", solved, "#f59e0b"),
+            matrix_to_html(partial, "A + B (partial, ? = not solved yet)", solved, "#f59e0b"),
             unsafe_allow_html=True,
         )
 
@@ -94,7 +74,7 @@ def render_addition_section(A, B):
         r, c = solved[-1]
         st.success(
             f"Latest solved cell: C[{r+1},{c+1}] = A[{r+1},{c+1}] + B[{r+1},{c+1}] "
-            f"= {A[r,c]:.1f} + {B[r,c]:.1f} = {C[r,c]:.1f}"
+            f"= {fmt_num(A[r,c], 1)} {fmt_signed(B[r,c], 1)} = {fmt_num(C[r,c], 1)}"
         )
     else:
         st.info("Move the slider to start solving matrix addition, one cell at a time.")
@@ -104,7 +84,7 @@ def render_addition_section(A, B):
 
 def render_scalar_section(A):
     st.header("2) Scalar Multiplication: Stretch or Flip")
-    scalar = st.slider("Choose scalar k", min_value=-4.0, max_value=4.0, value=1.5, step=0.5)
+    scalar = st.slider("Choose scalar k", min_value=-4.0, max_value=4.0, value=1.5, step=0.5, key="p11_scalar")
     kA = scalar * A
 
     total_cells = A.size
@@ -113,56 +93,61 @@ def render_scalar_section(A):
         min_value=0,
         max_value=total_cells,
         value=min(3, total_cells),
-        key="scalar_step",
+        key="p11_scalar_step",
     )
-    solved = step_coordinates(step, *A.shape)
-
-    partial = np.full_like(kA, np.nan)
-    for r, c in solved:
-        partial[r, c] = kA[r, c]
-    shown = np.where(np.isnan(partial), 0.0, partial)
+    solved = row_major_cells(step, *A.shape)
+    partial = partial_matrix(kA, solved)
 
     col1, col2 = st.columns(2, vertical_alignment="top")
     with col1:
         st.markdown(matrix_to_html(A, "Original Matrix A", solved, "#38bdf8"), unsafe_allow_html=True)
     with col2:
         st.markdown(
-            matrix_to_html(shown, f"Scaled Matrix kA (k={scalar:.1f})", solved, "#f97316"),
+            matrix_to_html(partial, f"Scaled Matrix kA (k={scalar:.1f}, ? = not solved yet)", solved, "#f97316"),
             unsafe_allow_html=True,
         )
 
     if solved:
         r, c = solved[-1]
         st.success(
-            f"Latest solved cell: (kA)[{r+1},{c+1}] = k * A[{r+1},{c+1}] "
-            f"= {scalar:.1f} * {A[r,c]:.1f} = {kA[r,c]:.1f}"
+            f"Latest solved cell: (kA)[{r+1},{c+1}] = k × A[{r+1},{c+1}] "
+            f"= {fmt_num(scalar, 1)} × {fmt_factor(A[r,c], 1)} = {fmt_num(kA[r,c], 1)}"
         )
 
-    meaning = "flips sign + stretches" if scalar < 0 else "stretches/shrinks"
+    if close_enough(scalar, 0.0):
+        meaning = "squashes every cell to 0"
+    elif close_enough(abs(scalar), 1.0):
+        meaning = "flips every sign (same sizes)" if scalar < 0 else "leaves every cell unchanged"
+    else:
+        size_change = "stretches" if abs(scalar) > 1 else "shrinks"
+        meaning = f"flips sign + {size_change}" if scalar < 0 else size_change
     st.info(f"When k = {scalar:.1f}, every cell gets scaled the same way: **{meaning}**.")
-    st.code("Rule: (kA)[i, j] = k * A[i, j]", language="text")
+    st.code("Rule: (kA)[i, j] = k × A[i, j]", language="text")
 
 
 def main():
     render_intro()
 
     st.sidebar.header("Matrix Controls")
-    rows = st.sidebar.select_slider("Rows", options=[2, 3, 4], value=3)
-    cols = st.sidebar.select_slider("Columns", options=[2, 3, 4], value=3)
-    regenerate = st.sidebar.button("Generate new random matrices")
+    rows = st.sidebar.select_slider("Rows", options=[2, 3, 4], value=3, key="p11_rows")
+    cols = st.sidebar.select_slider("Columns", options=[2, 3, 4], value=3, key="p11_cols")
+    regenerate = st.sidebar.button("Generate new random matrices", key="p11_regenerate")
 
-    if "A_matrix" not in st.session_state or "B_matrix" not in st.session_state:
-        st.session_state.A_matrix = build_random_matrix(rows, cols)
-        st.session_state.B_matrix = build_random_matrix(rows, cols)
-        st.session_state.shape = (rows, cols)
+    # Matrices come from a seed kept in session_state: the same numbers on every rerun until the
+    # shape changes or the user presses the button.
+    if "p11_seed" not in st.session_state:
+        st.session_state.p11_seed = 0
+    if regenerate:
+        st.session_state.p11_seed += 1
 
-    if regenerate or st.session_state.get("shape") != (rows, cols):
-        st.session_state.A_matrix = build_random_matrix(rows, cols)
-        st.session_state.B_matrix = build_random_matrix(rows, cols)
-        st.session_state.shape = (rows, cols)
+    if regenerate or st.session_state.get("p11_shape") != (rows, cols):
+        seed = st.session_state.p11_seed
+        st.session_state.p11_A_matrix = build_random_matrix(rows, cols, seed=[seed, rows, cols, 0])
+        st.session_state.p11_B_matrix = build_random_matrix(rows, cols, seed=[seed, rows, cols, 1])
+        st.session_state.p11_shape = (rows, cols)
 
-    A = st.session_state.A_matrix
-    B = st.session_state.B_matrix
+    A = st.session_state.p11_A_matrix
+    B = st.session_state.p11_B_matrix
 
     st.sidebar.markdown(
         """

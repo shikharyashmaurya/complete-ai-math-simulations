@@ -1,0 +1,49 @@
+{
+  "page": 53,
+  "questions": [
+    {
+      "q": "For the lab's bowl $f(x) = x^2$, one step is $x_{new} = (1 - 2\\eta)\\,x$. Starting at $x = 2$ with $\\eta = 0.15$, where does the ball land?",
+      "options": [
+        "$1.7$",
+        "$0.6$",
+        "$-1.4$",
+        "$1.4$"
+      ],
+      "answer": 3,
+      "explain": "$1 - 2(0.15) = 0.7$, so $x_{new} = 0.7 \\cdot 2 = 1.4$. $1.7$ forgets the factor 2 in the slope $2x$; $0.6$ is the step size $\\eta \\cdot 2x$ itself, not the new position."
+    },
+    {
+      "q": "On $f(x) = x^2$ you choose $\\eta = 0.75$. What does the ball do?",
+      "options": [
+        "Lands on the minimum in one jump",
+        "Bounces forever at the same height",
+        "Zig-zags across the valley but still converges (BOUNCY)",
+        "Diverges to infinity (CHAOS)"
+      ],
+      "answer": 2,
+      "explain": "The factor is $1 - 2(0.75) = -0.5$: the sign flips every step (zig-zag) but $|{-0.5}| < 1$, so it shrinks. One jump needs $\\eta = 0.5$, endless bouncing $\\eta = 1$, divergence $\\eta > 1$."
+    },
+    {
+      "q": "Using the rule $\\eta < 2/\\lambda$, what is the largest stable learning rate for the steeper bowl $f(x) = 4x^2$?",
+      "options": [
+        "$1$",
+        "$0.25$",
+        "$0.5$",
+        "$0.125$"
+      ],
+      "answer": 1,
+      "explain": "Curvature $\\lambda = f''(x) = 8$, so $\\eta < 2/8 = 0.25$. $1$ is the limit for $x^2$ ($\\lambda = 2$); $0.125 = 1/\\lambda$ is the one-jump rate, not the stability limit."
+    },
+    {
+      "q": "During training your loss suddenly becomes NaN or infinity. What is the most likely culprit and the page's suggested fix?",
+      "options": [
+        "The learning rate is too high — try dividing it by 10",
+        "The learning rate is too low — try multiplying it by 10",
+        "The model has reached the global minimum — stop training",
+        "The data has too few examples — duplicate it"
+      ],
+      "answer": 0,
+      "explain": "Steps larger than the stability limit make each update overshoot further (like CHAOS at $\\eta = 1.05$), so the loss explodes. Too small a rate only makes training slow."
+    }
+  ]
+}

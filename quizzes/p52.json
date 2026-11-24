@@ -1,0 +1,49 @@
+{
+  "page": 52,
+  "questions": [
+    {
+      "q": "At $\\mathbf{w}_{old} = [1,\\ 2]$ the gradient is $\\nabla f = [2,\\ -4]$. With $\\eta = 0.15$, what is $\\mathbf{w}_{next} = \\mathbf{w}_{old} - \\eta \\nabla f$?",
+      "options": [
+        "$[0.7,\\ 2.6]$",
+        "$[1.3,\\ 1.4]$",
+        "$[0.7,\\ 1.4]$",
+        "$[-1,\\ 6]$"
+      ],
+      "answer": 0,
+      "explain": "$\\eta\\nabla f = [0.3,\\ -0.6]$, so $\\mathbf{w}_{next} = [1 - 0.3,\\ 2 + 0.6] = [0.7,\\ 2.6]$. $[1.3, 1.4]$ adds the gradient (walks uphill); $[0.7, 1.4]$ mishandles the minus sign of the negative component; $[-1, 6]$ forgets $\\eta$."
+    },
+    {
+      "q": "Why does gradient descent move along $-\\nabla f$ rather than $\\nabla f$?",
+      "options": [
+        "$\\nabla f$ always points to the global minimum, so the minus sign is just a convention",
+        "$-\\nabla f$ has a larger magnitude than $\\nabla f$",
+        "$\\nabla f$ is zero everywhere except at the minimum",
+        "$\\nabla f$ points in the steepest **uphill** direction, so its negative is steepest downhill"
+      ],
+      "answer": 3,
+      "explain": "The gradient (orange dashed line in the lab) points uphill; the green arrow $-\\nabla f$ is the descent direction. Both have the same length."
+    },
+    {
+      "q": "In the topographic map, how does the gradient relate to the white contour lines (lines of equal loss)?",
+      "options": [
+        "It runs parallel to them",
+        "It is unrelated to them",
+        "It crosses them at a right angle",
+        "It always points to where they are densest"
+      ],
+      "answer": 2,
+      "explain": "Moving along a contour line does not change the loss, so the direction of steepest change must be perpendicular to it."
+    },
+    {
+      "q": "On **Lumpy Terrain**, the ball often stops in a shallow dip instead of the deepest one. Why?",
+      "options": [
+        "The learning rate $\\eta = 0.15$ is too large for this terrain",
+        "Gradient descent only uses the local slope, so it settles in whichever dip is nearby",
+        "The gradient is computed incorrectly on non-convex surfaces",
+        "The ball runs out of steps before reaching the bottom"
+      ],
+      "answer": 1,
+      "explain": "Each step only follows the local downhill direction; once the slope is zero in a dip, the steps vanish. On the Convex Bowl there is only one dip, so every start reaches the deepest blue. $\\eta = 0.15$ is small enough for both terrains."
+    }
+  ]
+}

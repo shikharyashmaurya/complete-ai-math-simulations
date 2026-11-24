@@ -1,0 +1,178 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; padding: 0; background: transparent; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; justify-content: center; align-items: center; color: white;}
+        
+        .container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #0f172a; padding: 30px; border-radius: 20px; width: 100%; max-width: 900px;
+            border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .controls {
+            display: flex; gap: 20px; margin-bottom: 30px; background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 12px;
+        }
+        
+        button {
+            background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        button:hover { background: #334155; color: white; }
+        button.active { background: #4ade80; color: #0f172a; border-color: #4ade80; }
+        
+        .viz-area {
+            display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 20px;
+        }
+
+        .flow-path {
+            flex-grow: 1; height: 100px; position: relative; display: flex; flex-direction: column; justify-content: center;
+        }
+        
+        .pipe { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; position: relative; overflow: hidden; margin: 20px 0; }
+        .data-particle {
+            position: absolute; top: 0; left: 0; height: 100%; width: 20px; border-radius: 4px;
+            animation: flow 2s infinite linear;
+        }
+        
+        @keyframes flow { 0% { left: -20px; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+        
+        .relu-box {
+            background: #1e293b; border: 2px solid #fbbf24; border-radius: 12px; padding: 20px; text-align: center;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); z-index: 2; position: relative;
+        }
+        .relu-box h3 { margin: 0 0 10px 0; color: #fbbf24; }
+        .relu-box .formula { font-family: monospace; font-size: 18px; color: #cbd5e1; }
+        
+        .label { font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;}
+        
+        #x-input { width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; outline: none; margin-top: 15px;}
+        #x-input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #38bdf8; cursor: pointer; }
+        
+        .val-display { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .in-val { color: #38bdf8; }
+        .out-val { color: #4ade80; }
+        
+        .dead-val { color: #ef4444; text-decoration: line-through; }
+        
+        .explanation { margin-top: 25px; color: #94a3b8; font-size: 14px; text-align: center; max-width: 600px; line-height: 1.5; }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="controls">
+                <button id="btn-relu" class="active">ReLU</button>
+                <button id="btn-leaky">Leaky ReLU</button>
+                <button id="btn-abs">Absolute Value</button>
+            </div>
+            
+            <div class="viz-area">
+                <div style="width: 150px; text-align: center;">
+                    <div class="label">Input (x)</div>
+                    <div id="disp-in" class="val-display in-val">-2.5</div>
+                    <input type="range" id="x-input" min="-5" max="5" step="0.1" value="-2.5">
+                </div>
+                
+                <div class="flow-path">
+                    <div class="pipe">
+                        <div id="particle-in" class="data-particle" style="background: #38bdf8; animation-duration: 1.5s;"></div>
+                    </div>
+                </div>
+                
+                <div class="relu-box" id="activation-box">
+                    <h3 id="box-title">ReLU</h3>
+                    <div class="formula" id="box-formula">max(0, x)</div>
+                </div>
+                
+                <div class="flow-path">
+                    <div class="pipe" id="pipe-out">
+                        <div id="particle-out" class="data-particle" style="background: #4ade80; animation-duration: 1.5s; animation-delay: 1.5s;"></div>
+                    </div>
+                </div>
+                
+                <div style="width: 150px; text-align: center;">
+                    <div class="label">Output (y)</div>
+                    <div id="disp-out" class="val-display out-val">0.0</div>
+                </div>
+            </div>
+            
+            <div class="explanation" id="exp-text">
+                ReLU is the simplest piecewise function: a hinge at 0. If the input is negative, the signal is <strong>blocked (output 0)</strong>. If positive, it passes through perfectly unchanged. This cheap trick gives neural networks their superpower.
+            </div>
+        </div>
+        
+        <script>
+            let mode = 'relu';
+            const btnRelu = document.getElementById('btn-relu');
+            const btnLeaky = document.getElementById('btn-leaky');
+            const btnAbs = document.getElementById('btn-abs');
+            const xInput = document.getElementById('x-input');
+            const dispIn = document.getElementById('disp-in');
+            const dispOut = document.getElementById('disp-out');
+            const particleOut = document.getElementById('particle-out');
+            const pipeOut = document.getElementById('pipe-out');
+            const boxTitle = document.getElementById('box-title');
+            const boxFormula = document.getElementById('box-formula');
+            const expText = document.getElementById('exp-text');
+            const actBox = document.getElementById('activation-box');
+            
+            function update() {
+                const x = parseFloat(xInput.value);
+                let y = 0;
+                dispIn.innerText = x.toFixed(1);
+                
+                if(mode === 'relu') {
+                    y = Math.max(0, x);
+                    boxTitle.innerText = 'ReLU'; boxFormula.innerText = 'max(0, x)';
+                    expText.innerHTML = 'ReLU is the simplest piecewise function: a hinge at 0. If the input is negative, the signal is <strong style="color:#ef4444">blocked (output 0)</strong>. If positive, it passes through perfectly unchanged. This cheap trick gives neural networks their superpower.';
+                    actBox.style.borderColor = '#fbbf24'; boxTitle.style.color = '#fbbf24';
+                } else if (mode === 'leaky') {
+                    y = x < 0 ? 0.1 * x : x;
+                    boxTitle.innerText = 'Leaky ReLU'; boxFormula.innerText = 'x < 0 ? 0.1x : x';
+                    expText.innerHTML = 'Leaky ReLU lets a tiny fraction of the negative signal through. This prevents "dead neurons" that get stuck outputting 0 forever during training, while still providing the necessary non-linearity.';
+                    actBox.style.borderColor = '#a78bfa'; boxTitle.style.color = '#a78bfa';
+                } else {
+                    y = Math.abs(x);
+                    boxTitle.innerText = 'Absolute Value'; boxFormula.innerText = '|x|';
+                    expText.innerHTML = 'The Absolute Value function reflects negative inputs. It is two lines (y=x and y=-x) stitched at 0. Piecewise doesn\'t just mean "turning off", it means swapping rules!';
+                    actBox.style.borderColor = '#f472b6'; boxTitle.style.color = '#f472b6';
+                }
+                
+                dispOut.innerText = y.toFixed(1);
+                
+                // Animation Logic
+                if (mode === 'relu' && x <= 0) {
+                    dispOut.className = 'val-display dead-val';
+                    dispOut.style.color = ''; // let .dead-val's red win over any earlier inline color
+                    particleOut.style.display = 'none';
+                    pipeOut.style.opacity = '0.2';
+                } else {
+                    dispOut.className = 'val-display out-val';
+                    particleOut.style.display = 'block';
+                    pipeOut.style.opacity = '1';
+                    
+                    // Color code output based on if it was modified
+                    if (y === x) { dispOut.style.color = '#38bdf8'; particleOut.style.background = '#38bdf8'; }
+                    else { dispOut.style.color = '#4ade80'; particleOut.style.background = '#4ade80'; }
+                }
+            }
+            
+            function setMode(m) {
+                mode = m;
+                btnRelu.className = m === 'relu' ? 'active' : '';
+                btnLeaky.className = m === 'leaky' ? 'active' : '';
+                btnAbs.className = m === 'abs' ? 'active' : '';
+                update();
+            }
+            
+            btnRelu.addEventListener('click', () => setMode('relu'));
+            btnLeaky.addEventListener('click', () => setMode('leaky'));
+            btnAbs.addEventListener('click', () => setMode('abs'));
+            xInput.addEventListener('input', update);
+            
+            update();
+        </script>
+    </body>
+    </html>
+    

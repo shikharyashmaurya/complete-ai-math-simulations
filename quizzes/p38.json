@@ -1,0 +1,49 @@
+{
+  "page": 38,
+  "questions": [
+    {
+      "q": "The lab starts with $[2, 3, 3, 4, 6, 8, 14, 18, 18, 18, 19]$. What are the mean, median and mode?",
+      "options": [
+        "Mean $8$, median $\\approx 10.27$, mode $18$",
+        "Mean $\\approx 10.27$, median $8$, mode $18$",
+        "Mean $\\approx 10.27$, median $6$, mode $3$",
+        "Mean $10.5$, median $8$, mode $19$"
+      ],
+      "answer": 1,
+      "explain": "Sum $= 113$, so mean $= 113/11 \\approx 10.27$. The 6th of 11 sorted values is $8$ (median). $18$ appears three times, more than any other value (mode)."
+    },
+    {
+      "q": "You drag the rightmost point from $19$ to $30$. What happens?",
+      "options": [
+        "Mean and median both rise by 1",
+        "The median rises; the mean stays the same",
+        "Nothing changes because the mode is still 18",
+        "The mean rises to $\\approx 11.27$; the median stays at $8$"
+      ],
+      "answer": 3,
+      "explain": "The sum grows by $11$, so the mean grows by $11/11 = 1$. The middle value is still $8$: the median is robust to outliers, the mean chases them."
+    },
+    {
+      "q": "You add a 12th point at $20$ (even count). What is the new median?",
+      "options": [
+        "$8$",
+        "$14$",
+        "$11$",
+        "$\\approx 11.08$"
+      ],
+      "answer": 2,
+      "explain": "With 12 sorted values the median is the average of the 6th and 7th: $(8 + 14)/2 = 11$. $\\approx 11.08$ is the new mean, not the median."
+    },
+    {
+      "q": "Reporting the \"typical\" house price in a town where one billionaire's mansion is far above all other prices, which measure best resists that outlier?",
+      "options": [
+        "Median",
+        "Mean",
+        "Maximum",
+        "Sum"
+      ],
+      "answer": 0,
+      "explain": "The median depends only on the middle of the sorted values, so one extreme value barely moves it, while the mean is pulled toward the outlier."
+    }
+  ]
+}

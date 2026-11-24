@@ -1,0 +1,18 @@
+{"page": 43, "questions": [
+  {"q": "A least-squares line with an intercept is fitted to $n$ points. What is $\\sum_i e_i$, the sum of the residuals $e_i = y_i - \\hat y_i$?",
+   "options": ["Exactly 0, because the residual vector is orthogonal to the column of 1s", "It equals the SSE", "It is positive whenever there are outliers", "It equals $n$ times the slope"],
+   "answer": 0,
+   "explain": "The normal equation for $b_0$ says $\\sum_i e_i = e \\cdot \\mathbf 1 = 0$. That is why we square residuals for the loss: their plain sum is always 0 and says nothing about fit quality."},
+  {"q": "The residuals-vs-fitted plot shows a clear U shape (positive at both ends, negative in the middle). What does this suggest?",
+   "options": ["The noise variance grows with $x$", "The true relationship is curved, so a straight line is the wrong model", "There is a single high-leverage outlier", "The fit is perfect and $R^2 = 1$"],
+   "answer": 1,
+   "explain": "A systematic pattern in the residuals means the model missed structure — here curvature, so add an $x^2$ feature or use a non-linear model. A growing spread (funnel) would instead indicate heteroscedasticity."},
+  {"q": "A point lies far to the right of all the others in $x$ but its residual is small. Which statement is correct?",
+   "options": ["It has low leverage, because its residual is small", "It has high leverage; it may still be influential, because it pulls the line towards itself and so shrinks its own residual", "Leverage depends only on $y$, so we cannot tell", "Its Cook's distance is always exactly 0"],
+   "answer": 1,
+   "explain": "Leverage $h_{ii} = 1/n + (x_i-\\bar x)^2/S_{xx}$ depends only on $x$. A high-leverage point drags the line towards itself, so a small residual does not prove it is harmless; Cook's distance (leverage combined with residual) or refitting without the point tells you."},
+  {"q": "For a fitted line, SST = 50 and SSE = 10. What is $R^2$, and what is SSR?",
+   "options": ["$R^2 = 0.2$, SSR = 10", "$R^2 = 0.8$, SSR = 40", "$R^2 = 0.8$, SSR = 60", "$R^2 = 5$, SSR = 40"],
+   "answer": 1,
+   "explain": "$R^2 = 1 - \\text{SSE}/\\text{SST} = 1 - 10/50 = 0.8$, and SST = SSR + SSE gives SSR = 40. A common trap is computing SSE/SST = 0.2, which is the *unexplained* share."}
+]}

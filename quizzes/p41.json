@@ -1,0 +1,49 @@
+{
+  "page": 41,
+  "questions": [
+    {
+      "q": "Using $r = \\frac{\\text{Cov}(X, Y)}{\\sigma_X \\sigma_Y}$: if $\\text{Cov}(X, Y) = 6$, $\\sigma_X = 2$ and $\\sigma_Y = 5$, what is $r$?",
+      "options": [
+        "$6$",
+        "$0.3$",
+        "$0.6$",
+        "$1.2$"
+      ],
+      "answer": 2,
+      "explain": "$r = 6/(2 \\times 5) = 0.6$, a moderate positive trend. $r$ must lie in $[-1, 1]$, so $6$ and $1.2$ are impossible."
+    },
+    {
+      "q": "Temperature in °C vs. the same temperature in °F ($F = 1.8\\,C + 32$). What is Pearson $r$?",
+      "options": [
+        "$1$",
+        "$1.8$",
+        "$0.5$",
+        "$32$"
+      ],
+      "answer": 0,
+      "explain": "The points lie exactly on an increasing straight line, so $r = 1$. $r$ measures how tightly points hug a line, not the slope — the 1.8 and 32 are irrelevant."
+    },
+    {
+      "q": "Points lie exactly on a symmetric U-shaped curve, so X determines Y. What is the Pearson correlation?",
+      "options": [
+        "$1$, because the relationship is perfect",
+        "$-1$",
+        "Undefined",
+        "$0$ (or near $0$), because there is no *linear* trend"
+      ],
+      "answer": 3,
+      "explain": "Pearson $r$ only measures linear association. The symmetric U has no overall upward or downward trend, so the least-squares line is flat and $r \\approx 0$ — never trust $r$ without plotting."
+    },
+    {
+      "q": "One variable is constant ($\\sigma_Y = 0$). What is $r$?",
+      "options": [
+        "$0$",
+        "Undefined ($0 \\div 0$)",
+        "$1$",
+        "$-1$"
+      ],
+      "answer": 1,
+      "explain": "The covariance is $0$ and the denominator $\\sigma_X \\cdot 0$ is also $0$, so $r = 0/0$ is undefined — not zero."
+    }
+  ]
+}

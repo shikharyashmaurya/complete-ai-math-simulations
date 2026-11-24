@@ -1,0 +1,212 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; overflow: hidden; }
+        .container { display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box; gap: 15px;}
+        .vis-row { display: flex; gap: 20px; flex: 1; min-height: 0; justify-content: center; align-items: flex-start; }
+        .panel { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; width: 220px;}
+        .final-panel { width: 320px; border-color: rgba(74, 222, 128, 0.3); background: rgba(74, 222, 128, 0.05); }
+        .panel-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #e2e8f0; text-align: center; }
+        canvas { background: #1e293b; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .small-cvs { width: 150px; height: 150px; }
+        .large-cvs { width: 250px; height: 250px; }
+        .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 15px; }
+        .slider-group { display: flex; flex-direction: column; }
+        .slider-group label { font-size: 12px; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px; font-variant-numeric: tabular-nums; font-weight: 600; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #38bdf8; cursor: pointer; }
+        .final-panel input[type=range]::-webkit-slider-thumb { background: #4ade80; }
+        .math-text { font-family: monospace; font-size: 13px; color: #94a3b8; margin-top: 10px; text-align: center; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .legend { display: flex; gap: 20px; justify-content: center; font-size: 13px; font-weight: bold; margin-top: 5px;}
+        .leg-item { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .btn-row { display: flex; gap: 15px; justify-content: center; margin-top: 10px; }
+        button { background: #1e293b; color: white; border: 1px solid #4ade80; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        button:hover { background: #4ade80; color: #0f172a; transform: translateY(-1px); }
+        .btn-fails { border-color: #fb7185; color: #fb7185; }
+        .btn-fails:hover { background: #fb7185; color: white; }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="vis-row">
+                <!-- Panel 1 -->
+                <div class="panel">
+                    <div class="panel-title" style="color: #38bdf8;">Slice 1 (ReLU)</div>
+                    <canvas id="c1" class="small-cvs" width="150" height="150"></canvas>
+                    <div class="math-text" id="math1">h₁</div>
+                    <div class="controls">
+                        <div class="slider-group"><label><span>w₁₁ (x)</span> <span id="v-w11">1.0</span></label><input type="range" id="w11" min="-2" max="2" step="0.1" value="1"></div>
+                        <div class="slider-group"><label><span>w₁₂ (y)</span> <span id="v-w12">1.0</span></label><input type="range" id="w12" min="-2" max="2" step="0.1" value="1"></div>
+                        <div class="slider-group"><label><span>b₁ (bias)</span> <span id="v-b1">-0.5</span></label><input type="range" id="b1" min="-2" max="2" step="0.1" value="-0.5"></div>
+                    </div>
+                </div>
+                
+                <!-- Panel 2 -->
+                <div class="panel">
+                    <div class="panel-title" style="color: #f472b6;">Slice 2 (ReLU)</div>
+                    <canvas id="c2" class="small-cvs" width="150" height="150"></canvas>
+                    <div class="math-text" id="math2">h₂</div>
+                    <div class="controls">
+                        <div class="slider-group"><label><span>w₂₁ (x)</span> <span id="v-w21">1.0</span></label><input type="range" id="w21" min="-2" max="2" step="0.1" value="1"></div>
+                        <div class="slider-group"><label><span>w₂₂ (y)</span> <span id="v-w22">1.0</span></label><input type="range" id="w22" min="-2" max="2" step="0.1" value="1"></div>
+                        <div class="slider-group"><label><span>b₂ (bias)</span> <span id="v-b2">-1.5</span></label><input type="range" id="b2" min="-2" max="2" step="0.1" value="-1.5"></div>
+                    </div>
+                </div>
+                
+                <!-- Final Panel -->
+                <div class="panel final-panel">
+                    <div class="panel-title" style="color: #4ade80;">Final Piecewise Output</div>
+                    <canvas id="c3" class="large-cvs" width="250" height="250"></canvas>
+                    <div class="math-text" id="math3" style="color: #4ade80;">out</div>
+                    <div class="controls">
+                        <div class="slider-group"><label><span>v₁ (weight of Slice 1)</span> <span id="v-v1">1.0</span></label><input type="range" id="v1" min="-4" max="4" step="0.1" value="1"></div>
+                        <div class="slider-group"><label><span>v₂ (weight of Slice 2)</span> <span id="v-v2">-3.0</span></label><input type="range" id="v2" min="-4" max="4" step="0.1" value="-3"></div>
+                        <div class="slider-group"><label><span>c (final bias)</span> <span id="v-c">-0.1</span></label><input type="range" id="c" min="-2" max="2" step="0.1" value="-0.1"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="leg-item"><div class="dot" style="background: #38bdf8;"></div> Class + (Different)</div>
+                <div class="leg-item"><div class="dot" style="background: #f472b6;"></div> Class − (Same)</div>
+            </div>
+            <div class="btn-row">
+                <button id="btn-solve">🎯 Auto-Solve XOR</button>
+                <button id="btn-linear" class="btn-fails">❌ Force Linear (Fails)</button>
+            </div>
+        </div>
+
+        <script>
+            const P1 = document.getElementById('c1').getContext('2d');
+            const P2 = document.getElementById('c2').getContext('2d');
+            const P3 = document.getElementById('c3').getContext('2d');
+            
+            const els = ['w11','w12','b1','w21','w22','b2','v1','v2','c'];
+            const inputs = {};
+            const vals = {};
+            els.forEach(id => {
+                inputs[id] = document.getElementById(id);
+                vals[id] = document.getElementById('v-'+id);
+                inputs[id].addEventListener('input', draw);
+            });
+            
+            document.getElementById('btn-solve').addEventListener('click', () => {
+                setVals({w11:1, w12:1, b1:-0.5, w21:1, w22:1, b2:-1.5, v1:1, v2:-3, c:-0.1});
+            });
+            
+            document.getElementById('btn-linear').addEventListener('click', () => {
+                setVals({w11:1, w12:1, b1:-0.5, w21:0, w22:0, b2:0, v1:1, v2:0, c:-0.5});
+            });
+            
+            function setVals(obj) {
+                for(let k in obj) {
+                    inputs[k].value = obj[k];
+                }
+                draw();
+            }
+
+            const points = [
+                [0, 0, -1], [1, 1, -1],
+                [1, 0,  1], [0, 1,  1]
+            ];
+
+            const bgR = 30, bgG = 41, bgB = 59; // #1e293b
+            const blR = 56, blG = 189, blB = 248; // #38bdf8
+            const pkR = 244, pkG = 114, pkB = 182; // #f472b6
+            const wtR = 255, wtG = 255, wtB = 255;
+            
+            const lerp = (a, b, t) => a + (b - a) * t;
+
+            function drawHeatmap(ctx, width, height, isFinal, calcFunc) {
+                const imgData = ctx.createImageData(width, height);
+                const data = imgData.data;
+                
+                for(let py=0; py<height; py++) {
+                    for(let px=0; px<width; px++) {
+                        const x = (px / width) * 2.0 - 0.5;
+                        const y = ((height - py) / height) * 2.0 - 0.5;
+                        
+                        const val = calcFunc(x, y);
+                        
+                        let r, g, b;
+                        let t = Math.min(1, Math.abs(val));
+                        
+                        if(!isFinal) {
+                            r = lerp(bgR, wtR, t);
+                            g = lerp(bgG, wtG, t);
+                            b = lerp(bgB, wtB, t);
+                        } else {
+                            if(val > 0) {
+                                r = lerp(bgR, blR, t);
+                                g = lerp(bgG, blG, t);
+                                b = lerp(bgB, blB, t);
+                            } else {
+                                r = lerp(bgR, pkR, t);
+                                g = lerp(bgG, pkG, t);
+                                b = lerp(bgB, pkB, t);
+                            }
+                        }
+                        
+                        const idx = (py * width + px) * 4;
+                        data[idx] = r; data[idx+1] = g; data[idx+2] = b; data[idx+3] = 255;
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+
+                // Draw points
+                points.forEach(p => {
+                    const px = (p[0] + 0.5) / 2.0 * width;
+                    const py = height - (p[1] + 0.5) / 2.0 * height;
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, isFinal ? 6 : 5, 0, 2*Math.PI);
+                    ctx.fillStyle = p[2] === 1 ? '#38bdf8' : '#f472b6';
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.stroke();
+                    
+                    // White halo for visibility
+                    ctx.beginPath();
+                    ctx.arc(px, py, isFinal ? 7 : 6, 0, 2*Math.PI);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.stroke();
+                });
+            }
+
+            function draw() {
+                const w11 = parseFloat(inputs.w11.value);
+                const w12 = parseFloat(inputs.w12.value);
+                const b1 = parseFloat(inputs.b1.value);
+                const w21 = parseFloat(inputs.w21.value);
+                const w22 = parseFloat(inputs.w22.value);
+                const b2 = parseFloat(inputs.b2.value);
+                const v1 = parseFloat(inputs.v1.value);
+                const v2 = parseFloat(inputs.v2.value);
+                const c = parseFloat(inputs.c.value);
+
+                els.forEach(id => { vals[id].innerText = parseFloat(inputs[id].value).toFixed(1); });
+                
+                const term = (coef, name) => `${coef < 0 ? '-' : '+'} ${Math.abs(coef).toFixed(1)}${name}`;
+                document.getElementById('math1').innerText = `h₁ = max(0, ${w11.toFixed(1)}x ${term(w12, 'y')} ${term(b1, '')})`;
+                document.getElementById('math2').innerText = `h₂ = max(0, ${w21.toFixed(1)}x ${term(w22, 'y')} ${term(b2, '')})`;
+                document.getElementById('math3').innerText = `out = ${v1.toFixed(1)}h₁ ${term(v2, 'h₂')} ${term(c, '')}`;
+
+                const calcH1 = (x, y) => Math.max(0, w11*x + w12*y + b1);
+                const calcH2 = (x, y) => Math.max(0, w21*x + w22*y + b2);
+                const calcY = (x, y) => v1 * calcH1(x, y) + v2 * calcH2(x, y) + c;
+
+                drawHeatmap(P1, 150, 150, false, calcH1);
+                drawHeatmap(P2, 150, 150, false, calcH2);
+                drawHeatmap(P3, 250, 250, true, calcY);
+            }
+            
+            draw();
+        </script>
+    </body>
+    </html>
+    

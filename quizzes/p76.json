@@ -1,0 +1,18 @@
+{"page": 76, "questions": [
+  {"q": "In 2-D, $v_1 = (2, 1)$ and $v_2 = (-1, -0.5)$. What is the span of $\\{v_1, v_2\\}$?",
+   "options": ["The whole plane $\\mathbb{R}^2$", "A line through the origin", "Just the origin", "Two separate lines"],
+   "answer": 1,
+   "explain": "$v_2 = -\\tfrac12 v_1$, so the vectors are dependent ($\\det[v_1\\ v_2] = 0$, rank 1). Every combination $c_1v_1 + c_2v_2$ is a multiple of $v_1$: a single line. Two non-zero vectors do not automatically give the plane."},
+  {"q": "Why does `np.linalg.matrix_rank` compare singular values with a tolerance instead of testing whether the determinant is exactly 0?",
+   "options": ["Because the determinant only exists for 3×3 matrices", "Because floating-point rounding makes truly dependent vectors give tiny non-zero values, so 'zero' must mean 'below a tolerance'", "Because the tolerance makes the rank larger for every matrix", "Because singular values are always integers"],
+   "answer": 1,
+   "explain": "With $v_1=(0.1,0.7)$ and $v_2=3v_1$ the computed determinant is about $-5.6\\times10^{-17}$, not 0. matrix_rank counts $\\sigma_i > \\text{tol}$ (default $\\sigma_{\\max}\\cdot\\max(m,n)\\cdot\\varepsilon$), which treats rounding dust as zero."},
+  {"q": "A $3\\times 3$ matrix $A$ has rank 2. What is the dimension of its null space $\\{x : Ax = 0\\}$?",
+   "options": ["0", "1", "2", "3"],
+   "answer": 1,
+   "explain": "Rank–nullity: rank + nullity = number of columns, so nullity $= 3 - 2 = 1$: a whole line of inputs is crushed to 0."},
+  {"q": "$v_1, v_2$ are independent and $B = [v_1\\ v_2]$. How do you find the coordinates $c$ of a point $w$ in the basis $\\{v_1, v_2\\}$?",
+   "options": ["$c = Bw$", "$c = B^{-1}w$ (solve $Bc = w$)", "$c = w - v_1 - v_2$", "Coordinates are not unique for a basis"],
+   "answer": 1,
+   "explain": "$w = c_1v_1 + c_2v_2 = Bc$, so $c$ solves $Bc = w$; independence makes $B$ invertible and the coordinates unique. Applying $B$ goes the other way (from new coordinates back to standard ones)."}
+]}

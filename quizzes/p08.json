@@ -1,0 +1,49 @@
+{
+  "page": 8,
+  "questions": [
+    {
+      "q": "Two vectors make a 60° angle. Vector 1 has length 2 and vector 2 has length 3. What are the dot product and the cosine similarity?",
+      "options": [
+        "Dot = 0.5, cosine = 3",
+        "Dot = 3, cosine = 0.5",
+        "Dot = 6, cosine = 1",
+        "Dot = 3, cosine = 3"
+      ],
+      "answer": 1,
+      "explain": "Dot $= 2 \\cdot 3 \\cdot \\cos 60° = 3$; cosine similarity divides by both lengths: $3 / (2 \\cdot 3) = 0.5$."
+    },
+    {
+      "q": "You double the length of Vector 2 without changing the angle. What happens?",
+      "options": [
+        "The cosine similarity doubles; the dot product stays the same",
+        "The dot product doubles; the cosine similarity stays the same",
+        "Neither changes",
+        "Both the dot product and the cosine similarity double"
+      ],
+      "answer": 1,
+      "explain": "Cosine similarity ignores length — it only depends on the angle. The plain dot product grows with the lengths."
+    },
+    {
+      "q": "What is the cosine similarity of two vectors pointing in exactly opposite directions (180°)?",
+      "options": [
+        "0",
+        "180",
+        "−1",
+        "1"
+      ],
+      "answer": 2,
+      "explain": "$\\cos 180° = -1$: total disagreement. 0 is for perpendicular vectors, 1 for the same direction."
+    },
+    {
+      "q": "Why do the length sliders on this page start at 0.5 instead of 0?",
+      "options": [
+        "Short vectors always have cosine 0",
+        "Lengths below 0.5 make the cosine larger than 1",
+        "Plotting short arrows is impossible",
+        "Cosine similarity is undefined for the zero vector (division by zero)"
+      ],
+      "answer": 3,
+      "explain": "The formula divides by $\\|\\mathbf{v}_1\\|\\,\\|\\mathbf{v}_2\\|$; a zero-length vector would make that 0."
+    }
+  ]
+}

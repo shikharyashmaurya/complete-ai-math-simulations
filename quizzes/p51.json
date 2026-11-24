@@ -1,0 +1,49 @@
+{
+  "page": 51,
+  "questions": [
+    {
+      "q": "On the loss landscape, what does the **global minimum** represent?",
+      "options": [
+        "Any point where the surface looks flat",
+        "The lowest objective value anywhere on the landscape",
+        "The point where the weights are guaranteed to be unique and generalize best",
+        "The highest peak, where the model guesses most wildly"
+      ],
+      "answer": 1,
+      "explain": "It is the lowest altitude on the whole map. Reaching it minimizes this objective, but the page stresses it does not necessarily give unique weights or guarantee the best generalization; flat points can also be saddles or local minima."
+    },
+    {
+      "q": "You add a constant $5$ to every loss value of the landscape (shift it straight up). What happens to the location $(w_1, w_2)$ of the minimum?",
+      "options": [
+        "It stays exactly the same",
+        "It moves by $5$ along $w_1$",
+        "It disappears because all values are now positive",
+        "It becomes a maximum"
+      ],
+      "answer": 0,
+      "explain": "The vertical offset is arbitrary: only differences in objective value shape the surface. Shifting everything up changes the altitude readout but not where the valleys and peaks are."
+    },
+    {
+      "q": "A valley has very **steep walls**. What does that tell you?",
+      "options": [
+        "The loss barely reacts to the weights there",
+        "The valley must be the global minimum",
+        "The optimizer will wander aimlessly there",
+        "Small changes in the weights cause large changes in the loss"
+      ],
+      "answer": 3,
+      "explain": "Steepness = sensitivity: a tiny move in $w$ produces a big jump in loss. Flat regions are the opposite, where the optimizer may wander aimlessly because the slope gives little guidance."
+    },
+    {
+      "q": "What does the gradient tell a model with billions of weights, whose landscape we cannot see?",
+      "options": [
+        "The exact location of the global minimum",
+        "How many valleys the landscape has",
+        "The local direction of steepest increase, so we step the opposite way",
+        "Which weights can safely be deleted"
+      ],
+      "answer": 2,
+      "explain": "Like a hiker in fog feeling the slope underfoot, the gradient only provides local information. Gradient descent steps opposite to it, with no guarantee of finding the global minimum."
+    }
+  ]
+}

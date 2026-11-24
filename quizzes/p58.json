@@ -1,0 +1,49 @@
+{
+  "page": 58,
+  "questions": [
+    {
+      "q": "What is the entropy $H(X) = -\\sum_i p_i \\log_2 p_i$ of a 3-outcome system with probabilities $[0.5,\\ 0.25,\\ 0.25]$?",
+      "options": [
+        "$\\log_2 3 \\approx 1.585$ bits",
+        "$1$ bit",
+        "$1.5$ bits",
+        "$5$ bits"
+      ],
+      "answer": 2,
+      "explain": "$0.5 \\cdot 1 + 0.25 \\cdot 2 + 0.25 \\cdot 2 = 1.5$ bits. $\\log_2 3$ would require a *uniform* distribution; $5$ bits sums the surprises $1 + 2 + 2$ without weighting by probability."
+    },
+    {
+      "q": "A coin lands heads with $p = 0.75$. Which is its binary entropy $H(p) = -p\\log_2 p - (1-p)\\log_2(1-p)$?",
+      "options": [
+        "$1$ bit",
+        "$\\approx 0.811$ bits",
+        "$0.75$ bits",
+        "$\\approx 0.415$ bits"
+      ],
+      "answer": 1,
+      "explain": "$-0.75\\log_2 0.75 - 0.25\\log_2 0.25 \\approx 0.311 + 0.5 = 0.811$ bits. Any bias below the fair-coin peak of $1$ bit lowers entropy; $0.415 = -\\log_2 0.75$ is just the surprise of heads."
+    },
+    {
+      "q": "For the 4-state weather lab, which distribution has the **maximum** entropy, and how large is it?",
+      "options": [
+        "🌀 Pure Chaos, 25% each: $\\log_2 4 = 2$ bits",
+        "☀️ Sahara Sun, 90% sunny: $2$ bits",
+        "🌀 Pure Chaos, 25% each: $4$ bits",
+        "Any distribution: entropy is always $1$ bit"
+      ],
+      "answer": 0,
+      "explain": "$0 \\le H \\le \\log_2 n$, with the maximum reached only by the uniform distribution. For $n = 4$ that is $2$ bits. A peaked distribution like 90% sunny is far more predictable, so its entropy is lower."
+    },
+    {
+      "q": "A decision tree splits a parent node (8 spam, 8 ham; $H = 1$ bit) into two equal-size children, each with a 75%/25% mix ($H \\approx 0.811$ bits). What is the information gain?",
+      "options": [
+        "$\\approx 0.811$ bits",
+        "$\\approx 0.378$ bits",
+        "$0$ bits",
+        "$\\approx 0.189$ bits"
+      ],
+      "answer": 3,
+      "explain": "$IG = H(\\text{Parent}) - \\sum_k \\frac{|S_k|}{|S|} H(S_k) = 1 - (0.5 \\cdot 0.811 + 0.5 \\cdot 0.811) \\approx 0.189$ bits. Forgetting the size weights and adding both children ($1 - 1.622$) would even give a negative number; $0.378$ doubles the gain."
+    }
+  ]
+}

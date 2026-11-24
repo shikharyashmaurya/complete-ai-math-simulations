@@ -1,0 +1,49 @@
+{
+  "page": 44,
+  "questions": [
+    {
+      "q": "On the lab's curve $f(x) = 0.2x^2 - 2$, take base point $x = 1$ and interval $h = 1$. What is the secant slope $\\frac{f(x+h) - f(x)}{h}$?",
+      "options": [
+        "$0.6$",
+        "$0.4$",
+        "$0.2$",
+        "$-1.2$"
+      ],
+      "answer": 0,
+      "explain": "$f(2) = -1.2$, $f(1) = -1.8$, so the slope is $0.6/1 = 0.6$. That is the *average* rate over $[1, 2]$; the tangent slope $f'(1) = 0.4$ only appears in the limit $h \\to 0$."
+    },
+    {
+      "q": "Why can't we just set $h = 0$ in $\\frac{f(x+h) - f(x)}{h}$ to get the instantaneous slope?",
+      "options": [
+        "Because the result would always be $0$",
+        "Because $h$ must be negative",
+        "Because derivatives only exist for straight lines",
+        "Because it gives $0/0$, which has no meaning — instead we take the limit as $h$ approaches $0$"
+      ],
+      "answer": 3,
+      "explain": "With $h = 0$ both rise and run vanish. The derivative is the value the ratio *approaches* as $h \\to 0$ (from either side), never evaluated at $h = 0$ itself."
+    },
+    {
+      "q": "For the same curve $f(x) = 0.2x^2 - 2$, what is the derivative (tangent slope) at $x = 1$?",
+      "options": [
+        "$0.6$",
+        "$0.4$",
+        "$-1.8$",
+        "$0.2$"
+      ],
+      "answer": 1,
+      "explain": "Shrinking $h$, the secant slopes $0.4 + 0.2h$ settle on $0.4$, which matches $f'(x) = 0.4x$ at $x = 1$. $-1.8$ is the function value $f(1)$, not its slope."
+    },
+    {
+      "q": "The derivative of a function is $0$ at some point. What can you conclude?",
+      "options": [
+        "It must be a minimum",
+        "It must be a maximum",
+        "The curve is momentarily flat there — often a valley or hilltop, but not always (e.g. $x^3$ at $x = 0$)",
+        "The function is constant everywhere"
+      ],
+      "answer": 2,
+      "explain": "Zero slope means flat at that instant. $x^3$ is flat at $0$ yet keeps climbing on both sides, so a zero derivative does not guarantee a minimum or maximum."
+    }
+  ]
+}

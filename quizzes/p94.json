@@ -1,0 +1,18 @@
+{"page": 94, "questions": [
+  {"q": "With inverted dropout (drop probability $p$), a kept unit is multiplied by $\\frac{1}{1-p}$. Why?",
+   "options": ["To make the training output larger than the evaluation output", "So that the expected activation during training equals the original $h$, and evaluation mode needs no change", "To make the variance of the activation equal to zero", "Because dropped units must be compensated by negative values"],
+   "answer": 1,
+   "explain": "$\\mathbb{E}[\\tfrac{m}{1-p}h]=\\tfrac{(1-p)h}{1-p}=h$. Without the scaling the training activations would on average be only $(1-p)h$, so the test-time network would see a different scale."},
+  {"q": "What does a dropout layer do in evaluation mode (e.g. after `model.eval()` in PyTorch, inverted dropout)?",
+   "options": ["Drops units with probability $p$ as in training", "Multiplies every activation by $\\frac{1}{1-p}$", "Nothing: it is the identity", "Drops exactly a fraction $p$ of units, chosen deterministically"],
+   "answer": 2,
+   "explain": "Inverted dropout already rescaled during training, so at evaluation every unit is kept and passed through unchanged. Classic (non-inverted) dropout instead multiplies by $1-p$ at test time."},
+  {"q": "A layer has $n$ units that can be dropped. How many different sub-networks can dropout sample, and how does evaluation mode relate to them?",
+   "options": ["$n$; evaluation picks the best one", "$2^n$; evaluation mode approximates their average (exactly for a linear model)", "$n^2$; evaluation averages them exactly for any network", "$2^n$; evaluation uses a random one"],
+   "answer": 1,
+   "explain": "Each unit is either kept or dropped, giving $2^n$ masks. The page's exact 1,024-mask check shows the ensemble average equals evaluation mode for a linear model but only approximately with a ReLU layer."},
+  {"q": "Why do many large LLM pre-training runs use little or no dropout?",
+   "options": ["Dropout cannot be applied to attention layers", "They see huge datasets roughly once, so there is little overfitting to fight and dropout's noise mostly slows learning", "Dropout makes the model larger", "Transformers have no hidden activations"],
+   "answer": 1,
+   "explain": "Dropout is a regulariser against overfitting. In the single-epoch, trillions-of-tokens regime overfitting is minor, so the extra noise costs more than it helps; dropout is often re-enabled for small fine-tuning datasets."}
+]}

@@ -1,0 +1,49 @@
+{
+  "page": 84,
+  "questions": [
+    {
+      "q": "In the example diary, 30 of 100 days were *Sunny & Walk* and 45 days were *Sunny* in total. What is $P(\\text{Walk} \\mid \\text{Sunny})$?",
+      "options": [
+        "$0.30$",
+        "$0.45$",
+        "$\\approx 0.667$",
+        "$0.135$"
+      ],
+      "answer": 2,
+      "explain": "Conditioning keeps only the Sunny row and re-normalizes it: $P(y\\mid x) = P(x,y)/P(x) = 0.30/0.45 \\approx 0.667$. $0.30$ is the *joint* probability, and $0.135 = 0.30 \\times 0.45$ multiplies instead of dividing."
+    },
+    {
+      "q": "Pressing **Make independent** replaces every cell by $P(x)\\,P(y)$ (the outer product of the marginals). What stays exactly the same?",
+      "options": [
+        "Every individual joint cell $P(x,y)$",
+        "Both marginal distributions $P(X)$ and $P(Y)$",
+        "The conditional $P(Y \\mid X = \\text{Rainy})$",
+        "Nothing — the total number of days changes"
+      ],
+      "answer": 1,
+      "explain": "Row and column sums of $P(x)P(y)$ are $P(x)\\sum_y P(y) = P(x)$ and $P(y)$, so the margins are preserved. The cells and the conditionals change (every conditional row becomes $P(Y)$). Two tables can share margins yet differ in dependence."
+    },
+    {
+      "q": "A bivariate Gaussian has $\\mu_x = \\mu_y = 0$, $\\sigma_x = 1$, $\\sigma_y = 2$, $\\rho = 0.5$. What is $\\mathbb{E}[X \\mid Y = 2]$?",
+      "options": [
+        "$0.5$",
+        "$1.0$",
+        "$2.0$",
+        "$0$, because the marginal mean of $X$ is $0$"
+      ],
+      "answer": 0,
+      "explain": "$\\mathbb{E}[X\\mid y_0] = \\mu_x + \\rho\\frac{\\sigma_x}{\\sigma_y}(y_0-\\mu_y) = 0 + 0.5 \\cdot \\frac{1}{2} \\cdot 2 = 0.5$. Forgetting the ratio $\\sigma_x/\\sigma_y$ gives $1.0$; $0$ ignores the correlation."
+    },
+    {
+      "q": "With $\\sigma_x = 1$ and $\\sigma_y = 1$, someone proposes $\\sigma_{xy} = \\text{Cov}(X,Y) = 1.5$. Why does the page reject this $\\Sigma$?",
+      "options": [
+        "Covariances must always be positive",
+        "$\\Sigma$ is not symmetric",
+        "$\\det\\Sigma = 1 - 1.5^2 < 0$, so $\\Sigma$ has a negative eigenvalue — it is not positive semi-definite (equivalently $|\\rho| > 1$)",
+        "Nothing is wrong; the contours just become more elongated"
+      ],
+      "answer": 2,
+      "explain": "A covariance matrix must be PSD: here that means $|\\sigma_{xy}| \\le \\sigma_x\\sigma_y = 1$, i.e. $|\\rho| \\le 1$. Negative covariances are perfectly valid, and the matrix is symmetric by construction."
+    }
+  ]
+}

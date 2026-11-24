@@ -1,0 +1,49 @@
+{
+  "page": 56,
+  "questions": [
+    {
+      "q": "How does the SGD update $w_{t+1} = w_t - \\eta \\cdot \\frac{1}{B}\\sum_{i \\in \\mathcal{B}_t} \\nabla \\ell_i(w_t)$ differ from full-batch GD?",
+      "options": [
+        "It averages gradients over a random mini-batch of $B$ examples instead of all $N$",
+        "It uses a larger learning rate than full-batch GD",
+        "It computes the exact gradient but skips some steps",
+        "It sums instead of averaging the gradients"
+      ],
+      "answer": 0,
+      "explain": "Full batch averages all $N$ per-example gradients; SGD averages only a random subset $\\mathcal{B}_t$ of size $B$, making each step much cheaper."
+    },
+    {
+      "q": "On average, how does the mini-batch gradient compare to the full-batch gradient?",
+      "options": [
+        "It is always exactly equal to the full gradient",
+        "It is systematically biased toward the global minimum",
+        "It always points in a random direction unrelated to the full gradient",
+        "It points the same way on average (unbiased), but each individual estimate is noisy"
+      ],
+      "answer": 3,
+      "explain": "A random subset's average gradient is an unbiased estimate of the full average, but different batches give different estimates, which is why the SGD path looks jumpy."
+    },
+    {
+      "q": "With the lab's dataset of 64 examples and batch size $B = 8$, how many SGD steps cost the same compute as one full-batch step (⚖️ Equal compute)?",
+      "options": [
+        "$64$",
+        "$1$",
+        "$8$",
+        "$512$"
+      ],
+      "answer": 2,
+      "explain": "One full-batch step processes all 64 examples; each SGD step processes 8, so $64/8 = 8$ SGD steps match it. ($512 = 64 \\times 8$ multiplies instead of divides.)"
+    },
+    {
+      "q": "In the lab, full batch gets stuck in the dip near (−3.5, −4.2). What happens to SGD as you change the batch size?",
+      "options": [
+        "Large batches escape more often because their gradient is more accurate",
+        "Small batches (1–2) almost always escape; large batches (8+) usually stay stuck too",
+        "Batch size has no effect on escaping",
+        "SGD always escapes, regardless of batch size"
+      ],
+      "answer": 1,
+      "explain": "Smaller batches mean noisier gradients, a 'shake' that can push the ball out of a shallow dip. Large batches behave almost like full batch. Noise is not a guarantee, and too much keeps the optimizer jittering near the bottom."
+    }
+  ]
+}

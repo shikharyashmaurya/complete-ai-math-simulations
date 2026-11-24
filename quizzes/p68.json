@@ -1,0 +1,49 @@
+{
+  "page": 68,
+  "questions": [
+    {
+      "q": "A regression line makes errors $3, -1, 0, -2$ on four points. What are its MSE and MAE?",
+      "options": [
+        "MSE $= 3.5$, MAE $= 1.5$",
+        "MSE $= 1.5$, MAE $= 3.5$",
+        "MSE $= 14$, MAE $= 6$",
+        "MSE $= 0$, MAE $= 0$"
+      ],
+      "answer": 0,
+      "explain": "Squares: $9 + 1 + 0 + 4 = 14$, divided by $4$ gives $3.5$. Absolute values: $3 + 1 + 0 + 2 = 6$, divided by $4$ gives $1.5$. The plain mean error is $0$ because the signs cancel, which is exactly why we square or take absolute values."
+    },
+    {
+      "q": "For a single error of size $0.5$, how do the squared and absolute penalties compare?",
+      "options": [
+        "Squared ($1$) is larger than absolute ($0.5$)",
+        "They are equal",
+        "Squared is always larger, for every error size",
+        "Squared ($0.25$) is **smaller** than absolute ($0.5$)"
+      ],
+      "answer": 3,
+      "explain": "$0.5^2 = 0.25 < 0.5$. For errors under one unit MSE is gentler than MAE; beyond one unit the squared penalty grows faster (e.g. $3^2 = 9$ vs $3$)."
+    },
+    {
+      "q": "In the lab you tick **Add a Rogue Outlier Point**. What happens to the best-fit line?",
+      "options": [
+        "With MAE it tilts strongly; with MSE it barely moves",
+        "Both lines stay exactly where they were",
+        "With MSE it tilts strongly toward the outlier (slope ≈ 0.87 → 0.30); with MAE it barely moves (≈ 0.87 → 0.83)",
+        "Both lines move by exactly the same amount"
+      ],
+      "answer": 2,
+      "explain": "The outlier's giant square dominates the MSE sum, pulling the line toward it. With MAE one bad point out of seven has limited influence (though MAE is not immune to all outliers)."
+    },
+    {
+      "q": "Why is MSE friendlier to gradient descent than MAE?",
+      "options": [
+        "MSE values are always smaller, so steps are safer",
+        "Its squared error is a smooth bowl, while $|x|$ has a sharp, non-differentiable V at zero",
+        "MAE has no minimum",
+        "MSE ignores outliers"
+      ],
+      "answer": 1,
+      "explain": "Gradient descent needs derivatives. $x^2$ is smooth everywhere (derivative $2x$), whereas $|x|$ has a kink at $0$. MSE is not always smaller and it is *more* sensitive to outliers."
+    }
+  ]
+}

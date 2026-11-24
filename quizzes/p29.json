@@ -1,0 +1,49 @@
+{
+  "page": 29,
+  "questions": [
+    {
+      "q": "On the balance beam, relative weights 20, 50 and 10 sit at $x = 1, 5, 9$. Where is the balance point $E[X]$?",
+      "options": [
+        "$5$",
+        "$15$",
+        "$4.5$",
+        "$\\approx 26.7$"
+      ],
+      "answer": 2,
+      "explain": "$E[X] = \\frac{20 \\cdot 1 + 50 \\cdot 5 + 10 \\cdot 9}{20 + 50 + 10} = \\frac{360}{80} = 4.5$. Weights must be normalized into probabilities; $5$ is just the most likely outcome (the mode)."
+    },
+    {
+      "q": "Casino game: cost \\$10, jackpot \\$100, win probability 5%. Using $E[X] = P(\\text{Win})(\\text{Prize} - \\text{Cost}) + P(\\text{Lose})(-\\text{Cost})$, what is the player's expected value per play?",
+      "options": [
+        "$-\\$5.00$",
+        "$+\\$4.50$",
+        "$-\\$9.50$",
+        "$+\\$90.00$"
+      ],
+      "answer": 0,
+      "explain": "$0.05 \\times 90 + 0.95 \\times (-10) = 4.5 - 9.5 = -5$. The house wins \\$5 per play on average, even though individual players sometimes win big."
+    },
+    {
+      "q": "Which statement about expected value is correct?",
+      "options": [
+        "$E[X]$ is always one of the possible outcomes",
+        "$E[X]$ is the most likely single outcome",
+        "A positive $E[X]$ guarantees you win on every play",
+        "$E[X]$ is a probability-weighted average — the long-run average per trial — and need not be a possible outcome"
+      ],
+      "answer": 3,
+      "explain": "E.g. the balance point 4.5 is not any of $1, 5, 9$. Over many plays the average per play settles toward $E[X]$, but short runs can stray far from it."
+    },
+    {
+      "q": "A regression network trained with squared-error loss predicts which summary of the target distribution?",
+      "options": [
+        "Its mode (most likely value)",
+        "Its expected value (mean)",
+        "Its median",
+        "Its maximum"
+      ],
+      "answer": 1,
+      "explain": "Minimizing average squared error is achieved by predicting the mean $E[Y \\mid x]$. A classifier, in contrast, usually picks the single most likely class."
+    }
+  ]
+}

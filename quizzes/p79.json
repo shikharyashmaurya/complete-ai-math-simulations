@@ -1,0 +1,49 @@
+{
+  "page": 79,
+  "questions": [
+    {
+      "q": "What is $\\lim_{x\\to 1} \\frac{x^2-1}{x-1}$?",
+      "options": [
+        "It does not exist, because $f(1) = \\frac{0}{0}$ is undefined",
+        "$2$",
+        "$0$",
+        "$+\\infty$"
+      ],
+      "answer": 1,
+      "explain": "For $x \\neq 1$ the fraction simplifies to $x + 1$, so the values approach $2$ from both sides. A limit ignores what happens *at* $x = 1$ — the hole is a removable discontinuity, not a missing limit."
+    },
+    {
+      "q": "What is true about $\\mathrm{ReLU}(x) = \\max(0, x)$ at $x = 0$?",
+      "options": [
+        "It is discontinuous there (a jump)",
+        "It is differentiable with $\\mathrm{ReLU}'(0) = 0.5$, as the central difference shows",
+        "It is continuous but not differentiable: the left derivative is $0$, the right derivative is $1$",
+        "It is neither continuous nor differentiable"
+      ],
+      "answer": 2,
+      "explain": "The graph has no hole or jump, so ReLU is continuous. But the one-sided difference quotients settle on $0$ and $1$, so the two-sided derivative limit does not exist. The central difference reports $0.5$ only because it averages both sides — it hides the kink. Any value in $[0, 1]$ is a subgradient."
+    },
+    {
+      "q": "For $f(x) = x^2$ at $a = 1$ (so $L = 1$) and tolerance $\\varepsilon = 0.5$, what is the largest $\\delta$ with $|x^2 - 1| < 0.5$ whenever $|x - 1| < \\delta$?",
+      "options": [
+        "$\\delta = 0.5$",
+        "$\\delta = 0.25$",
+        "$\\delta = \\sqrt{0.5} \\approx 0.707$",
+        "$\\delta = \\sqrt{1.5} - 1 \\approx 0.225$"
+      ],
+      "answer": 3,
+      "explain": "The worst case is the right edge: $(1+\\delta)^2 - 1 \\le 0.5$ gives $\\delta \\le \\sqrt{1.5} - 1 \\approx 0.2247$. The left edge is less strict. Taking $\\delta = 0.25$ fails because $1.25^2 - 1 = 0.5625 > 0.5$."
+    },
+    {
+      "q": "Logits $z = (2, 1, 0.5, 2)$ have a tie for the maximum. What does $\\mathrm{softmax}(z/T)$ approach as $T \\to 0^+$?",
+      "options": [
+        "$(1, 0, 0, 0)$ — the first maximum wins",
+        "$(0.5, 0, 0, 0.5)$",
+        "$(0.25, 0.25, 0.25, 0.25)$",
+        "The limit does not exist because of the tie"
+      ],
+      "answer": 1,
+      "explain": "As $T \\to 0$, every non-maximal entry gets weight $e^{(z_i - z_{\\max})/T} \\to 0$, while the tied maxima keep equal weight. So the probability splits evenly between them. The uniform vector is the $T \\to \\infty$ limit."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{"page": 96, "questions": [
+  {"q": "A 1D signal of length $n = 32$ goes through a kernel of size $k = 5$ with padding $p = 2$ and stride $s = 2$. How long is the output, using $\\lfloor (n + 2p - k)/s \\rfloor + 1$?",
+   "options": ["15", "16", "14", "32"], "answer": 1,
+   "explain": "$\\lfloor (32 + 4 - 5)/2 \\rfloor + 1 = \\lfloor 31/2 \\rfloor + 1 = 15 + 1 = 16$. The trap is forgetting the $+1$ (15), or assuming padding 2 keeps the size 32 — it only does so when the stride is 1."},
+  {"q": "What do deep-learning libraries actually compute in a \"convolution\" layer?",
+   "options": ["True convolution: the kernel is flipped before sliding", "Cross-correlation: the kernel slides over the input without flipping", "An element-wise product of the whole input with the kernel, with no sliding", "A Fourier transform of the input"], "answer": 1,
+   "explain": "Frameworks slide the kernel unflipped (cross-correlation). Because the kernel is learned, the network simply learns the flipped weights, so the naming difference doesn't matter in practice — but it does when you copy a textbook kernel like Sobel."},
+  {"q": "A conv layer has $3\\times3$ kernels, 3 input channels and 16 output channels (with one bias per output channel). How many parameters does it have on a $224\\times224$ image?",
+   "options": ["$9 \\cdot 3 \\cdot 16 \\cdot 224^2$", "$9 \\cdot 3 \\cdot 16 = 432$", "$9 \\cdot 3 \\cdot 16 + 16 = 448$", "$224^2 \\cdot 3 \\cdot 16$"], "answer": 2,
+   "explain": "Parameter sharing: the same $k^2 C_{in} C_{out}$ weights plus $C_{out}$ biases are reused at every position, so the count ($448$) does not depend on the image size at all."},
+  {"q": "You stack three $3\\times3$ conv layers with stride 1. How wide is the receptive field of one output unit along each axis?",
+   "options": ["7 pixels", "3 pixels", "9 pixels", "27 pixels"], "answer": 0,
+   "explain": "With stride 1 each layer adds $k - 1 = 2$: $1 + 3\\cdot 2 = 7$. It grows linearly, not multiplicatively — that only happens when strides (or pooling) make the jump grow."}
+]}

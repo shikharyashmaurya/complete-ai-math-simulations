@@ -87,7 +87,7 @@ def local_css():
     .section-header {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #e2e8f0;
         margin: 0 0 16px 0;
         display: flex;
         align-items: center;
@@ -133,9 +133,19 @@ def render_interactive_distribution():
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="section-header">📏 The Empirical Rule</div>', unsafe_allow_html=True)
        
-        show_1sigma = st.checkbox("Show 1σ Area (68.2%)", value=True)
-        show_2sigma = st.checkbox("Show 2σ Area (95.4%)")
-        show_3sigma = st.checkbox("Show 3σ Area (99.7%)")
+        show_1sigma = st.checkbox("Show 1σ Area (≈68.3%)", value=True)
+        show_2sigma = st.checkbox("Show 2σ Area (≈95.4%)")
+        show_3sigma = st.checkbox("Show 3σ Area (≈99.7%)")
+        show_samples = st.checkbox("Overlay 1,000 random samples", key="p34_show_samples",
+                                   help="Draw real data from this Normal(μ, σ) and compare its histogram with the curve.")
+        if show_samples:
+            st.button(
+                "🎲 Draw new samples",
+                key="p34_resample",
+                on_click=lambda: st.session_state.update(
+                    p34_sample_seed=st.session_state.get("p34_sample_seed", 0) + 1
+                ),
+            )
        
         st.markdown("""
         <div class="insight-box">
@@ -163,7 +173,7 @@ def render_interactive_distribution():
                 x=np.concatenate([x_3sig, x_3sig[::-1]]),
                 y=np.concatenate([y_3sig, np.zeros_like(y_3sig)]),
                 fill='toself', fillcolor='rgba(239, 68, 68, 0.2)', line=dict(color='rgba(255,255,255,0)'),
-                name='99.7% (3σ)'
+                name='≈99.7% (3σ)'
             ))
 
         if show_2sigma:
@@ -173,7 +183,7 @@ def render_interactive_distribution():
                 x=np.concatenate([x_2sig, x_2sig[::-1]]),
                 y=np.concatenate([y_2sig, np.zeros_like(y_2sig)]),
                 fill='toself', fillcolor='rgba(245, 158, 11, 0.3)', line=dict(color='rgba(255,255,255,0)'),
-                name='95.4% (2σ)'
+                name='≈95.4% (2σ)'
             ))
 
         if show_1sigma:
@@ -183,7 +193,27 @@ def render_interactive_distribution():
                 x=np.concatenate([x_1sig, x_1sig[::-1]]),
                 y=np.concatenate([y_1sig, np.zeros_like(y_1sig)]),
                 fill='toself', fillcolor='rgba(16, 185, 129, 0.4)', line=dict(color='rgba(255,255,255,0)'),
-                name='68.2% (1σ)'
+                name='≈68.3% (1σ)'
+            ))
+
+        y_top = 1.0
+        if show_samples:
+            rng = np.random.default_rng(42 + st.session_state.get("p34_sample_seed", 0))
+            samples = rng.normal(mu, sigma, 1000)
+            bin_edges = np.linspace(x_min, x_max, 33)  # 32 bins of width σ/4
+            hist_density, _ = np.histogram(samples, bins=bin_edges)
+            hist_density = hist_density / (len(samples) * (bin_edges[1] - bin_edges[0]))
+            # Keep the fixed 0–1 axis unless a noisy bar would be cut off
+            y_top = max(1.0, float(hist_density.max()) * 1.05)
+            fig.add_trace(go.Bar(
+                x=(bin_edges[:-1] + bin_edges[1:]) / 2,
+                y=hist_density,
+                width=bin_edges[1] - bin_edges[0],
+                marker_color='rgba(148, 163, 184, 0.35)',
+                marker_line_color='rgba(203, 213, 225, 0.6)',
+                marker_line_width=1,
+                name='1,000 samples (density histogram)',
+                hovertemplate="bin center %{x:.2f}<br>density %{y:.4f}<extra></extra>"
             ))
 
         # The PDF Bell Curve
@@ -192,7 +222,7 @@ def render_interactive_distribution():
             mode='lines',
             name='Normal Distribution',
             line=dict(color='#3b82f6', width=4),
-            hoverinfo='skip'
+            hovertemplate="x = %{x:.2f}<br>f(x) = %{y:.4f}<extra></extra>"
         ))
 
         # Mean line
@@ -215,7 +245,7 @@ def render_interactive_distribution():
             ),
             yaxis=dict(
                 title="Probability Density",
-                range=[0, 1.0],
+                range=[0, y_top],
                 gridcolor='rgba(51,65,85,0.4)',
             ),
             plot_bgcolor='rgba(0,0,0,0)',
@@ -227,7 +257,7 @@ def render_interactive_distribution():
             legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 def render_math_breakdown():
     st.markdown('<div class="section-header">🧮 Deconstructing the Gaussian Formula</div>', unsafe_allow_html=True)
@@ -241,14 +271,14 @@ def render_math_breakdown():
         <div class="stat-card" style="border-top-color:#10b981;">
             <div class="stat-label" style="color:#10b981;">The Distance</div>
             <div style="font-size:1.5rem; margin:10px 0; color:#f8fafc; font-family: 'Times New Roman', serif;"><i>(x - μ)</i></div>
-            <div style="color:#cbd5e1; font-size:0.9rem;">Measures how far our point $x$ is from the center $\mu$.</div>
+            <div style="color:#cbd5e1; font-size:0.9rem;">Measures how far our point <i>x</i> is from the center μ.</div>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(r"""
         <div class="stat-card" style="border-top-color:#f43f5e;">
             <div class="stat-label" style="color:#f43f5e;">The Exponential Decay</div>
-            <div style="font-size:1.5rem; margin:10px 0; color:#f8fafc; font-family: 'Times New Roman', serif;"><i>e<sup> -(distance)²</sup></i></div>
-            <div style="color:#cbd5e1; font-size:0.9rem;">Squaring the distance makes it symmetric (left & right). The negative exponential creates the rapidly falling "bell" shape.</div>
+            <div style="font-size:1.5rem; margin:10px 0; color:#f8fafc; font-family: 'Times New Roman', serif;">            <i>e<sup> −½((x−μ)/σ)²</sup></i></div>
+                        <div style="color:#cbd5e1; font-size:0.9rem;">Dividing by σ measures the distance in "standard deviations". Squaring it makes it symmetric (left & right). The negative exponential creates the rapidly falling "bell" shape.</div>
         </div>""", unsafe_allow_html=True)
     with c3:
         st.markdown(r"""
@@ -266,9 +296,9 @@ def render_ai_context():
         ("🎲 Weight Initialization", "#3b82f6",
          "When we create a new Neural Network, we don't start weights at zero. We sample them from a Normal Distribution! This random start gives the network symmetry breaking."),
         ("🖼️ Diffusion Models (AI Art)", "#8b5cf6",
-         "Models like Midjourney and DALL-E work by starting with pure Gaussian noise (static). They slowly 'denoise' this bell-curve static into a beautiful image."),
+         "Diffusion models like Stable Diffusion and DALL·E 2/3 work by starting with pure Gaussian noise (static). They slowly 'denoise' this bell-curve static into a beautiful image."),
         ("🧠 Variational Autoencoders", "#ec4899",
-         "VAEs force their internal 'latent space' to follow a Normal Distribution. This makes the space continuous, so you can smoothly morph one face into another face!")
+         "VAEs are trained with a penalty that pushes their internal 'latent space' toward a standard Normal Distribution. This keeps the space continuous, so you can smoothly morph one face into another face!")
     ]
 
     for col, (title, color, desc) in zip(cols, examples):
@@ -291,6 +321,11 @@ def main():
    
     st.divider()
     render_ai_context()
+
+    st.divider()
+    st.info("💡 **Takeaway:** Two numbers, μ and σ, completely describe a Normal distribution: μ sets the center and σ the spread "
+            "(≈68.3% / 95.4% / 99.7% of values fall within 1 / 2 / 3 σ). To see *why* bell curves appear everywhere, "
+            "visit the **Central Limit Theorem** page, and use **Z-Scores & Standardization** to compare values across different Normals.")
 
 if __name__ == "__main__":
     main()

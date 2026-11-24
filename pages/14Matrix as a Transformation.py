@@ -1,48 +1,40 @@
+import functools
+import sys
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common import matrix_display  # noqa: E402
+from common.linalg2d import rotation_matrix, transform_points, unit_square  # noqa: E402
+
 
 st.set_page_config(page_title="Matrix as a Transformation", layout="wide")
 
-
-def rotation_matrix(theta_deg):
-    t = np.deg2rad(theta_deg)
-    return np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]], dtype=float)
-
-
-def transform_points(M, points):
-    return (M @ points.T).T
-
-
-def unit_square():
-    return np.array([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]], dtype=float)
-
-
-def matrix_html(M, title, precision=2):
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;margin-bottom:12px;">
-      <h4 style="margin:0 0 8px 0;color:#e2e8f0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:18px;color:#f8fafc;">
-    """
-    for i in range(2):
-        html += "<tr>"
-        for j in range(2):
-            html += (
-                f"<td style='border:1px solid #475569;padding:7px 14px;text-align:center;"
-                f"min-width:48px;'>{M[i, j]:.{precision}f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
+matrix_html = functools.partial(
+    matrix_display.matrix_html,
+    theme="slate",
+    cell_style="plain",
+    font_size=18,
+    cell_padding="7px 14px",
+    min_width=48,
+    title_color="#e2e8f0",
+    text_color="#f8fafc",
+    margin_bottom="12px",
+)
 
 
 def preset_matrix(preset):
     if preset == "Identity (no change)":
         return np.eye(2)
     if preset == "Rotation 45°":
-        t = np.deg2rad(45.0)
-        return np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]])
+        return rotation_matrix(45.0)
     if preset == "Stretch X, Squash Y":
         return np.array([[1.5, 0.0], [0.0, 0.5]])
     if preset == "Shear X":
@@ -118,7 +110,7 @@ def draw_scene(M, grid_limit=5, density=1):
     for spine in ax.spines.values():
         spine.set_color("#475569")
     ax.tick_params(colors="#cbd5e1")
-    ax.set_title("Space-Time Grid Warp", color="#f8fafc", fontsize=14, pad=15)
+    ax.set_title("Grid Warp", color="#f8fafc", fontsize=14, pad=15)
     
     return fig
 
@@ -127,7 +119,7 @@ def render_intro():
     st.title("Page 14: Matrix as a Transformation")
     st.markdown(
         """
-        Welcome to the **Space-Time Grid Warp Station**.
+        Welcome to the **Grid Warp Station**.
 
         **A Matrix is a Transformation of Space**
         Instead of thinking of a matrix as just a grid of numbers, think of it as a set of instructions that morphs the entire plane. 
@@ -159,13 +151,41 @@ def render_matrix_card(M):
         st.warning("det(M) is near 0: space squashed into a lower dimension!")
 
 
+GEOM_DEFAULTS = {
+    "p14_angle": 30,
+    "p14_sx": 1.2,
+    "p14_sy": 0.8,
+    "p14_shx": 0.6,
+    "p14_shy": 0.2,
+}
+DIRECT_KEYS = ("p14_a", "p14_b", "p14_c", "p14_d")
+WIDGET_KEYS = ("p14_mode", "p14_geom_mode", "p14_preset_radio", *GEOM_DEFAULTS, *DIRECT_KEYS)
+
+
+def keep_widget_state():
+    """Streamlit forgets keyed widget values when the widget is not rendered for one run
+    (e.g. while the other mode is shown). Re-assigning keeps the user's settings."""
+    for k in WIDGET_KEYS:
+        if k in st.session_state:
+            st.session_state[k] = st.session_state[k]
+
+
+def apply_preset(preset):
+    base = preset_matrix(preset)
+    st.session_state.p14_preset = preset
+    for k, v in zip(DIRECT_KEYS, base.ravel()):
+        st.session_state[k] = float(v)
+
+
 def render_playground():
     st.header("1) Transformation Controls")
+    keep_widget_state()
     
     mode = st.radio(
         "Build matrix from:",
         ["Geometric Controls (Rotate, Scale, Shear)", "Direct Entries (2x2)"],
-        horizontal=True
+        horizontal=True,
+        key="p14_mode",
     )
     
     if mode == "Geometric Controls (Rotate, Scale, Shear)":
@@ -173,55 +193,62 @@ def render_playground():
         geom_mode = st.radio(
             "Transformation Type:",
             ["Combo (All)", "Rotation Only", "Scale Only", "Shear Only"],
-            horizontal=True
+            horizontal=True,
+            key="p14_geom_mode",
         )
+        for k, v in GEOM_DEFAULTS.items():
+            st.session_state.setdefault(k, v)
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            angle = st.slider("Rotation (deg)", -180, 180, 30, 5, disabled=(geom_mode not in ["Combo (All)", "Rotation Only"]))
+            angle = st.slider("Rotation (deg)", -180, 180, step=5, key="p14_angle",
+                              disabled=(geom_mode not in ["Combo (All)", "Rotation Only"]))
         with col2:
-            sx = st.slider("Scale X", -3.0, 3.0, 1.2, 0.1, disabled=(geom_mode not in ["Combo (All)", "Scale Only"]))
-            sy = st.slider("Scale Y", -3.0, 3.0, 0.8, 0.1, disabled=(geom_mode not in ["Combo (All)", "Scale Only"]))
+            sx = st.slider("Scale X", -3.0, 3.0, step=0.1, key="p14_sx",
+                           disabled=(geom_mode not in ["Combo (All)", "Scale Only"]))
+            sy = st.slider("Scale Y", -3.0, 3.0, step=0.1, key="p14_sy",
+                           disabled=(geom_mode not in ["Combo (All)", "Scale Only"]))
         with col3:
-            shx = st.slider("Shear X", -2.0, 2.0, 0.6, 0.1, disabled=(geom_mode not in ["Combo (All)", "Shear Only"]))
-            shy = st.slider("Shear Y", -2.0, 2.0, 0.2, 0.1, disabled=(geom_mode not in ["Combo (All)", "Shear Only"]))
+            shx = st.slider("Shear X", -2.0, 2.0, step=0.1, key="p14_shx",
+                            disabled=(geom_mode not in ["Combo (All)", "Shear Only"]))
+            shy = st.slider("Shear Y", -2.0, 2.0, step=0.1, key="p14_shy",
+                            disabled=(geom_mode not in ["Combo (All)", "Shear Only"]))
 
         r = rotation_matrix(angle) if geom_mode in ["Combo (All)", "Rotation Only"] else np.eye(2)
         s = np.array([[sx, 0.0], [0.0, sy]], dtype=float) if geom_mode in ["Combo (All)", "Scale Only"] else np.eye(2)
-        h = np.array([[1.0, shx], [shy, 1.0]], dtype=float) if geom_mode in ["Combo (All)", "Shear Only"] else np.eye(2)
+        if geom_mode in ["Combo (All)", "Shear Only"]:
+            # Two genuine shears (each has det = 1): horizontal shear after vertical shear.
+            h = np.array([[1.0, shx], [0.0, 1.0]]) @ np.array([[1.0, 0.0], [shy, 1.0]])
+        else:
+            h = np.eye(2)
         
         M = h @ r @ s
+        st.latex(r"M = H_{\text{shear}}\;R_{\theta}\;S_{\text{scale}}")
+        st.caption(
+            "Order matters! Matrices act **right-to-left** on a vector: `M @ x = H @ (R @ (S @ x))`, "
+            "so the point is **scaled first, then rotated, then sheared**. "
+            "Shear = horizontal shear (Shear X) applied after a vertical shear (Shear Y); each shear alone keeps area (det = 1)."
+        )
     else:
         preset = st.radio(
             "Quick Vibe",
             ["Identity (no change)", "Rotation 45°", "Stretch X, Squash Y", "Shear X", "Reflection (y = x)", "Collapse to line (Singular)"],
-            horizontal=True
+            horizontal=True,
+            key="p14_preset_radio",
         )
-        base = preset_matrix(preset)
         
-        if "d14_preset" not in st.session_state:
-            st.session_state.d14_preset = preset
-            st.session_state.d14_a = float(base[0, 0])
-            st.session_state.d14_b = float(base[0, 1])
-            st.session_state.d14_c = float(base[1, 0])
-            st.session_state.d14_d = float(base[1, 1])
-
-        if preset != st.session_state.d14_preset:
-            st.session_state.d14_preset = preset
-            st.session_state.d14_a = float(base[0, 0])
-            st.session_state.d14_b = float(base[0, 1])
-            st.session_state.d14_c = float(base[1, 0])
-            st.session_state.d14_d = float(base[1, 1])
+        if st.session_state.get("p14_preset") != preset or any(k not in st.session_state for k in DIRECT_KEYS):
+            apply_preset(preset)
             
         r1c1, r1c2, r2c1, r2c2 = st.columns(4)
         with r1c1:
-            a = st.slider("a (top-left)", -3.0, 3.0, key="d14_a")
+            a = st.slider("a (top-left)", -3.0, 3.0, key="p14_a")
         with r1c2:
-            b = st.slider("b (top-right)", -3.0, 3.0, key="d14_b")
+            b = st.slider("b (top-right)", -3.0, 3.0, key="p14_b")
         with r2c1:
-            c = st.slider("c (bottom-left)", -3.0, 3.0, key="d14_c")
+            c = st.slider("c (bottom-left)", -3.0, 3.0, key="p14_c")
         with r2c2:
-            d = st.slider("d (bottom-right)", -3.0, 3.0, key="d14_d")
+            d = st.slider("d (bottom-right)", -3.0, 3.0, key="p14_d")
             
         M = np.array([[a, b], [c, d]], dtype=float)
         
@@ -234,9 +261,9 @@ def render_point_mission(M):
     
     c1, c2, c3 = st.columns([1, 1, 1.5])
     with c1:
-        px = st.slider("Point x", -5.0, 5.0, 2.0, 0.5)
+        px = st.slider("Point x", -5.0, 5.0, 2.0, 0.5, key="p14_px")
     with c2:
-        py = st.slider("Point y", -5.0, 5.0, 1.0, 0.5)
+        py = st.slider("Point y", -5.0, 5.0, 1.0, 0.5, key="p14_py")
         
     p = np.array([px, py], dtype=float)
     p2 = M @ p
@@ -273,7 +300,7 @@ def main():
     col1, col2 = st.columns([1.5, 1.0], gap="large")
     with col1:
         fig = draw_scene(M, grid_limit=5, density=1)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
     with col2:
         render_matrix_card(M)
@@ -289,7 +316,8 @@ def main():
         ### Recap
         - A `2x2` matrix transforms the entire plane, not just one point.
         - Columns of `M` are exactly where the basis vectors (î, ĵ) land.
-        - `det(M)` tells you the area scaling factor.
+        - `|det(M)|` is the area scaling factor; a negative sign means the plane was flipped.
+        - Composition reads right-to-left: in `H @ R @ S`, `S` acts first.
         - This is the fundamental math powering computer graphics and neural network layers.
         """
     )

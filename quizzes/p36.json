@@ -1,0 +1,49 @@
+{
+  "page": 36,
+  "questions": [
+    {
+      "q": "In the dice lab, what shape does the histogram of the **sum** of $n = 2$ dice have?",
+      "options": [
+        "Flat (uniform)",
+        "A perfect Normal curve",
+        "U-shaped, peaking at 2 and 12",
+        "A triangle peaking at 7"
+      ],
+      "answer": 3,
+      "explain": "There are 6 ways to roll a 7 but only one way to roll 2 or 12, so the counts rise and fall linearly — a triangle. With more dice it becomes more bell-shaped."
+    },
+    {
+      "q": "One die has standard deviation $\\sigma \\approx 1.71$. What is the standard deviation of the **mean** of $n = 4$ dice?",
+      "options": [
+        "$\\approx 1.71$",
+        "$\\approx 0.85$",
+        "$\\approx 0.43$",
+        "$\\approx 3.42$"
+      ],
+      "answer": 1,
+      "explain": "The SD of the mean is $\\sigma/\\sqrt{n} = 1.71/2 \\approx 0.85$. Dividing by $n$ instead of $\\sqrt{n}$ gives $0.43$; $3.42 = \\sigma\\sqrt{n}$ is the SD of the *sum*."
+    },
+    {
+      "q": "Which statement about the Central Limit Theorem is correct?",
+      "options": [
+        "Under suitable conditions (independence, finite variance), the distribution of sample means approaches a Normal as $n$ grows — even if the data are not Normal",
+        "It says every dataset is Normally distributed",
+        "It only works when the original data are Normal",
+        "$n > 30$ always guarantees an exact Normal distribution"
+      ],
+      "answer": 0,
+      "explain": "The CLT concerns sums/means, not the raw data. $n > 30$ is only a rough guide — skewed or heavy-tailed populations may need more, and the result is always an approximation."
+    },
+    {
+      "q": "How does the CLT show up in stochastic gradient descent?",
+      "options": [
+        "It makes every mini-batch gradient exactly equal to the full gradient",
+        "It forces the loss to be Normally distributed",
+        "The mini-batch average gradient is approximately Normal, centered on the true full-batch gradient (for large enough batches)",
+        "It removes the need for a learning rate"
+      ],
+      "answer": 2,
+      "explain": "A mini-batch gradient is an average of per-example gradients, so by the CLT it is roughly Normal around the true gradient, with spread shrinking like $1/\\sqrt{\\text{batch size}}$."
+    }
+  ]
+}

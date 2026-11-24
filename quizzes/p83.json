@@ -1,0 +1,29 @@
+{
+  "page": 83,
+  "questions": [
+    {
+      "q": "In $f(x,y) = (x\\cdot y + \\sin x)\\cdot e^{-y}$ the input $x$ feeds two operations. With upstream gradient $\\bar c = \\partial f/\\partial(xy + \\sin x) = e^{-y}$, what does reverse mode store in $x$'s gradient?",
+      "options": ["$y\\,e^{-y}$ — whichever message arrives last", "$(y + \\cos x)\\,e^{-y}$ — the sum of both messages", "$y\\cos x\\,e^{-y}$ — the product of both messages", "$\\max(y, \\cos x)\\,e^{-y}$"],
+      "answer": 1,
+      "explain": "Each path from the output to $x$ contributes local × upstream, and the multivariable chain rule *adds* contributions: $y\\,e^{-y} + \\cos x\\,e^{-y}$. Overwriting instead of accumulating keeps only one path — the bug the lab's toggle demonstrates."
+    },
+    {
+      "q": "A network has one scalar loss and $10^8$ parameters. Why is training done with reverse mode rather than forward mode?",
+      "options": ["Forward mode gives only approximate derivatives", "Reverse mode needs no memory", "Reverse mode gets all $10^8$ partial derivatives from one backward pass; forward mode needs one pass per input", "Forward mode cannot handle nonlinear functions like $\\sigma$"],
+      "answer": 2,
+      "explain": "Both modes are exact. Forward mode propagates one tangent (one input direction) per pass, so it needs $n$ passes for $n$ inputs; reverse mode propagates from the single output and gets every $\\partial L/\\partial w$ at once — at the price of storing activations."
+    },
+    {
+      "q": "Using dual numbers ($\\varepsilon^2 = 0$), evaluate $g(x) = x\\cdot x\\cdot x$ at $3 + 1\\cdot\\varepsilon$. What is the result?",
+      "options": ["$27 + 27\\varepsilon$", "$27 + 9\\varepsilon$", "$9 + 6\\varepsilon$", "$27 + 3\\varepsilon$"],
+      "answer": 0,
+      "explain": "$(3+\\varepsilon)^3 = 27 + 3\\cdot 9\\,\\varepsilon$ (all higher powers of $\\varepsilon$ vanish), and the $\\varepsilon$-part $27 = 3x^2$ is exactly $g'(3)$. $9 + 6\\varepsilon$ is $(3+\\varepsilon)^2$."
+    },
+    {
+      "q": "Why does training a deep network need much more memory than just running it (inference)?",
+      "options": ["Gradients are stored with higher precision", "The backward pass needs the forward-pass activations (e.g. $\\sigma$'s output for $s(1-s)$), so every layer's values must be kept", "Reverse mode has to enumerate every path through the graph", "The computational graph must be compiled twice"],
+      "answer": 1,
+      "explain": "Local derivatives depend on forward values (the 'saved for backward' column), so activations are kept until the backward pass uses them. Reverse mode never enumerates paths — it shares common prefixes. Gradient checkpointing trades recomputation for this memory."
+    }
+  ]
+}

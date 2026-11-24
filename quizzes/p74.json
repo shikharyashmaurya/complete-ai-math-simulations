@@ -1,0 +1,49 @@
+{
+  "page": 74,
+  "questions": [
+    {
+      "q": "In the 1D tug of war the data wants $w = 2$. With $\\lambda = 2$, what are the optimal weights for L1 ($w^* = \\max(0,\\ 2 - \\lambda/2)$) and L2 ($w^* = 2/(1 + \\lambda)$)?",
+      "options": [
+        "L1: $0$, L2: $1$",
+        "L1: $\\approx 0.67$, L2: $1$",
+        "L1: $1$, L2: $\\approx 0.67$",
+        "L1: $1$, L2: $0$"
+      ],
+      "answer": 2,
+      "explain": "L1: $2 - 2/2 = 1$. L2: $2/3 \\approx 0.67$. Neither is zero yet; L1 reaches exactly $0$ only at $\\lambda \\ge 4$."
+    },
+    {
+      "q": "As $\\lambda$ grows very large, how do the two penalties treat the single weight?",
+      "options": [
+        "Both make it exactly 0 at the same λ",
+        "L1 drives it to exactly 0 (from λ ≥ 4); L2 shrinks it smoothly toward 0 but never reaches exactly 0",
+        "L2 drives it to exactly 0; L1 only shrinks it",
+        "Neither changes the weight; λ only scales the loss"
+      ],
+      "answer": 1,
+      "explain": "L1's V-shaped penalty keeps a constant pull $\\lambda/2$ that eventually overpowers the data; L2's pull $\\propto w$ fades as $w \\to 0$, so $2/(1+\\lambda)$ is never exactly zero."
+    },
+    {
+      "q": "In the 2D landscape, why does L1 tend to produce **sparse** weights?",
+      "options": [
+        "Its diamond-shaped budget has corners on the axes, and the loss contours often touch a corner, where one weight is 0",
+        "Its circular budget touches the contours at a generic point",
+        "L1 removes the smallest weight first by design",
+        "L1 makes the data loss convex"
+      ],
+      "answer": 0,
+      "explain": "Corners stick out, so they are hit far more often than any particular point of a smooth circle (L2). In the lab it is $w_1$, the larger weight, that is dropped first because the correlated weights let $w_2$ take over."
+    },
+    {
+      "q": "You have hundreds of features, most of them useless, and want the model to pick out the few that matter. Which regularizer fits best?",
+      "options": [
+        "L2 (Ridge): it shrinks all weights evenly",
+        "No regularization: useless features get weight zero automatically",
+        "L2 with λ = 0",
+        "L1 (Lasso): it tends to set many weights to exactly zero"
+      ],
+      "answer": 3,
+      "explain": "L1's superpower is feature selection (with the caveat that among strongly correlated features it may keep one somewhat arbitrarily). L2 keeps all features but small, and is the one related to weight decay in neural networks."
+    }
+  ]
+}

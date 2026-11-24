@@ -1,0 +1,49 @@
+{
+  "page": 18,
+  "questions": [
+    {
+      "q": "Using $M^{-1} = \\frac{1}{ad - bc}\\begin{bmatrix} d & -b \\\\ -c & a \\end{bmatrix}$, what is the inverse of $M = \\begin{bmatrix} 2 & 1 \\\\ 1 & 1 \\end{bmatrix}$?",
+      "options": [
+        "$\\begin{bmatrix} 1/2 & 1 \\\\ 1 & 1 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 1 & -1 \\\\ -1 & 2 \\end{bmatrix}$",
+        "$\\begin{bmatrix} -2 & -1 \\\\ -1 & -1 \\end{bmatrix}$",
+        "$\\begin{bmatrix} 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$"
+      ],
+      "answer": 1,
+      "explain": "$\\det M = 2 - 1 = 1$; swap $a$ and $d$, negate $b$ and $c$: $\\begin{bmatrix} 1 & -1 \\\\ -1 & 2 \\end{bmatrix}$. Inverting each entry separately does not work."
+    },
+    {
+      "q": "When does a 2×2 matrix $M$ have **no** inverse?",
+      "options": [
+        "When $M$ is a rotation",
+        "When $\\det(M) < 0$",
+        "When $M$ has a negative entry",
+        "When $\\det(M) = 0$"
+      ],
+      "answer": 3,
+      "explain": "$\\det = 0$ squashes the plane onto a line or point; many inputs land on the same output, so there is no unique undo. A negative determinant (a flip) can still be undone."
+    },
+    {
+      "q": "The **Gentle zoom** preset scales everything by 1.35. What does $M^{-1}$ do?",
+      "options": [
+        "Scales everything by $1/1.35 \\approx 0.741$",
+        "Scales everything by 1.35 again",
+        "Scales everything by $-1.35$",
+        "Rotates by 135°"
+      ],
+      "answer": 0,
+      "explain": "To undo a uniform zoom by 1.35 you shrink by the same factor: $M^{-1} = \\frac{1}{1.35} I$."
+    },
+    {
+      "q": "$|\\det(M)|$ is tiny (say 0.01) but not zero. What does the page warn about?",
+      "options": [
+        "The inverse exists but has huge entries, so small errors get magnified (fragile undo)",
+        "The inverse does not exist",
+        "The inverse is exactly $M$",
+        "The inverse equals the identity"
+      ],
+      "answer": 0,
+      "explain": "Because $M^{-1}$ contains $\\frac{1}{\\det}$, a tiny determinant blows up its entries and the condition number, so round-off errors grow on the way back."
+    }
+  ]
+}

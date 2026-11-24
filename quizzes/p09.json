@@ -1,0 +1,49 @@
+{
+  "page": 9,
+  "questions": [
+    {
+      "q": "In the Movies dataset, what does one movie's 5-D vector contain?",
+      "options": [
+        "The movie's 5 most common words",
+        "The ratings it received from 5 different users",
+        "The 5 principal components of the movie",
+        "5 pixels from the movie poster"
+      ],
+      "answer": 1,
+      "explain": "Each movie is described by the ratings (1–5) given by the same 5 users, so every movie lives in the same 5-D rating space."
+    },
+    {
+      "q": "What is PCA used for on this page?",
+      "options": [
+        "To squeeze high-dimensional vectors (5-D, 50-D, 784-D) down to 3-D so we can plot them",
+        "To add more dimensions to the data",
+        "To label each point with its group",
+        "To turn images into words"
+      ],
+      "answer": 0,
+      "explain": "PCA finds 3 directions that keep as much variation as possible, so similar items still land near each other in the 3-D plot."
+    },
+    {
+      "q": "Why does each dataset get its **own** PCA instead of plotting movies, words and images in one space?",
+      "options": [
+        "Each kind of data has its own number of dimensions and its axes measure different things",
+        "PCA can only handle 10 points at a time",
+        "All three would land on exactly the same point",
+        "Words cannot be represented as vectors"
+      ],
+      "answer": 0,
+      "explain": "A 5-D rating vector and a 784-D pixel vector are not comparable — the page notes that comparing a movie point with a word point would be meaningless."
+    },
+    {
+      "q": "In the 3-D plots, \"king\" sits near \"queen\" and action movies cluster together. What does that closeness mean?",
+      "options": [
+        "PCA always puts labels in alphabetical order",
+        "Nothing — the positions are chosen by hand",
+        "They have the same number of dimensions as everything else, so position is random",
+        "Their vectors are similar, which is exactly what AI models exploit"
+      ],
+      "answer": 3,
+      "explain": "Similar items have similar vectors, so they end up close together; models use that geometric closeness to find related items."
+    }
+  ]
+}

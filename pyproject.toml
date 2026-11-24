@@ -1,0 +1,14 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 200
+
+[tool.ruff.lint]
+select = ["F", "E9", "W605", "B", "PLE"]
+ignore = ["B905", "B007", "E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "slow: widget fuzz tests that take several minutes (deselect with -m \"not slow\")",
+]

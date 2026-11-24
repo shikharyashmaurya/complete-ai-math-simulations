@@ -1,0 +1,49 @@
+{
+  "page": 60,
+  "questions": [
+    {
+      "q": "Lab settings: $P = \\mathcal{N}(0, 1^2)$ and $Q = \\mathcal{N}(1, 1^2)$. Using the closed form, what is $D_{KL}(P \\parallel Q)$?",
+      "options": [
+        "$\\frac{0.5}{\\ln 2} \\approx 0.721$ bits",
+        "$0.5$ bits",
+        "$1$ bit",
+        "$0$ bits"
+      ],
+      "answer": 0,
+      "explain": "$\\ln(\\sigma_Q/\\sigma_P) = 0$ and $\\frac{\\sigma_P^2 + (\\mu_P - \\mu_Q)^2}{2\\sigma_Q^2} - \\frac12 = \\frac{1 + 1}{2} - \\frac12 = 0.5$ nats. Dividing by $\\ln 2$ converts to bits: $\\approx 0.721$. $0.5$ forgets the unit conversion."
+    },
+    {
+      "q": "With $P = \\mathcal{N}(0, 1^2)$ and a wider $Q = \\mathcal{N}(0, 2^2)$, forward KL is $\\approx 0.46$ bits but reverse KL $D_{KL}(Q \\parallel P) \\approx 1.16$ bits. What does this show?",
+      "options": [
+        "One of the two numbers must be a rounding error",
+        "Reverse KL is always exactly 2.5 times forward KL",
+        "KL divergence can be negative when the model is too wide",
+        "KL divergence is asymmetric, so it is not a true distance metric"
+      ],
+      "answer": 3,
+      "explain": "$D_{KL}(P \\parallel Q) \\neq D_{KL}(Q \\parallel P)$ in general. Both values are still $\\ge 0$ (Gibbs' inequality); there is no fixed ratio between them."
+    },
+    {
+      "q": "$P$ has two well-separated modes. Which behavior does minimizing **reverse** KL $D_{KL}(Q \\parallel P)$ tend to produce in a single-mode model $Q$?",
+      "options": [
+        "Mean-seeking: $Q$ stretches to cover both modes",
+        "$Q$ becomes uniform over the whole line",
+        "Mode-seeking: $Q$ locks onto one mode and fits it tightly",
+        "$Q$ places most mass in the empty gap between the modes"
+      ],
+      "answer": 2,
+      "explain": "Reverse KL heavily penalizes $Q$ for putting mass where $P \\approx 0$ (zero-forcing), so $Q$ concentrates on one mode. Covering every mode is the forward-KL (zero-avoiding, mean-seeking) behavior."
+    },
+    {
+      "q": "Discrete example: $P = [0.5,\\ 0.5]$, $Q = [0.25,\\ 0.75]$. What is $D_{KL}(P \\parallel Q) = \\sum_x P(x)\\log_2\\frac{P(x)}{Q(x)}$?",
+      "options": [
+        "$0$ bits",
+        "$\\approx 0.208$ bits",
+        "$\\approx 0.5$ bits",
+        "$\\approx -0.208$ bits"
+      ],
+      "answer": 1,
+      "explain": "$0.5\\log_2(0.5/0.25) + 0.5\\log_2(0.5/0.75) = 0.5 \\cdot 1 + 0.5 \\cdot (-0.585) \\approx 0.208$ bits. One term is negative, but the total is never below $0$; it is $0$ only if $P = Q$."
+    }
+  ]
+}

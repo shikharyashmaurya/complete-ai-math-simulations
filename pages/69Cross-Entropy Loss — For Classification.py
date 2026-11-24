@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Cross-Entropy Loss", layout="wide", initial_sidebar_state="collapsed")
@@ -51,7 +50,7 @@ st.markdown("""
 <div class="concept-box">
     <strong>What is Cross-Entropy Loss?</strong><br>
     While Mean Squared Error (MSE) is great for guessing exact numbers (like predicting a house price), it doesn't work well for <strong>categories</strong> (like "Is this a Dog or a Cat?").<br>
-    Cross-Entropy measures <strong>surprise</strong>. If the model is 99% confident it's a Dog, and it <i>is</i> a Dog, the surprise is near zero. But if the model is 99% confident it's a Cat, and it's actually a Dog, the penalty EXPLODES! 💥
+    Cross-Entropy measures <strong>surprise</strong> (the "surprisal" −ln p of the true answer). If the model is 99% confident it's a Dog, and it <i>is</i> a Dog, the surprise is near zero. But if the model is 99% confident it's a Cat, and it's actually a Dog, the penalty EXPLODES! 💥
 </div>
 """, unsafe_allow_html=True)
 
@@ -65,7 +64,7 @@ col1, col2 = st.columns([1, 1.5])
 with col1:
     st.markdown("### Model's Prediction")
     st.markdown("Adjust the slider to see how the penalty changes.")
-    p_dog = st.slider("Probability it's a Dog (True Class)", min_value=0.01, max_value=0.99, value=0.50, step=0.01)
+    p_dog = st.slider("Probability it's a Dog (True Class)", min_value=0.01, max_value=0.99, value=0.50, step=0.01, key="p69_p_dog")
     
     loss = -np.log(p_dog)
     
@@ -86,10 +85,21 @@ with col1:
     st.markdown(f'<div class="metric-value" style="color: {color};">{loss:.3f}</div>', unsafe_allow_html=True)
     st.markdown(f"*{msg}*")
     
-    st.markdown("""
-    **The Formula:**
-    $$ \\text{Loss} = -\\ln(\\text{Probability of TRUE Class}) $$
+    st.markdown(r"""
+    **The Formula (for one example):**
+    $$ \text{Loss} = -\ln(\text{Probability of TRUE Class}) $$
+
+    This is the general cross-entropy with a one-hot target written compactly:
+
+    - **Binary** (label $y \in \{0, 1\}$, predicted $p = P(y=1)$):
+      $\; L = -\big[\,y \ln p + (1-y)\ln(1-p)\,\big]$
+    - **Multi-class** (one-hot $y_k$, predicted $p_k$):
+      $\; L = -\sum_k y_k \ln p_k$
+
+    Only the term for the true class survives, which gives $-\ln(p_{\text{true}})$.
     """)
+    st.caption("Since ln(0) is undefined, real libraries clip probabilities to a tiny ε or compute the loss directly from "
+               "logits (log-softmax). This slider stops at 0.01 for the same reason.")
 
 with col2:
     # Plot -log(x) curve
@@ -116,19 +126,18 @@ with col2:
         textfont=dict(size=16, color="white")
     ))
     
-    # Fill under curve for emphasis
+    # Dotted drop-line from the current point to the x-axis
     fig1.add_trace(go.Scatter(
-        x=np.concatenate([x_vals[x_vals <= p_dog], [p_dog]]),
-        y=np.concatenate([y_vals[x_vals <= p_dog], [0]]),
-        fill='tozeroy',
-        fillcolor='rgba(255, 75, 75, 0.1)',
-        line=dict(width=0),
+        x=[p_dog, p_dog],
+        y=[0, loss],
+        mode='lines',
+        line=dict(color=color, width=2, dash='dot'),
         showlegend=False,
         hoverinfo='skip'
     ))
 
     fig1.update_layout(
-        title="Cross-Entropy Curve: $y = -\\ln(x)$",
+        title="Cross-Entropy Curve: y = −ln(x)",
         xaxis_title="Predicted Probability of True Class",
         yaxis_title="Penalty (Loss)",
         template="plotly_dark",
@@ -137,7 +146,7 @@ with col2:
         xaxis=dict(range=[0, 1.05]),
         yaxis=dict(range=[0, 5])
     )
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width="stretch")
 
 
 st.divider()
@@ -154,17 +163,16 @@ st.markdown("### The 'Is it a Dog, Cat, or Bird?' Game")
 mc_col1, mc_col2 = st.columns([1, 2])
 
 with mc_col1:
-    true_label = st.radio("What is the ACTUAL image?", ["Dog", "Cat", "Bird"], index=0)
+    true_label = st.radio("What is the ACTUAL image?", ["Dog", "Cat", "Bird"], index=0, key="p69_true_label")
     
-    st.markdown("Set the model's raw confidence (these will be normalized to sum to 100%):")
-    raw_dog = st.slider("Raw Dog Confidence", 0.01, 10.0, 5.0, step=0.1)
-    raw_cat = st.slider("Raw Cat Confidence", 0.01, 10.0, 2.0, step=0.1)
-    raw_bird = st.slider("Raw Bird Confidence", 0.01, 10.0, 1.0, step=0.1)
+    st.markdown("Set the model's raw scores (**logits**). Like a real classifier, we turn them into probabilities that sum to 100% with the **softmax** function: $p_k = e^{z_k} / \\sum_j e^{z_j}$.")
+    raw_dog = st.slider("Dog score (logit)", -5.0, 5.0, 2.0, step=0.1, key="p69_logit_dog")
+    raw_cat = st.slider("Cat score (logit)", -5.0, 5.0, 1.0, step=0.1, key="p69_logit_cat")
+    raw_bird = st.slider("Bird score (logit)", -5.0, 5.0, 0.3, step=0.1, key="p69_logit_bird")
     
-    total = raw_dog + raw_cat + raw_bird
-    p_dog_mc = raw_dog / total
-    p_cat_mc = raw_cat / total
-    p_bird_mc = raw_bird / total
+    logits = np.array([raw_dog, raw_cat, raw_bird])
+    exp_logits = np.exp(logits - logits.max())  # subtract max for numerical stability
+    p_dog_mc, p_cat_mc, p_bird_mc = exp_logits / exp_logits.sum()
     
     probs = {"Dog": p_dog_mc, "Cat": p_cat_mc, "Bird": p_bird_mc}
     p_true = probs[true_label]
@@ -208,13 +216,13 @@ with mc_col2:
         margin=dict(l=40, r=40, t=60, b=40),
         showlegend=False
     )
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width="stretch")
     
     st.markdown(f"""
     <div style="background-color: #2b2b3b; padding: 20px; border-radius: 10px; text-align: center; color: white;">
         <h3 style="margin:0;">Loss Calculation</h3>
         <p style="font-size: 1.2rem; margin:10px 0;">The model predicted the true class (<b>{true_label}</b>) with <b>{p_true*100:.1f}%</b> probability.</p>
-        <p style="font-family: monospace; font-size: 1.5rem; color: #ff4b4b; margin:0;">Loss = -ln({p_true:.3f}) = <b>{ce_loss_mc:.3f}</b></p>
+        <p style="font-family: monospace; font-size: 1.5rem; color: #ff4b4b; margin:0;">Loss = -ln({p_true:.5g}) = <b>{ce_loss_mc:.4f}</b></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -229,21 +237,21 @@ Why can't we just use Mean Squared Error (MSE)? Look at what happens when the mo
 comp_col1, comp_col2, comp_col3 = st.columns(3)
 
 with comp_col1:
-    st.markdown("""
+    st.markdown(r"""
     **Mean Squared Error (MSE)**
-    - Formula: $(1 - p)^2$
-    - If p = 0.01: $(1 - 0.01)^2 = 0.98$
-    - Max penalty is capped at **1.0**. 
-    - The model isn't "punished" enough for being disastrously wrong.
+    - True-class term only: $(1 - p)^2$
+    - If p = 0.01: $(1 - 0.01)^2 \approx 0.98$
+    - Bounded: at most **1** for this term (at most **2** for full one-hot MSE $\sum_k (y_k - p_k)^2$).
+    - The penalty for being disastrously wrong stays small.
     """)
 
 with comp_col2:
-    st.markdown("""
+    st.markdown(r"""
     **Cross-Entropy**
-    - Formula: $-\\ln(p)$
-    - If p = 0.01: $-\\ln(0.01) \\approx 4.6$
-    - Penalty **shoots to infinity** as probability approaches 0.
-    - Forces the model to rapidly correct its mistakes!
+    - Formula: $-\ln(p)$
+    - If p = 0.01: $-\ln(0.01) \approx 4.6$
+    - Penalty **grows without bound** as the probability approaches 0.
+    - Its gradient stays large when the model is confidently wrong (see below).
     """)
 
 with comp_col3:
@@ -265,6 +273,36 @@ with comp_col3:
         margin=dict(l=20, r=20, t=40, b=20),
         legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99)
     )
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3, width="stretch")
+
+st.markdown("#### The real reason: the learning signal (gradient)")
+grad_col1, grad_col2 = st.columns([1.2, 1])
+with grad_col1:
+    st.markdown(r"""
+    Classifiers produce $p$ from a raw score $z$ with a sigmoid (or softmax): $p = \sigma(z)$.
+    Training follows the gradient with respect to $z$. For a true label $y = 1$:
+
+    - **MSE:** $\dfrac{\partial}{\partial z}(1-p)^2 = -2\,p\,(1-p)^2$
+    - **Cross-Entropy:** $\dfrac{\partial}{\partial z}\big(-\ln p\big) = p - 1$
+
+    At $p = 0.01$ (confidently wrong): MSE gives a gradient of only about $-0.02$, while
+    cross-entropy gives $-0.99$ — roughly **50× stronger**. The sigmoid "flattens" MSE's
+    signal exactly when the model needs it most; cross-entropy cancels that flattening.
+    """)
+with grad_col2:
+    p_grad = np.linspace(0.001, 0.999, 300)
+    fig4 = go.Figure()
+    fig4.add_trace(go.Scatter(x=p_grad, y=np.abs(p_grad - 1), mode='lines', name='|∂CE/∂z|', line=dict(color='#ff4b4b')))
+    fig4.add_trace(go.Scatter(x=p_grad, y=np.abs(2 * p_grad * (1 - p_grad) ** 2), mode='lines', name='|∂MSE/∂z|', line=dict(color='#4444ff')))
+    fig4.update_layout(
+        title="Gradient size vs. true-class probability",
+        xaxis_title="True Class Probability p",
+        yaxis_title="|gradient w.r.t. logit z|",
+        template="plotly_dark",
+        height=280,
+        margin=dict(l=20, r=20, t=40, b=20),
+        legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99)
+    )
+    st.plotly_chart(fig4, width="stretch")
 
 st.success("🎉 **Takeaway:** Cross-Entropy loss acts as an amplifier for mistakes. It gives the model a tiny slap on the wrist when it's slightly off, but drops an anvil on it when it's confidently wrong!")

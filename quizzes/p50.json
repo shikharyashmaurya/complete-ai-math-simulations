@@ -1,0 +1,49 @@
+{
+  "page": 50,
+  "questions": [
+    {
+      "q": "A line makes errors $y_i - \\hat{y}_i = 1, -2, 3$ on three points. What is the **MSE** $L = \\frac{1}{n}\\sum (y_i - \\hat{y}_i)^2$?",
+      "options": [
+        "$2$",
+        "$\\approx 0.67$",
+        "$\\approx 4.67$",
+        "$14$"
+      ],
+      "answer": 2,
+      "explain": "Square each error ($1, 4, 9$), sum to $14$, divide by $n = 3$: $14/3 \\approx 4.67$. $2$ is the MAE (mean of $|e_i|$), $0.67$ forgets to square/abs (signs cancel: $2/3$), and $14$ forgets to divide by $n$."
+    },
+    {
+      "q": "In the lab you drag a single point far away from the line. Which statement best describes what happens?",
+      "options": [
+        "MAE jumps more than MSE, because absolute values are larger than squares",
+        "MSE jumps much more than MAE, because the outlier's error is squared",
+        "Both losses grow by exactly the same amount",
+        "Neither loss changes, since only one point moved"
+      ],
+      "answer": 1,
+      "explain": "MSE squares errors: being off by 10 costs 100 while being off by 2 costs only 4, so one outlier can explode it. MAE grows only linearly with the distance, which is why it is called robust to outliers."
+    },
+    {
+      "q": "Why is MAE described as harder to use with calculus than MSE?",
+      "options": [
+        "Its V-shaped absolute value has a sharp, non-smooth tip at zero error",
+        "It can be negative, so minimizing it never stops",
+        "It has no minimum at all",
+        "It needs the errors to be squared first"
+      ],
+      "answer": 0,
+      "explain": "$|e|$ has a kink at $e = 0$ where the derivative jumps from $-1$ to $+1$. MSE is smooth everywhere ($e^2 \\to 2e$). MAE is still non-negative and does have a minimum."
+    },
+    {
+      "q": "What does a loss function hand back to the training process?",
+      "options": [
+        "A list containing the corrected predictions",
+        "The best possible slope $w$ and bias $b$ directly",
+        "The probability that the model is correct",
+        "A single number summarizing how bad all the predictions are — lower is better"
+      ],
+      "answer": 3,
+      "explain": "The loss 'crushes' all the individual mistakes into one score. Training then searches for the parameters ($w$, $b$) that make this score as small as possible; the loss itself does not give those parameters."
+    }
+  ]
+}

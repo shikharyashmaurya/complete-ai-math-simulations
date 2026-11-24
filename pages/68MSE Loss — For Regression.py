@@ -60,22 +60,22 @@ with col1:
     st.write("Adjust the line's parameters to minimize the total loss.")
     
     # Sliders for the line equation y = wx + b
-    w = st.slider("Slope (w)", 0.0, 2.0, 0.5, 0.1)
-    b = st.slider("Intercept (b)", 0.0, 10.0, 2.0, 0.5)
+    w = st.slider("Slope (w)", 0.0, 2.0, 0.5, 0.1, key="p68_w")
+    b = st.slider("Intercept (b)", 0.0, 10.0, 2.0, 0.5, key="p68_b")
     
     st.markdown("### 📏 Choose the Metric")
     metric = st.radio("How should we measure mistakes?", 
-                      ["Mean Squared Error (MSE)", "Mean Absolute Error (MAE)"])
+                      ["Mean Squared Error (MSE)", "Mean Absolute Error (MAE)"], key="p68_metric")
     
     st.markdown("### 🌪️ Data Mode")
-    has_outlier = st.checkbox("Add a Rogue Outlier Point")
+    has_outlier = st.checkbox("Add a Rogue Outlier Point", key="p68_outlier")
     
     # Generate Data
     x_data = np.array([1, 2.5, 4, 5.5, 7, 8.5, 10])
     if has_outlier:
-        y_true = np.array([3, 4.5, 5.5, 6.5, 8, 9.5, 3]) # Outlier at the end
+        y_true = np.array([3, 4.5, 5.5, 6.5, 8, 9.5, 3]) # Outlier at the end (also the largest x, i.e. a high-leverage point)
     else:
-        y_true = np.array([3, 4.5, 5.5, 6.5, 8, 9.5, 11]) # Clean linear trend
+        y_true = np.array([3, 4.5, 5.5, 6.5, 8, 9.5, 11]) # Roughly linear trend (not exactly on one line)
         
     # Calculate predictions and errors
     y_pred = w * x_data + b
@@ -178,7 +178,10 @@ with col2:
         )
         return fig
 
-    st.plotly_chart(create_squares_plot(x_data, y_true, w, b, metric), use_container_width=True)
+    st.plotly_chart(create_squares_plot(x_data, y_true, w, b, metric), width="stretch")
+    if metric == "Mean Squared Error (MSE)":
+        st.caption("Each square is drawn to the right of its data point with side length |error|. "
+                   "Large squares can overlap their neighbours; every square still counts fully toward the MSE.")
 
 # Explanation Section
 st.markdown("---")
@@ -197,8 +200,9 @@ with col_text:
        MSE acts like an alarm system that screams loudly if there is even one massive error.
        
     2. **Try the Outlier Checkbox 👆**: 
-       Turn on the rogue outlier point above. If you use **MAE**, the best fit line will ignore the outlier to keep the majority happy. 
-       If you use **MSE**, the outlier's giant square will pull the entire line down just to shrink that one massive square!
+       Turn on the rogue outlier point above. With **MAE**, the best line for this data barely moves (slope ≈ 0.83 vs ≈ 0.87 without the outlier): one bad point out of seven has limited influence.
+       (MAE is not immune to outliers in general — a far-away point at an extreme x can still drag it.)
+       With **MSE**, the outlier's giant square **tilts** the best line toward it (best slope drops from ≈ 0.87 to ≈ 0.30): the right end is pulled down while the left end actually rises.
        
     3. **Calculus Loves Smooth Bowls 🥣**:
        To train a neural network, we calculate derivatives. The Absolute Error creates a sharp "V" shape at the bottom (non-differentiable at zero). Squaring it creates a beautiful, smooth parabola (a bowl) that makes Gradient Descent very happy!
@@ -238,4 +242,4 @@ with col_plot:
         )
         return fig
         
-    st.plotly_chart(create_penalty_plot(), use_container_width=True)
+    st.plotly_chart(create_penalty_plot(), width="stretch")

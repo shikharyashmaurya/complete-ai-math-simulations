@@ -1,9 +1,34 @@
+import sys
+from pathlib import Path
+
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+from common.nav import safe_page_link  # noqa: E402
+
+st.set_page_config(page_title="Bias-Variance Tradeoff", page_icon="🎯", layout="wide")
+
+NOISE = 10  # irreducible error in the illustrative tradeoff curve
+
+
+def curve_bias_sq(c):
+    return 80 * np.exp(-0.6 * (c - 1))
+
+
+def curve_variance(c):
+    return 1.0 * ((c - 1) ** 2)
+
+
 def draw_dartboard(bias, variance, num_darts=30, seed_val=None, show_labels=True):
-    """Draws a dartboard with darts scattered based on bias and variance."""
+    """Draws a dartboard with darts scattered based on bias (distance) and per-axis variance.
+
+    Returns the figure and the dart coordinates.
+    """
     rng = np.random.default_rng(seed_val)
         
     # Angle for the bias offset (fixed to top-right for consistent visualization)
@@ -117,21 +142,21 @@ def draw_dartboard(bias, variance, num_darts=30, seed_val=None, show_labels=True
     
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     
-    return fig
+    return fig, darts_x, darts_y
 
 def draw_tradeoff_curve(complexity):
     """Draws the Bias-Variance tradeoff curve."""
     x = np.linspace(1, 10, 200)
     
-    # Simulated values for pedagogical purposes
-    bias = 80 * np.exp(-0.6 * (x - 1))
-    variance = 1.0 * ((x - 1) ** 2)
-    total_error = bias + variance + 10 # 10 is irreducible error
+    # Simulated values for pedagogical purposes: Expected error = Bias² + Variance + Noise
+    bias_sq = curve_bias_sq(x)
+    variance = curve_variance(x)
+    total_error = bias_sq + variance + NOISE
     
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
-        x=x, y=bias, mode='lines', 
+        x=x, y=bias_sq, mode='lines', 
         name='Bias² (Assumptions)', 
         line=dict(color='#E74C3C', width=4)
     ))
@@ -144,14 +169,14 @@ def draw_tradeoff_curve(complexity):
     
     fig.add_trace(go.Scatter(
         x=x, y=total_error, mode='lines', 
-        name='Total Error', 
+        name='Total Error (Bias² + Variance + Noise)', 
         line=dict(color='#9B59B6', width=5, dash='dash')
     ))
     
     # Calculate current values based on slider
-    curr_bias = 80 * np.exp(-0.6 * (complexity - 1))
-    curr_var = 1.0 * ((complexity - 1) ** 2)
-    curr_total = curr_bias + curr_var + 10
+    curr_bias = curve_bias_sq(complexity)
+    curr_var = curve_variance(complexity)
+    curr_total = curr_bias + curr_var + NOISE
     
     # Vertical line indicating current position
     fig.add_shape(
@@ -216,10 +241,11 @@ with st.expander("📖 What are Bias and Variance? (Read First!)", expanded=Fals
     st.markdown("""
     When we train an AI model, it tries to learn the patterns in our data. But it faces two main enemies:
     
-    *   **<span style='color:#E74C3C; font-weight:bold;'>Bias</span> (The "Inaccurate" Error):** The model makes strong assumptions and is too simple. It consistently misses the mark because it didn't learn enough from the data. (Think: **Underfitting**)
-    *   **<span style='color:#3498DB; font-weight:bold;'>Variance</span> (The "Inconsistent" Error):** The model is too complex and sensitive. It memorizes the training data perfectly, including the random noise, so its predictions jump all over the place on new data. (Think: **Overfitting**)
+    *   **<span style='color:#E74C3C; font-weight:bold;'>Bias</span> (The "Inaccurate" Error):** The model makes strong assumptions and is too simple. It consistently misses the mark in the same direction, no matter which training data it sees. (Think: **Underfitting**)
+    *   **<span style='color:#3498DB; font-weight:bold;'>Variance</span> (The "Inconsistent" Error):** The model is very flexible and sensitive. It can fit the random noise in its particular training set, so retraining it on a different sample of data gives noticeably different predictions. (Think: **Overfitting**)
     
-    Our goal is to find the **sweet spot** in between!
+    For squared error, the expected error splits exactly into **Bias² + Variance + Irreducible Noise**.
+    Our goal is to find the **sweet spot** where their sum is smallest!
     """, unsafe_allow_html=True)
 
 st.markdown("---")
@@ -228,19 +254,21 @@ st.markdown("---")
 tab1, tab2 = st.tabs(["🕹️ The Dartboard Analogy", "⚖️ The Tradeoff Curve"])
 
 with tab1:
-    st.markdown("Imagine you are throwing darts at a board. The **bullseye is the true correct answer**. Your darts are the **model's predictions**.")
+    st.markdown("Imagine you are throwing darts at a board. The **bullseye is the true answer** for one fixed input. "
+                "Each dart is the prediction for that input from the same kind of model **trained on a different random training set**. "
+                "Bias is how far the *average* dart lands from the bullseye; variance is how much the darts scatter around their own average.")
     
     col1, col2 = st.columns([1, 2])
     
     with col1:
         st.markdown("### Adjust Your Throw")
-        bias_val = st.slider("🎯 Bias (How far off-center?)", min_value=0.0, max_value=12.0, value=7.0, step=0.5, 
-                             help="Higher bias means the darts are consistently missing the bullseye.")
-        var_val = st.slider("🌪️ Variance (How spread out?)", min_value=0.1, max_value=8.0, value=1.5, step=0.1,
-                            help="Higher variance means the darts are scattered everywhere.")
+        bias_val = st.slider("🎯 Bias (How far off-center?)", min_value=0.0, max_value=12.0, value=7.0, step=0.5, key="p73_bias",
+                             help="Distance from the bullseye to the center of the dart cloud. Higher bias means the darts are consistently missing the bullseye.")
+        var_val = st.slider("🌪️ Variance (How spread out?)", min_value=0.1, max_value=8.0, value=1.5, step=0.1, key="p73_variance",
+                            help="Variance of the darts along each axis. Higher variance means the darts are scattered everywhere.")
         
-        if st.button("🎲 Throw New Darts!", use_container_width=True):
-            st.session_state.dart_seed = int(np.random.default_rng().integers(0, 100000))
+        if st.button("🎲 Throw New Darts!", width="stretch", key="p73_throw"):
+            st.session_state.p73_dart_seed = int(np.random.default_rng().integers(0, 100000))
             
         st.markdown("---")
         
@@ -255,35 +283,62 @@ with tab1:
             st.error("**💥 High Bias, High Variance!** \n\nYou are consistently wrong AND scattered. Back to the drawing board!")
             
     with col2:
-        seed = st.session_state.get('dart_seed', 42)
-        fig1 = draw_dartboard(bias_val, var_val, seed_val=seed)
-        st.plotly_chart(fig1, use_container_width=True)
+        seed = st.session_state.get('p73_dart_seed', 42)
+        fig1, darts_x, darts_y = draw_dartboard(bias_val, var_val, seed_val=seed)
+        st.plotly_chart(fig1, width="stretch")
+
+        # Measured decomposition for the darts actually thrown:
+        # mean squared miss = (distance of the dart average from the bullseye)² + mean squared spread around that average
+        mean_sq_miss = float(np.mean(darts_x**2 + darts_y**2))
+        measured_bias_sq = float(np.mean(darts_x)**2 + np.mean(darts_y)**2)
+        measured_spread = float(np.mean((darts_x - np.mean(darts_x))**2 + (darts_y - np.mean(darts_y))**2))
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Avg squared miss", f"{mean_sq_miss:.2f}")
+        m2.metric("Measured Bias²", f"{measured_bias_sq:.2f}")
+        m3.metric("Measured Variance (spread)", f"{measured_spread:.2f}")
+        st.caption(f"Avg squared miss = Measured Bias² + Measured Variance, exactly, for these {darts_x.size} darts. In expectation it is "
+                   f"Bias² + 2 × per-axis variance = {bias_val**2:.2f} + {2 * var_val:.2f} = {bias_val**2 + 2 * var_val:.2f} "
+                   "(two axes on a 2-D board).")
 
 with tab2:
     st.markdown("In many model-selection settings, increasing complexity tends to reduce bias while increasing variance, but this is a common tradeoff—not a universal law or a strict rule that the two must change together. The curve below is illustrative.")
     
-    complexity = st.slider("⚙️ Model Complexity", min_value=1.0, max_value=10.0, value=5.0, step=0.1,
+    complexity = st.slider("⚙️ Model Complexity", min_value=1.0, max_value=10.0, value=5.0, step=0.1, key="p73_complexity",
                            help="1 = Very Simple (e.g., straight line). 10 = Very Complex (e.g., squiggly polynomial).")
     
     col3, col4 = st.columns([2, 1.2])
     
     with col3:
         fig2 = draw_tradeoff_curve(complexity)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
         
     with col4:
         st.markdown(f"#### Dartboard at Complexity {complexity:.1f}")
         
-        # Map complexity to bias and variance for visual effect on the mini dartboard
-        mapped_bias = 10 * np.exp(-0.5 * (complexity - 1))
-        mapped_var = 0.5 + 0.08 * ((complexity - 1) ** 2)
+        # Use the SAME values as the curve: the mean squared miss of the darts is Bias² + Variance,
+        # so the dart-cloud offset is sqrt(Bias²) and the per-axis variance is Variance / 2 (two axes).
+        curr_bias_sq = float(curve_bias_sq(complexity))
+        curr_var = float(curve_variance(complexity))
+        x_grid = np.linspace(1, 10, 200)
+        sweet_spot = float(x_grid[np.argmin(curve_bias_sq(x_grid) + curve_variance(x_grid))])
         
-        bias_label = "High" if mapped_bias > 4 else "Medium" if mapped_bias > 2 else "Low"
-        var_label = "High" if mapped_var > 4 else "Medium" if mapped_var > 2 else "Low"
-        
-        st.markdown(f"- **Bias:** {bias_label} ({mapped_bias:.1f})")
-        st.markdown(f"- **Variance:** {var_label} ({mapped_var:.1f})")
+        st.markdown(f"- **Bias²:** {curr_bias_sq:.1f}")
+        st.markdown(f"- **Variance:** {curr_var:.1f}")
+        st.markdown(f"- **Noise:** {NOISE} → **Total:** {curr_bias_sq + curr_var + NOISE:.1f}")
+        if abs(complexity - sweet_spot) <= 0.5:
+            st.success(f"Near the sweet spot (≈ {sweet_spot:.1f}): Bias² and Variance are balanced.")
+        elif complexity < sweet_spot:
+            st.error("Underfitting side: **Bias²** dominates the error.")
+        else:
+            st.warning("Overfitting side: **Variance** dominates the error.")
         
         # Draw a mini dartboard without labels for a cleaner look
-        fig3 = draw_dartboard(mapped_bias, mapped_var, num_darts=15, seed_val=42, show_labels=False)
-        st.plotly_chart(fig3, use_container_width=True)
+        fig3, _, _ = draw_dartboard(np.sqrt(curr_bias_sq), curr_var / 2, num_darts=15, seed_val=42, show_labels=False)
+        st.plotly_chart(fig3, width="stretch")
+
+st.divider()
+prev_col, next_col = st.columns(2)
+with prev_col:
+    safe_page_link("pages/72Train, Validation & Test Splits.py", "Previous: 72 · Train, Validation & Test Splits", icon="⬅️")
+with next_col:
+    safe_page_link("pages/74L1 & L2 Regularization.py", "Next: 74 · L1 & L2 Regularization", icon="➡️")

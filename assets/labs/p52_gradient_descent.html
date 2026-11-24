@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:sans-serif;background:#0f172a;color:#fff;padding:16px;overflow-x:hidden;}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+.row{display:flex;gap:16px;}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;}
+.col-l{flex:1;display:flex;flex-direction:column;gap:12px;min-width:320px;}
+.col-r{flex:2;display:flex;flex-direction:column;gap:12px;}
+h2{font-size:22px;font-weight:900;margin-bottom:2px;background:linear-gradient(90deg, #38bdf8, #10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sub{font-size:12px;color:#94a3b8;line-height:1.5;margin-bottom:8px;}
+.lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:6px;}
+.func-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.fbtn{background:rgba(255,255,255,0.05);color:#cbd5e1;border:1px solid rgba(255,255,255,.1);padding:8px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px;text-align:center;transition:.2s;}
+.fbtn:hover{background:rgba(255,255,255,.1);}
+.fbtn.active{background:rgba(56,189,248,.2);border-color:#38bdf8;color:#38bdf8;box-shadow:0 0 10px rgba(56,189,248,.2);}
+canvas{border-radius:12px;border:1px solid rgba(255,255,255,.08);display:block;width:100%;background:#1e293b;}
+.mbox{background:rgba(0,0,0,.3);border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:8px;}
+.mr{display:flex;justify-content:space-between;align-items:center;}
+.meq{font-family:monospace;font-size:13px;font-weight:bold;}
+.mv{font-family:monospace;font-size:15px;font-weight:900;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:5px;font-variant-numeric:tabular-nums;}
+.sep{border-top:1px dashed rgba(255,255,255,.12);padding-top:8px;}
+input[type=range]{width:100%;height:5px;background:rgba(255,255,255,.1);border-radius:3px;outline:none;-webkit-appearance:none;margin-bottom:10px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;cursor:pointer;}
+.sl{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px;}
+.sv{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;}
+.action-btn{background:#10b981;color:#0f172a;border:none;padding:10px;border-radius:8px;font-weight:800;cursor:pointer;width:100%;font-size:12px;letter-spacing:1px;transition:.2s;margin-top:4px;text-transform:uppercase;}
+.action-btn:hover{background:#059669;transform:translateY(-1px);}
+.action-btn.secondary{background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.1);margin-top:8px;}
+.hint{font-size:10px;color:#64748b;text-align:center;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.toast{position:absolute;top:20px;right:20px;background:rgba(16,185,129,0.9);color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:bold;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:100;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="wrap">
+ <div class="row">
+  <div class="col-l">
+   <div class="card">
+    <h2>Downhill Walker 🏔️</h2>
+    <p class="sub">AI doesn't "know" the bottom. It feels the slope and takes a step downhill. This is Gradient Descent.</p>
+   </div>
+   
+   <div class="card">
+    <div class="lbl">Terrain Topology</div>
+    <div class="func-grid" id="fbtns">
+     <button class="fbtn active" data-f="bowl">Convex Bowl</button>
+     <button class="fbtn" data-f="complex">Lumpy Terrain</button>
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="lbl">Training Configuration</div>
+    <div style="font-size: 13px; color: #38bdf8; font-weight: 700; margin-bottom: 10px;">
+        Learning Rate: <span style="background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px;">0.15 (Fixed)</span>
+    </div>
+    <p class="sub" style="font-size: 10px; margin-top: -5px;">We'll explore how changing this affects learning on Page 53.</p>
+    
+    <button class="action-btn" id="runBtn">▶ START TRAINING</button>
+    <button class="action-btn secondary" id="resetBtn">🔄 RESET POSITION</button>
+    <div class="hint">Click on the Topo Map to teleport</div>
+   </div>
+
+   <div class="mbox">
+    <div class="mr"><span class="meq" style="color:#a78bfa">Loss f(w1, w2)</span><span class="mv" style="color:#a78bfa" id="lossVal">0.00</span></div>
+    <div class="sep">
+     <div class="mr"><span class="meq" style="color:#fb923c">Gradient ∇f = [∂f/∂w1, ∂f/∂w2] (Uphill)</span><span class="mv" style="color:#fb923c" id="gVal">[0,0]</span></div>
+     <div class="mr"><span class="meq" style="color:#10b981">Descent −∇f (Downhill)</span><span class="mv" style="color:#10b981" id="dgVal">[0,0]</span></div>
+    </div>
+    <div class="sep">
+     <div class="mr"><span class="meq" style="color:#38bdf8">Steps Taken</span><span class="mv" style="color:#38bdf8" id="stepVal">0</span></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="col-r">
+   <div style="display:flex; gap:12px;">
+    <div style="flex:1;">
+     <div class="lbl">1. Topographic Map (Birds-eye)</div>
+     <canvas id="cvs2d" width="400" height="400"></canvas>
+    </div>
+    <div style="flex:1.2;">
+     <div class="lbl">2. 3D View (drag to rotate)</div>
+     <canvas id="cvs3d" width="480" height="400"></canvas>
+    </div>
+   </div>
+   <div class="card" style="padding:10px; font-size:11px; color:#94a3b8; display:flex; justify-content:space-around;">
+    <span><b style="color:#fb923c">- -</b> Gradient ∇f (Uphill)</span>
+    <span><b style="color:#10b981">→</b> Descent direction −∇f (Downhill)</span>
+    <span><b style="color:#10b981">●</b> Path</span>
+    <span><b style="color:rgba(255,255,255,0.6)">—</b> Contour lines (equal loss)</span>
+   </div>
+  </div>
+ </div>
+</div>
+
+<script>
+// Both surfaces have a minimum loss of (about) 0. "Lumpy Terrain" is the same
+// surface as the "Complex" landscape on Page 51.
+const funcs = {
+  bowl: {
+    f: (x, y) => 0.3*(x*x + y*y),
+    dx: (x, y) => 0.6*x,
+    dy: (x, y) => 0.6*y,
+    gMin: {x: 0, y: 0}
+  },
+  complex: {
+    f: (x, y) => 0.2*(x*x + y*y) + 0.5*Math.sin(x*3)*Math.cos(y*3) + 0.3*Math.cos(x*1.5) + 0.25,
+    dx: (x, y) => 0.4*x + 1.5*Math.cos(x*3)*Math.cos(y*3) - 0.45*Math.sin(x*1.5),
+    dy: (x, y) => 0.4*y - 1.5*Math.sin(x*3)*Math.sin(y*3),
+    gMin: {x: -0.548, y: 0}  // global minimum, loss ≈ 0.016 (a 2nd dip at (1.51, 0) has loss ≈ 0.022)
+  }
+};
+
+const LR = 0.15; // Fixed for this page
+let curF = 'bowl';
+let ball = { x: 2.5, y: 2.0 };
+let path = [];
+let steps = 0;
+let running = false;
+let frameId = null;
+let toastTimer = null;
+let rotX = 0.6, rotZ = 0.7;
+
+const c2 = document.getElementById('cvs2d'), ctx2 = c2.getContext('2d');
+const c3 = document.getElementById('cvs3d'), ctx3 = c3.getContext('2d');
+const runBtn = document.getElementById('runBtn');
+const toast = document.getElementById('toast');
+const gValEl = document.getElementById('gVal');
+const dgValEl = document.getElementById('dgVal');
+
+const R = 3.5, PAD = 30;
+
+// Coordinate mapping
+function w2s(x, y) {
+  return {
+    sx: PAD + (x + R) / (2 * R) * (c2.width - 2 * PAD),
+    sy: PAD + (R - y) / (2 * R) * (c2.height - 2 * PAD)
+  };
+}
+function s2w(sx, sy) {
+  return {
+    x: (sx - PAD) / (c2.width - 2 * PAD) * (2 * R) - R,
+    y: R - (sy - PAD) / (c2.height - 2 * PAD) * (2 * R)
+  };
+}
+
+// 3D Projection: orthographic camera above the surface. The w2 axis is
+// mirrored so that, seen from above, the 3D view matches the topo map.
+function rawProject(x, z, y) {
+  const zm = -z;
+  const x1 = x * Math.cos(rotZ) - zm * Math.sin(rotZ);
+  const z1 = x * Math.sin(rotZ) + zm * Math.cos(rotZ);
+  const y1 = y * Math.cos(rotX) - z1 * Math.sin(rotX);
+  const z2 = y * Math.sin(rotX) + z1 * Math.cos(rotX); // larger = closer to viewer
+  return { x1, y1, depth: z2 };
+}
+
+// Scale/centre the 3D view so the whole surface fits inside the canvas.
+let view = { s: 65, cx: 0, cy: 0 };
+function fitView(fn, N) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      const x = -R + 2 * R * i / N, z = -R + 2 * R * j / N;
+      const p = rawProject(x, z, fn.f(x, z));
+      minX = Math.min(minX, p.x1); maxX = Math.max(maxX, p.x1);
+      minY = Math.min(minY, p.y1); maxY = Math.max(maxY, p.y1);
+    }
+  }
+  view.s = Math.min((c3.width - 30) / Math.max(maxX - minX, 1e-9), (c3.height - 50) / Math.max(maxY - minY, 1e-9));
+  view.cx = (minX + maxX) / 2;
+  view.cy = (minY + maxY) / 2;
+}
+
+function project(x, z, y) {
+  const p = rawProject(x, z, y);
+  return {
+    x: c3.width/2 + (p.x1 - view.cx) * view.s,
+    y: c3.height/2 + 10 - (p.y1 - view.cy) * view.s,
+    depth: p.depth
+  };
+}
+
+function heatColor(v) {
+  const t = Math.max(0, Math.min(1, (v + 0.5) / 4.5));
+  if (t < 0.3) return `hsl(217, 91%, ${20 + t * 100}%)`;
+  else if (t < 0.7) return `hsl(${217 - (t-0.3)*400}, 91%, 60%)`;
+  else return `hsl(${45 - (t-0.7)*150}, 91%, 50%)`;
+}
+
+const CONTOUR_STEP = 0.5;
+
+function draw() {
+  const fn = funcs[curF];
+  
+  // -- 2D DRAW --
+  ctx2.clearRect(0,0,c2.width,c2.height);
+  ctx2.fillStyle='#1e293b'; ctx2.fillRect(0,0,c2.width,c2.height);
+  
+  // Heatmap background (values cached for the contour pass)
+  const res = 5;
+  const cols = [], vals = [];
+  for(let i=PAD; i<c2.width-PAD; i+=res) {
+    const col = [];
+    for(let j=PAD; j<c2.height-PAD; j+=res) {
+      const {x, y} = s2w(i + res/2, j + res/2);
+      const v = fn.f(x, y);
+      col.push(v);
+      ctx2.fillStyle = heatColor(v);
+      ctx2.fillRect(i, j, res, res);
+    }
+    cols.push(i); vals.push(col);
+  }
+  
+  // Contour lines: draw a cell edge wherever the loss crosses a multiple of CONTOUR_STEP
+  ctx2.strokeStyle = 'rgba(255,255,255,0.35)'; ctx2.lineWidth = 1;
+  ctx2.beginPath();
+  for (let a = 0; a < vals.length; a++) {
+    for (let b = 0; b < vals[a].length; b++) {
+      const band = Math.floor(vals[a][b] / CONTOUR_STEP);
+      const x0 = cols[a], y0 = PAD + b * res;
+      if (a + 1 < vals.length && Math.floor(vals[a+1][b] / CONTOUR_STEP) !== band) {
+        ctx2.moveTo(x0 + res, y0); ctx2.lineTo(x0 + res, y0 + res);
+      }
+      if (b + 1 < vals[a].length && Math.floor(vals[a][b+1] / CONTOUR_STEP) !== band) {
+        ctx2.moveTo(x0, y0 + res); ctx2.lineTo(x0 + res, y0 + res);
+      }
+    }
+  }
+  ctx2.stroke();
+
+  // Path on 2D
+  if(path.length > 1) {
+    ctx2.beginPath();
+    const s0 = w2s(path[0].x, path[0].y);
+    ctx2.moveTo(s0.sx, s0.sy);
+    for(let i=1; i<path.length; i++) {
+      const s = w2s(path[i].x, path[i].y);
+      ctx2.lineTo(s.sx, s.sy);
+    }
+    ctx2.strokeStyle = '#10b981'; ctx2.lineWidth = 2; ctx2.stroke();
+  }
+
+  // Ball & Vectors on 2D
+  const curS = w2s(ball.x, ball.y);
+  const dx = fn.dx(ball.x, ball.y), dy = fn.dy(ball.x, ball.y);
+  const vScale = 0.5;
+  
+  // gradient (uphill)
+  const sg2 = w2s(ball.x + dx*vScale, ball.y + dy*vScale);
+  ctx2.beginPath(); ctx2.moveTo(curS.sx, curS.sy); ctx2.lineTo(sg2.sx, sg2.sy);
+  ctx2.strokeStyle='#fb923c'; ctx2.lineWidth=1; ctx2.setLineDash([2,2]); ctx2.stroke(); ctx2.setLineDash([]);
+  
+  // descent step (downhill - negative gradient)
+  const sd2 = w2s(ball.x - dx*vScale, ball.y - dy*vScale);
+  ctx2.beginPath(); ctx2.moveTo(curS.sx, curS.sy); ctx2.lineTo(sd2.sx, sd2.sy);
+  ctx2.strokeStyle='#10b981'; ctx2.lineWidth=3; ctx2.stroke();
+  
+  // arrowhead for descent
+  const da = Math.atan2(sd2.sy - curS.sy, sd2.sx - curS.sx);
+  ctx2.beginPath(); ctx2.moveTo(sd2.sx, sd2.sy);
+  ctx2.lineTo(sd2.sx - 10*Math.cos(da-0.4), sd2.sy - 10*Math.sin(da-0.4));
+  ctx2.lineTo(sd2.sx - 10*Math.cos(da+0.4), sd2.sy - 10*Math.sin(da+0.4));
+  ctx2.closePath(); ctx2.fillStyle='#10b981'; ctx2.fill();
+
+  ctx2.beginPath(); ctx2.arc(curS.sx, curS.sy, 6, 0, Math.PI*2);
+  ctx2.fillStyle='#fff'; ctx2.shadowBlur=10; ctx2.shadowColor='#fff'; ctx2.fill(); ctx2.shadowBlur=0;
+
+  // -- 3D DRAW --
+  ctx3.clearRect(0,0,c3.width,c3.height);
+  ctx3.fillStyle='#1e293b'; ctx3.fillRect(0,0,c3.width,c3.height);
+  
+  const N = 25;
+  const step = (2*R)/N;
+  fitView(fn, N);
+  const polys = [];
+  for(let i=0; i<N; i++) {
+    for(let j=0; j<N; j++) {
+      const x0 = -R + i*step, x1 = x0 + step;
+      const z0 = -R + j*step, z1 = z0 + step;
+      const y00 = fn.f(x0, z0), y10 = fn.f(x1, z0), y01 = fn.f(x0, z1), y11 = fn.f(x1, z1);
+      const p00 = project(x0, z0, y00), p10 = project(x1, z0, y10), p01 = project(x0, z1, y01), p11 = project(x1, z1, y11);
+      polys.push({
+        pts: [p00, p10, p11, p01],
+        depth: (p00.depth+p10.depth+p01.depth+p11.depth)/4,
+        color: heatColor((y00+y10+y01+y11)/4)
+      });
+    }
+  }
+  // Painter's algorithm: farthest first, closest last
+  polys.sort((a,b)=>a.depth-b.depth);
+  polys.forEach(p=>{
+    ctx3.beginPath(); ctx3.moveTo(p.pts[0].x, p.pts[0].y);
+    for(let i=1; i<4; i++) ctx3.lineTo(p.pts[i].x, p.pts[i].y);
+    ctx3.closePath(); ctx3.fillStyle=p.color; ctx3.fill();
+    ctx3.strokeStyle='rgba(0,0,0,0.1)'; ctx3.stroke();
+  });
+
+  // Path in 3D
+  if(path.length > 1) {
+    ctx3.beginPath();
+    const p0 = project(path[0].x, path[0].y, path[0].z);
+    ctx3.moveTo(p0.x, p0.y);
+    for(let i=1; i<path.length; i++) {
+      const p = project(path[i].x, path[i].y, path[i].z);
+      ctx3.lineTo(p.x, p.y);
+    }
+    ctx3.strokeStyle='rgba(255,255,255,0.4)'; ctx3.lineWidth=1.5; ctx3.stroke();
+  }
+
+  // Ball in 3D
+  const pb = project(ball.x, ball.y, fn.f(ball.x, ball.y));
+  ctx3.beginPath(); ctx3.arc(pb.x, pb.y - 8, 7, 0, Math.PI*2);
+  const grad = ctx3.createRadialGradient(pb.x-2, pb.y-10, 1, pb.x, pb.y-8, 7);
+  grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#38bdf8');
+  ctx3.fillStyle=grad; ctx3.shadowBlur=15; ctx3.shadowColor='#38bdf8'; ctx3.fill(); ctx3.shadowBlur=0;
+  
+  // UI Updates
+  document.getElementById('lossVal').innerText = fn.f(ball.x, ball.y).toFixed(3);
+  gValEl.innerText = `[${dx.toFixed(2)}, ${dy.toFixed(2)}]`;
+  dgValEl.innerText = `[${(-dx).toFixed(2)}, ${(-dy).toFixed(2)}]`;
+  document.getElementById('stepVal').innerText = steps;
+}
+
+function showToast(text, color) {
+  toast.innerText = text;
+  toast.style.background = color;
+  toast.style.opacity = 1;
+  if (toastTimer !== null) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.opacity = 0; toastTimer = null; }, 2500);
+}
+
+function stopRun() {
+  running = false;
+  if (frameId !== null) { cancelAnimationFrame(frameId); frameId = null; }
+  runBtn.innerText = "▶ START TRAINING";
+}
+
+function step() {
+  frameId = null;
+  if(!running) return;
+  const fn = funcs[curF];
+  const dx = fn.dx(ball.x, ball.y), dy = fn.dy(ball.x, ball.y);
+  
+  path.push({x: ball.x, y: ball.y, z: fn.f(ball.x, ball.y)});
+  if(path.length > 100) path.shift();
+  
+  ball.x -= LR * dx;
+  ball.y -= LR * dy;
+  steps++;
+  
+  const mag = Math.sqrt(dx*dx + dy*dy);
+  if(mag < 0.01) {
+    stopRun();
+    // Gradient ≈ 0 only means "flat here": check whether this dip is the deepest one.
+    if (Math.hypot(ball.x - fn.gMin.x, ball.y - fn.gMin.y) < 0.3) {
+      showToast("GLOBAL MINIMUM REACHED! 🎯", "rgba(16,185,129,0.9)");
+    } else {
+      showToast("STOPPED IN A LOCAL DIP 🕳️ (gradient ≈ 0)", "rgba(234,179,8,0.95)");
+    }
+  }
+  
+  draw();
+  if(running) frameId = requestAnimationFrame(step);
+}
+
+// Events (pointer events: mouse, pen and touch)
+c2.style.touchAction = 'none';
+c2.addEventListener('pointerdown', e => {
+  const rect = c2.getBoundingClientRect();
+  const scale = c2.width / rect.width;
+  const {x, y} = s2w((e.clientX - rect.left)*scale, (e.clientY - rect.top)*scale);
+  stopRun();
+  ball = {x: Math.max(-R, Math.min(R, x)), y: Math.max(-R, Math.min(R, y))}; path = []; steps = 0;
+  draw();
+});
+
+runBtn.addEventListener('click', () => {
+  if (running) { stopRun(); return; }
+  running = true;
+  runBtn.innerText = "⏸ PAUSE";
+  step();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  stopRun();
+  ball = { x: (Math.random()-0.5)*5, y: (Math.random()-0.5)*5 };
+  path = []; steps = 0;
+  draw();
+});
+
+document.querySelectorAll('.fbtn').forEach(b => {
+  b.addEventListener('click', e => {
+    document.querySelectorAll('.fbtn').forEach(x => x.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    curF = e.currentTarget.dataset.f;
+    stopRun();
+    ball = {x: 2.5, y: 2.0}; path = []; steps = 0;
+    draw();
+  });
+});
+
+// 3D Rotation dragging
+let isDragging = false, lastX, lastY;
+c3.style.touchAction = 'none';
+c3.addEventListener('pointerdown', e => { isDragging=true; lastX=e.clientX; lastY=e.clientY; c3.setPointerCapture(e.pointerId); });
+c3.addEventListener('pointermove', e => {
+  if(!isDragging) return;
+  rotZ += (e.clientX - lastX) * 0.01;
+  rotX += (e.clientY - lastY) * 0.01;
+  rotX = Math.max(0.1, Math.min(Math.PI/2-0.1, rotX));
+  lastX = e.clientX; lastY = e.clientY;
+  if (!running) draw();
+});
+c3.addEventListener('pointerup', () => isDragging=false);
+c3.addEventListener('pointercancel', () => isDragging=false);
+window.addEventListener('pagehide', () => {
+  stopRun();
+  if (toastTimer !== null) clearTimeout(toastTimer);
+});
+
+draw();
+</script>
+</body>
+</html>

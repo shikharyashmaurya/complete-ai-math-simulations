@@ -1,0 +1,49 @@
+{
+  "page": 67,
+  "questions": [
+    {
+      "q": "In the planet network, $W^1$ is $3 \\times 2$, $b^1$ is $3 \\times 1$, $W^2$ is $2 \\times 3$ and $b^2$ is $2 \\times 1$. How many learnable parameters does the network have?",
+      "options": [
+        "$12$",
+        "$17$",
+        "$13$",
+        "$9$"
+      ],
+      "answer": 1,
+      "explain": "$6 + 3 + 6 + 2 = 17$. Forgetting the biases gives $12$; counting only the first layer gives $9$."
+    },
+    {
+      "q": "With $W^1 = \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\\\ 1 & 1 \\end{bmatrix}$, $b^1 = [0,\\ 0,\\ -1]^T$, $X = [2,\\ -1]^T$ and ReLU as $g$, what is $A^1 = g(W^1X + b^1)$?",
+      "options": [
+        "$[2,\\ 0,\\ 0]^T$",
+        "$[2,\\ -1,\\ 0]^T$",
+        "$[2,\\ 0,\\ 1]^T$",
+        "$[1,\\ 0,\\ 0]^T$"
+      ],
+      "answer": 0,
+      "explain": "$Z^1 = [2,\\ -1,\\ 1 - 1]^T = [2,\\ -1,\\ 0]^T$; ReLU zeroes the negative entry: $[2,\\ 0,\\ 0]^T$. $[2, -1, 0]$ forgets the activation; $[2, 0, 1]$ forgets the bias."
+    },
+    {
+      "q": "If you remove the activation function $g$, what does the 2-layer network collapse to?",
+      "options": [
+        "A single affine map with $W_{new} = W^1W^2$ ($3 \\times 3$)",
+        "A network that can still carve out a closed Goldilocks pocket",
+        "Nothing changes, because softmax is still applied at the end",
+        "A single affine map $W_{new}X + b_{new}$ with $W_{new} = W^2W^1$ ($2 \\times 2$) and $b_{new} = W^2b^1 + b^2$"
+      ],
+      "answer": 3,
+      "explain": "$W^2(W^1X + b^1) + b^2 = (W^2W^1)X + (W^2b^1 + b^2)$. The order matters: $W^2W^1$ is $2 \\times 2$. One affine map gives a single straight decision line, so no bounded pocket is possible."
+    },
+    {
+      "q": "How does the 🌌 Goldilocks Zone Brain carve out a closed habitable pocket when a single straight line cannot?",
+      "options": [
+        "The softmax layer draws a circle around the pocket",
+        "The 3×2 matrix fills all of 3D space, so any shape is possible",
+        "$W^1$ maps the 2D grid onto a flat plane in 3D hidden space, the activation bends and creases it, and one flat cut in the bent space suffices",
+        "It uses a larger bias, which curves the decision line"
+      ],
+      "answer": 2,
+      "explain": "A $3 \\times 2$ matrix can only produce a flat 2D sheet inside 3D; the non-linear activation creases it. Biases alone only shift lines, and softmax just turns scores into probabilities."
+    }
+  ]
+}

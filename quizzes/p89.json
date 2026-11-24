@@ -1,0 +1,49 @@
+{
+  "page": 89,
+  "questions": [
+    {
+      "q": "For a joint table with $p(x,y) = p(x)\\,p(y)$ in every cell, what is $I(X;Y)$?",
+      "options": [
+        "$H(X) + H(Y)$",
+        "$0$ bits",
+        "$H(X,Y)$",
+        "$1$ bit"
+      ],
+      "answer": 1,
+      "explain": "Then $H(X,Y) = H(X) + H(Y)$, so $I = H(X)+H(Y)-H(X,Y) = 0$; equivalently $D_{\\mathrm{KL}}(p(x,y)\\,\\|\\,p(x)p(y)) = 0$ because the two distributions are identical."
+    },
+    {
+      "q": "$Y$ is an exact copy of $X$, where $X$ takes 3 values with probabilities $0.2, 0.3, 0.5$. What is $I(X;Y)$?",
+      "options": [
+        "$\\log_2 3 \\approx 1.585$ bits",
+        "$H(X) \\approx 1.485$ bits",
+        "$2H(X) \\approx 2.971$ bits",
+        "$1$ bit"
+      ],
+      "answer": 1,
+      "explain": "$H(Y\\mid X) = 0$, so $I = H(Y) - 0 = H(X) \\approx 1.485$ bits. $\\log_2 3$ would only be reached if $X$ were uniform."
+    },
+    {
+      "q": "A binary symmetric channel with uniform input flips each bit with probability $\\varepsilon$. For which $\\varepsilon$ is $I(X;Y) = 1 - H_b(\\varepsilon)$ equal to 0?",
+      "options": [
+        "$\\varepsilon = 0$",
+        "$\\varepsilon = 0.5$",
+        "$\\varepsilon = 1$",
+        "Both $\\varepsilon = 0.5$ and $\\varepsilon = 1$"
+      ],
+      "answer": 1,
+      "explain": "$H_b(0.5) = 1$ bit, so $I = 0$: the output is a coin flip regardless of the input. At $\\varepsilon = 1$ every bit is inverted — a perfectly predictable relation — so $I = 1 - H_b(1) = 1$ bit."
+    },
+    {
+      "q": "With $x \\sim \\text{Uniform}(-1, 1)$ and $y = x^2 + $ small noise, the page shows Pearson $r \\approx 0$. What does the binned mutual information show, and why?",
+      "options": [
+        "MI ≈ 0 too, because MI and correlation always agree",
+        "MI is clearly positive: knowing x pins down y, but the dependence is non-linear and symmetric so correlation cancels out",
+        "MI is negative, because the relationship slopes down for x < 0",
+        "MI is exactly 1 bit for any noise level and bin count"
+      ],
+      "answer": 1,
+      "explain": "Correlation only measures linear dependence; the down-slope for $x<0$ cancels the up-slope for $x>0$. MI captures any dependence and is never negative. Its binned estimate depends on n and the bin count and is biased upward (compare the shuffled baseline)."
+    }
+  ]
+}

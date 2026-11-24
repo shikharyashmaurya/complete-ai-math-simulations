@@ -1,0 +1,49 @@
+{
+  "page": 47,
+  "questions": [
+    {
+      "q": "For $f(x, y) = x^2 + 3xy + y^2$, what is $\\frac{\\partial f}{\\partial x}$?",
+      "options": [
+        "$2x + 3y$",
+        "$2x + 3y + 2y$",
+        "$2x + 3$",
+        "$2x + 3x + 2y$"
+      ],
+      "answer": 0,
+      "explain": "Freeze $y$: $x^2 \\to 2x$, $3xy \\to 3y$ (since $3y$ is a constant coefficient), $y^2 \\to 0$. Treating $y^2$ as a variable term is the common trap."
+    },
+    {
+      "q": "For the same $f(x, y) = x^2 + 3xy + y^2$, evaluate $\\frac{\\partial f}{\\partial y}$ at the point $(1, 2)$.",
+      "options": [
+        "$8$",
+        "$7$",
+        "$5$",
+        "$11$"
+      ],
+      "answer": 1,
+      "explain": "$\\frac{\\partial f}{\\partial y} = 3x + 2y = 3 + 4 = 7$. $8$ is $\\frac{\\partial f}{\\partial x} = 2x + 3y$ at that point."
+    },
+    {
+      "q": "The lab's Saddle is $f(x, y) = \\frac{1}{4}(x^2 - y^2)$. At $(2, 1)$, what are $\\frac{\\partial f}{\\partial x}$ and $\\frac{\\partial f}{\\partial y}$?",
+      "options": [
+        "$1$ and $0.5$",
+        "$0.75$ and $0.75$",
+        "$1$ and $-0.5$",
+        "$4$ and $-2$"
+      ],
+      "answer": 2,
+      "explain": "$\\frac{\\partial f}{\\partial x} = \\frac{x}{2} = 1$ (uphill in x) and $\\frac{\\partial f}{\\partial y} = -\\frac{y}{2} = -0.5$ (downhill in y). $0.75$ is $f(2, 1)$, the height."
+    },
+    {
+      "q": "Geometrically, what does the **∂/∂x slice** in the 3D Slicer show?",
+      "options": [
+        "The surface viewed from above",
+        "The average of all slopes",
+        "The curve obtained by freezing $x$",
+        "The 2D curve obtained by freezing $y$ and varying $x$ — its slope is $\\frac{\\partial f}{\\partial x}$"
+      ],
+      "answer": 3,
+      "explain": "A partial derivative is an ordinary derivative along one axis with all other variables held constant; slicing the surface at fixed $y$ shows exactly that curve."
+    }
+  ]
+}

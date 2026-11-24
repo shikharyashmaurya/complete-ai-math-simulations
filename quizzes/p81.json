@@ -1,0 +1,49 @@
+{
+  "page": 81,
+  "questions": [
+    {
+      "q": "Use the order-2 Taylor polynomial of $e^x$ around $a = 0$ to estimate $e^{0.5}$.",
+      "options": [
+        "$1.5$",
+        "$1.625$",
+        "$1.6487$",
+        "$1.25$"
+      ],
+      "answer": 1,
+      "explain": "$P_2(x) = 1 + x + \\frac{x^2}{2}$, so $P_2(0.5) = 1 + 0.5 + 0.125 = 1.625$. The true value $e^{0.5} \\approx 1.6487$; the Lagrange bound $e^{0.5}\\cdot\\frac{0.5^3}{3!} \\approx 0.034$ covers the gap of $\\approx 0.024$."
+    },
+    {
+      "q": "The Taylor series of $\\ln(1+x)$ around $a = 0$ is evaluated at $x = 1.5$ with more and more terms. What happens?",
+      "options": [
+        "It converges to $\\ln 2.5$, just more slowly",
+        "It converges to a wrong value",
+        "The partial sums diverge, because $|x - a| = 1.5$ exceeds the radius $R = 1$",
+        "It converges, because $\\ln(1+x)$ is defined at $x = 1.5$"
+      ],
+      "answer": 2,
+      "explain": "The radius of convergence is the distance from $a$ to the nearest singularity, $x = -1$, so $R = 1$. Outside it the terms $\\frac{x^k}{k}$ grow, so adding terms makes the error worse — even though $f(1.5)$ itself is perfectly defined."
+    },
+    {
+      "q": "On $f(x) = 2(x-1)^2 + 0.5$ starting at $x_0 = -1$, where does one Newton step land, compared with one gradient-descent step with $\\eta = 0.1$?",
+      "options": [
+        "Newton: $x = 1$ (the exact minimum); GD: $x = -0.2$",
+        "Newton: $x = -0.2$; GD: $x = 1$",
+        "Both land at $x = 1$",
+        "Newton is undefined because $f''$ is constant"
+      ],
+      "answer": 0,
+      "explain": "$f'(-1) = -8$, $f'' = 4$. Newton: $-1 - \\frac{-8}{4} = 1$ — exact for a quadratic, because its quadratic Taylor model *is* the function. GD: $-1 - 0.1\\cdot(-8) = -0.2$, a small step that trusts only the linear model."
+    },
+    {
+      "q": "Why does the Taylor series of the sigmoid $\\sigma(x)$ around $a = 0$ have radius of convergence $\\pi$, even though $\\sigma$ is smooth on the whole real line?",
+      "options": [
+        "Because $\\sigma$ saturates for $|x| > \\pi$",
+        "Because floating-point errors grow beyond $|x| = \\pi$",
+        "It doesn't — the series converges for every real $x$",
+        "Because $\\sigma$ has complex poles at $\\pm i\\pi$, at distance $\\pi$ from $0$"
+      ],
+      "answer": 3,
+      "explain": "$1 + e^{-z} = 0$ at $z = \\pm i\\pi$ (plus multiples $2\\pi i k$). The radius is the distance to the nearest singularity in the complex plane, here $\\sqrt{a^2 + \\pi^2} = \\pi$ for $a = 0$ — invisible on the real axis."
+    }
+  ]
+}

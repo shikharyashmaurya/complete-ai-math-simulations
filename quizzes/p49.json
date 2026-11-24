@@ -1,0 +1,49 @@
+{
+  "page": 49,
+  "questions": [
+    {
+      "q": "Using the Fundamental Theorem with $F(x) = x^3/3$, what is the exact area $\\int_{-2}^{2} x^2\\,dx$ (the lab's default range)?",
+      "options": [
+        "$0$",
+        "$\\frac{8}{3} \\approx 2.67$",
+        "$\\frac{16}{3} \\approx 5.33$",
+        "$8$"
+      ],
+      "answer": 2,
+      "explain": "$F(2) - F(-2) = \\frac{8}{3} - \\left(-\\frac{8}{3}\\right) = \\frac{16}{3}$. $\\frac{8}{3}$ forgets the left half; $0$ wrongly treats $x^2$ as cancelling, but $x^2 \\ge 0$ everywhere."
+    },
+    {
+      "q": "Approximate $\\int_0^2 x^2\\,dx$ with a **left** Riemann sum using $n = 2$ slices. What do you get?",
+      "options": [
+        "$2.5$",
+        "$1$",
+        "$5$",
+        "$\\frac{8}{3}$"
+      ],
+      "answer": 1,
+      "explain": "Width $\\Delta x = 1$; left heights $f(0) = 0$ and $f(1) = 1$, so the sum is $1$ — an underestimate of the exact $8/3$ because $x^2$ is increasing. The midpoint sum would give $0.25 + 2.25 = 2.5$, and the right sum $1 + 4 = 5$."
+    },
+    {
+      "q": "What is $\\int_0^{2\\pi} \\sin(x)\\,dx$ (the \"signed area\" option)?",
+      "options": [
+        "$4$",
+        "$2\\pi$",
+        "$-2$",
+        "$0$"
+      ],
+      "answer": 3,
+      "explain": "Area below the x-axis counts as negative: the positive hump on $[0, \\pi]$ (area $2$) cancels the negative one on $[\\pi, 2\\pi]$. $4$ is the total *unsigned* area."
+    },
+    {
+      "q": "Why does AI care about integrals as area?",
+      "options": [
+        "Because probabilities of continuous variables are areas under the density: $P(a \\le X \\le b) = \\int_a^b p(x)\\,dx$",
+        "Because neural networks compute integrals in every layer",
+        "Because derivatives cannot be computed without them",
+        "Because the density $p(x)$ itself is the probability of $X = x$"
+      ],
+      "answer": 0,
+      "explain": "Continuous probabilities, expected values $E[X] = \\int x\\,p(x)\\,dx$ and entropy all use integrals. The density value $p(x)$ is not itself a probability."
+    }
+  ]
+}

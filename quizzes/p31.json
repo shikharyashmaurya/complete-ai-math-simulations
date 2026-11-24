@@ -1,0 +1,49 @@
+{
+  "page": 31,
+  "questions": [
+    {
+      "q": "For $X \\sim \\text{Bernoulli}(p)$ with $p = 0.3$, what are $E[X]$ and $\\text{Var}(X)$?",
+      "options": [
+        "$E[X] = 0.5$, $\\text{Var}(X) = 0.25$",
+        "$E[X] = 0.3$, $\\text{Var}(X) = 0.21$",
+        "$E[X] = 0.3$, $\\text{Var}(X) = 0.09$",
+        "$E[X] = 0.7$, $\\text{Var}(X) = 0.21$"
+      ],
+      "answer": 1,
+      "explain": "$E[X] = p = 0.3$ and $\\text{Var}(X) = p(1-p) = 0.3 \\times 0.7 = 0.21$. $0.09 = p^2$ forgets the $(1-p)$ factor; $0.7$ is the probability of tails."
+    },
+    {
+      "q": "At which value of $p$ is the Bernoulli variance largest?",
+      "options": [
+        "$p = 0$",
+        "$p = 1$",
+        "It is the same for every $p$",
+        "$p = 0.5$"
+      ],
+      "answer": 3,
+      "explain": "$p(1-p)$ peaks at $p = 0.5$ with value $0.25$ — maximum uncertainty. At $p = 0$ or $p = 1$ the outcome is certain and the variance is $0$."
+    },
+    {
+      "q": "Using $P(X = x) = p^x (1-p)^{1-x}$ for $x \\in \\{0, 1\\}$, what is $P(X = 0)$ when $p = 0.8$?",
+      "options": [
+        "$0.2$",
+        "$0.8$",
+        "$0$",
+        "$0.16$"
+      ],
+      "answer": 0,
+      "explain": "With $x = 0$: $p^0 (1-p)^1 = 1 - p = 0.2$. The formula is just a compact way of writing $P(X=1) = p$ and $P(X=0) = 1-p$."
+    },
+    {
+      "q": "Dropout drops each neuron with rate $r = 0.5$ during training. How does the page model this?",
+      "options": [
+        "As one Binomial draw for the whole network",
+        "As a Normal random variable added to each weight",
+        "As an independent Bernoulli($r$) on/off switch per neuron",
+        "As a deterministic rule that drops every other neuron"
+      ],
+      "answer": 2,
+      "explain": "Each neuron gets its own two-outcome random switch — a Bernoulli trial with parameter $r$ (not the coin's $p$). Summing many such switches would give a Binomial count."
+    }
+  ]
+}

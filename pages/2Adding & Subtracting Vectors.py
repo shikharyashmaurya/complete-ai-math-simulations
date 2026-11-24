@@ -23,21 +23,22 @@ col1, col2 = st.columns([1.5, 1])
 with col2:
     st.subheader("🎛️ Flight Controls")
     
-    operation = st.radio("Select Operation:", ["Addition (A + B)", "Subtraction (A - B)"])
+    operation = st.radio("Select Operation:", ["Addition (A + B)", "Subtraction (A - B)"], key="p02_operation")
     
     st.markdown("**Set Vector A (First Leg):**")
-    ax = st.slider("A x-component", -5, 5, 3, key="ax")
-    ay = st.slider("A y-component", -5, 5, 4, key="ay")
+    ax = st.slider("A x-component", -5, 5, 3, key="p02_ax")
+    ay = st.slider("A y-component", -5, 5, 4, key="p02_ay")
     
     st.markdown("**Set Vector B (Second Leg):**")
-    bx = st.slider("B x-component", -5, 5, 4, key="bx")
-    by = st.slider("B y-component", -5, 5, -2, key="by")
+    bx = st.slider("B x-component", -5, 5, 4, key="p02_bx")
+    by = st.slider("B y-component", -5, 5, -2, key="p02_by")
     
     # Handle Subtraction logic (A - B is just A + (-B))
     if "Subtraction" in operation:
         calc_bx, calc_by = -bx, -by
         op_sign = "-"
-        st.info("💡 **Subtraction Tip:** Subtracting a vector is the same as adding its opposite. Watch Vector B flip!")
+        st.info("💡 **Subtraction Tip:** Subtracting a vector is the same as adding its opposite. Watch Vector B flip! "
+                "At the end of the timeline you will also see the second picture: A - B is the arrow from the tip of B to the tip of A.")
     else:
         calc_bx, calc_by = bx, by
         op_sign = "+"
@@ -46,7 +47,7 @@ with col2:
     st.subheader("⏱️ Simulation Timeline")
     st.markdown("Drag the slider to watch the **Tip-to-Tail** connection happen.")
     # The animation slider!
-    time_step = st.slider("Scrub time to animate", 0.0, 1.0, 0.0, step=0.05)
+    time_step = st.slider("Scrub time to animate", 0.0, 1.0, 0.0, step=0.05, key="p02_time_step")
 
     # Component-wise Math Display
     st.markdown("---")
@@ -105,29 +106,46 @@ with col1:
         fig.add_trace(go.Scatter(x=[bx/2], y=[by/2], mode="text", text=["<b>Vector B</b>"], textfont=dict(color="rgba(255, 165, 0, 0.5)", size=14), showlegend=False))
 
     # Resultant Vector C (Only show when time_step is complete)
-    if time_step == 1.0:
-        fig.add_annotation(
-            x=ax+calc_bx, y=ay+calc_by, ax=0, ay=0,
-            xref="x", yref="y", axref="x", ayref="y",
-            showarrow=True, arrowhead=2, arrowsize=1.5, arrowwidth=4, arrowcolor="green"
-        )
-        fig.add_trace(go.Scatter(x=[(ax+calc_bx)/2], y=[(ay+calc_by)/2], mode="text", text=["<b>Resultant</b>"], textfont=dict(color="green", size=16), showlegend=False))
-        
+    if time_step >= 1.0 - 1e-9:
+        res_x, res_y = ax + calc_bx, ay + calc_by
+        if res_x != 0 or res_y != 0:
+            fig.add_annotation(
+                x=res_x, y=res_y, ax=0, ay=0,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True, arrowhead=2, arrowsize=1.5, arrowwidth=4, arrowcolor="green"
+            )
+            fig.add_trace(go.Scatter(x=[res_x/2], y=[res_y/2], mode="text", text=["<b>Resultant</b>"], textfont=dict(color="green", size=16), showlegend=False))
+        else:
+            # A zero-length arrow has no direction, so mark the origin instead of drawing a stray arrowhead
+            fig.add_trace(go.Scatter(x=[0], y=[0], mode="markers+text", marker=dict(size=16, color="green", symbol="circle-open"),
+                                     text=["<b>Resultant = zero vector</b>"], textposition="bottom center",
+                                     textfont=dict(color="green", size=14), showlegend=False))
+
         # Add a dashed line to show component connection
         fig.add_trace(go.Scatter(
-            x=[0, ax+calc_bx, ax+calc_bx], 
-            y=[0, 0, ay+calc_by], 
+            x=[0, res_x, res_x], 
+            y=[0, 0, res_y], 
             mode="lines", 
             line=dict(color="gray", width=2, dash="dot"),
             name="X/Y Components"
         ))
+
+        # Second picture of subtraction: A - B is also the arrow from the tip of B to the tip of A
+        if "Subtraction" in operation and (res_x != 0 or res_y != 0):
+            fig.add_annotation(
+                x=ax, y=ay, ax=bx, ay=by,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True, arrowhead=2, arrowsize=1.2, arrowwidth=2, arrowcolor="rgba(0, 128, 0, 0.45)"
+            )
+            fig.add_trace(go.Scatter(x=[(ax + bx) / 2], y=[(ay + by) / 2], mode="text",
+                                     text=["A - B (tip of B → tip of A)"],
+                                     textfont=dict(color="rgba(0, 128, 0, 0.7)", size=12), showlegend=False))
 
     # Graph Formatting
     fig.update_layout(
         title="Drone Radar (XY Coordinate Space)",
         xaxis=dict(range=[-10, 10], zeroline=True, zerolinewidth=2, zerolinecolor='black', gridcolor='lightgray', dtick=1),
         yaxis=dict(range=[-10, 10], zeroline=True, zerolinewidth=2, zerolinecolor='black', gridcolor='lightgray', dtick=1),
-        width=700,
         height=700,
         plot_bgcolor="white",
         showlegend=False
@@ -136,4 +154,4 @@ with col1:
     # Force square aspect ratio so vectors don't look stretched
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")

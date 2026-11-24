@@ -1,0 +1,49 @@
+{
+  "page": 21,
+  "questions": [
+    {
+      "q": "Why can no single straight line classify all four XOR points correctly?",
+      "options": [
+        "Because the bias $b$ is limited to $[-2.2, 2.2]$",
+        "Because $s(1,0) + s(0,1) = s(0,0) + s(1,1)$, so the two positive scores and two negative scores cannot both hold",
+        "Because there are too few points to fit a line",
+        "Because the points are not on a grid"
+      ],
+      "answer": 1,
+      "explain": "For $s = w_1 x + w_2 y + b$ both sums equal $w_1 + w_2 + 2b$, yet XOR needs one sum $\\ge 0$ and the other $< 0$ — a contradiction. It is geometry, not slider range."
+    },
+    {
+      "q": "What is the smallest number of XOR points that the best single straight line must still get wrong?",
+      "options": [
+        "0 of 4",
+        "1 of 4",
+        "3 of 4",
+        "2 of 4"
+      ],
+      "answer": 1,
+      "explain": "Cutting off one corner gets 3 points right; the grid-search button confirms 1 mistake is the best possible."
+    },
+    {
+      "q": "Set the angle to 0° (normal $w = (1, 0)$) and $b = -0.5$, so the rule is \"predict + if $x - 0.5 \\ge 0$\". How many XOR points are misclassified?",
+      "options": [
+        "0",
+        "2",
+        "4",
+        "1"
+      ],
+      "answer": 1,
+      "explain": "Predictions: $(0,0) \\to -$ ✓, $(1,0) \\to +$ ✓, $(0,1) \\to -$ ✗, $(1,1) \\to +$ ✗. The vertical line ignores $y$, so it gets 2 wrong."
+    },
+    {
+      "q": "A linear classifier on 2-D data divides the plane into what?",
+      "options": [
+        "Four quadrants",
+        "Any number of curved regions",
+        "A circle and its outside",
+        "Two half-planes separated by one straight line (a hyperplane)"
+      ],
+      "answer": 3,
+      "explain": "One hyperplane gives exactly two half-spaces — which cannot carve out the inner blob of the ring dataset. Curved or nested boundaries need non-linearity."
+    }
+  ]
+}

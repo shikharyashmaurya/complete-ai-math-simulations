@@ -1,0 +1,49 @@
+{
+  "page": 28,
+  "questions": [
+    {
+      "q": "Which of these random variables is **continuous**?",
+      "options": [
+        "The number of heads in 10 coin flips",
+        "The number of emails received in an hour",
+        "The face shown by a die",
+        "A person's exact height in cm"
+      ],
+      "answer": 3,
+      "explain": "Continuous variables are measured and can take any value in a range (170.539… cm). The others are counted, so they are discrete — you cannot get 2.5 heads."
+    },
+    {
+      "q": "For a continuous height variable, what is $P(\\text{height} = 170.0000\\ldots \\text{ cm exactly})$?",
+      "options": [
+        "The height of the density curve at 170",
+        "$\\frac{1}{100}$",
+        "$0$ — only ranges (areas under the curve) have positive probability",
+        "It depends on the bucket width"
+      ],
+      "answer": 2,
+      "explain": "A single exact point has zero width, so zero area. Continuous probability is the area under the density over an interval; the density value itself is not a probability."
+    },
+    {
+      "q": "Flipping 10 fair coins, the random variable $X$ = number of heads. What is $P(X = 5)$?",
+      "options": [
+        "About $0.246$",
+        "$0.5$",
+        "$0.1$",
+        "About $0.0098$"
+      ],
+      "answer": 0,
+      "explain": "$P(X = 5) = \\binom{10}{5} / 2^{10} = 252/1024 \\approx 0.246$. 5 is the most likely count but far from certain; $0.1$ wrongly assumes the 11 counts are equally likely."
+    },
+    {
+      "q": "In the \"bridge\" lab, what happens as the height buckets shrink from 10 cm toward 0.1 cm (with enough people)?",
+      "options": [
+        "The bars all become equally tall",
+        "The density histogram approaches a smooth density curve — which is why sums ($\\sum$) become integrals ($\\int$)",
+        "The total area under the bars grows without bound",
+        "Heights become discrete"
+      ],
+      "answer": 1,
+      "explain": "Shrinking the measuring stick turns the discrete histogram into a continuous density. The total area stays 1, and summing over buckets becomes integrating over the curve."
+    }
+  ]
+}

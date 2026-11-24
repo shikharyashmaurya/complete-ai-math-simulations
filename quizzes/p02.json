@@ -1,0 +1,49 @@
+{
+  "page": 2,
+  "questions": [
+    {
+      "q": "With the page defaults $A = (3, 4)$ and $B = (4, -2)$, what is $A + B$?",
+      "options": [
+        "$(-1, 6)$",
+        "$(12, -8)$",
+        "$(7, 6)$",
+        "$(7, 2)$"
+      ],
+      "answer": 3,
+      "explain": "Add matching components: $(3+4,\\; 4+(-2)) = (7, 2)$. $(12,-8)$ multiplies instead of adds."
+    },
+    {
+      "q": "With the same vectors, what is $A - B$?",
+      "options": [
+        "$(-1, 2)$",
+        "$(-1, 6)$",
+        "$(7, 2)$",
+        "$(1, -6)$"
+      ],
+      "answer": 1,
+      "explain": "$A - B = A + (-B) = (3-4,\\; 4-(-2)) = (-1, 6)$. Watch the double negative in the second component."
+    },
+    {
+      "q": "Geometrically, where does the arrow $A - B$ go when both $A$ and $B$ start at the origin?",
+      "options": [
+        "From the tip of $A$ to the tip of $B$",
+        "From the tip of $B$ to the tip of $A$",
+        "From the origin to the midpoint of $A$ and $B$",
+        "Along $B$, but twice as long"
+      ],
+      "answer": 1,
+      "explain": "Since $B + (A - B) = A$, the difference is the arrow you add to $B$ to reach $A$: tip of $B$ → tip of $A$. The reversed direction would be $B - A$."
+    },
+    {
+      "q": "In the tip-to-tail picture, what does subtracting $B$ do to the second leg of the flight?",
+      "options": [
+        "It rotates $B$ by 90°",
+        "It flips $B$ to point the opposite way, then adds it",
+        "It removes $B$ entirely",
+        "It shortens $B$ to half its length"
+      ],
+      "answer": 1,
+      "explain": "Subtracting a vector is adding its opposite: $A - B = A + (-B)$, so the orange arrow flips before being attached to the tip of $A$."
+    }
+  ]
+}

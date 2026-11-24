@@ -1,30 +1,19 @@
+import sys
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common.matrix_display import matrix_html  # noqa: E402
+
 
 st.set_page_config(page_title="Identity Matrix - The Perfect Do-Nothing Machine", layout="wide")
-
-
-def matrix_html(matrix, title, highlight=None, color="#38bdf8", precision=1):
-    rows, cols = matrix.shape
-    highlight = highlight or []
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:18px;">
-    """
-    for i in range(rows):
-        html += "<tr>"
-        for j in range(cols):
-            bg = color if (i, j) in highlight else "transparent"
-            html += (
-                f"<td style='border:1px solid #475569;padding:7px 10px;text-align:center;"
-                f"min-width:42px;background:{bg};'>{matrix[i, j]:.{precision}f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
 
 
 def make_identity(n):
@@ -108,52 +97,68 @@ def render_identity_builder(n):
     return I
 
 
+DEFAULT_V = [3.0, -2.0, 1.5, 0.5, -1.0, 2.5]
+
+
 def render_vector_experiment(I):
     st.header("2) Vector Teleporter (That Goes Nowhere)")
     st.markdown("Pick a vector. Send it through `I`. Watch how nothing changes.")
 
-    if I.shape[0] >= 2:
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            x = st.slider("v[1]", -8.0, 8.0, 3.0, 0.5)
-        with c2:
-            y = st.slider("v[2]", -8.0, 8.0, -2.0, 0.5)
-        with c3:
-            if I.shape[0] > 2:
-                z = st.slider("v[3]", -8.0, 8.0, 1.5, 0.5)
-            else:
-                z = 0.0
+    n = I.shape[0]
+    v = np.zeros(n)
+    cols = st.columns(3)
+    for k in range(n):
+        with cols[k % 3]:
+            v[k] = st.slider(f"v[{k + 1}]", -8.0, 8.0, DEFAULT_V[k], 0.5, key=f"p16_v{k + 1}")
+    transformed = I @ v
 
-        v = np.zeros(I.shape[0])
-        v[0], v[1] = x, y
-        if I.shape[0] > 2:
-            v[2] = z
-        transformed = I @ v
+    left, right = st.columns([1.15, 1])
+    with left:
+        fig = draw_vector_lab(v[:2], transformed[:2])
+        st.pyplot(fig, width="stretch")
+        plt.close(fig)
+        if n > 2:
+            st.caption(f"The picture shows only the first 2 of {n} components; the panel on the right checks all {n}.")
+    with right:
+        st.code(
+            f"v        = {np.array2string(v, precision=1)}\n"
+            f"I @ v    = {np.array2string(transformed, precision=1)}\n"
+            f"v - I @ v= {np.array2string(v - transformed, precision=1)}",
+            language="text",
+        )
+        if np.allclose(v, transformed):
+            st.success("No change at all. Identity passes the vector untouched.")
+    return v
 
-        left, right = st.columns([1.15, 1])
-        with left:
-            fig = draw_vector_lab(v[:2], transformed[:2])
-            st.pyplot(fig, use_container_width=True)
-            plt.close(fig)
-        with right:
-            st.code(
-                f"v        = {np.array2string(v, precision=1)}\n"
-                f"I @ v    = {np.array2string(transformed, precision=1)}\n"
-                f"v - I @ v= {np.array2string(v - transformed, precision=1)}",
-                language="text",
-            )
-            if np.allclose(v, transformed):
-                st.success("No change at all. Identity passes the vector untouched.")
-    else:
-        st.warning("Increase matrix size to at least 2 for the vector visual.")
+
+def render_matrix_neutral(I):
+    st.header("3) Identity Is the Number 1 for Matrices")
+    n = I.shape[0]
+    st.markdown("Multiplying any square matrix `A` by `I` — on the left **or** on the right — gives `A` back.")
+    st.latex(r"A\,I = I\,A = A")
+
+    st.session_state.setdefault("p16_seed", 16)
+    if st.button("New random A", key="p16_new_A"):
+        st.session_state.p16_seed += 1
+    A = np.random.default_rng(st.session_state.p16_seed).integers(-5, 6, size=(n, n)).astype(float)
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(matrix_html(A, "A", precision=0), unsafe_allow_html=True)
+    with c2:
+        st.markdown(matrix_html(I @ A, "I @ A", precision=0), unsafe_allow_html=True)
+    with c3:
+        st.markdown(matrix_html(A @ I, "A @ I", precision=0), unsafe_allow_html=True)
+    if np.allclose(I @ A, A) and np.allclose(A @ I, A):
+        st.success("I @ A = A @ I = A — identity is the neutral element of matrix multiplication.")
 
 
 def render_proof_panel(I):
-    st.header("3) Why It Works (Row Dot Product View)")
+    st.header("4) Why It Works (Row Dot Product View)")
     n = I.shape[0]
     st.markdown("Each output component is one row of `I` dotted with vector `v`.")
 
-    row_pick = st.selectbox("Inspect row of I", options=list(range(1, n + 1)))
+    row_pick = st.selectbox("Inspect row of I", options=list(range(1, n + 1)), key="p16_row_pick")
     k = row_pick - 1
     basis_row = I[k]
 
@@ -168,7 +173,7 @@ def render_proof_panel(I):
         unsafe_allow_html=True,
     )
 
-    terms = [f"{int(basis_row[j])}*v{j+1}" for j in range(n)]
+    terms = [rf"{int(basis_row[j])}\cdot v_{{{j + 1}}}" for j in range(n)]
     st.latex(rf"(Iv)_{{{row_pick}}} = " + " + ".join(terms))
     st.latex(rf"(Iv)_{{{row_pick}}} = v_{{{row_pick}}}")
     st.caption(
@@ -176,13 +181,35 @@ def render_proof_panel(I):
     )
 
 
-def render_no_change_score():
-    st.header("4) Identity Scoreboard")
-    st.markdown("How much does identity preserve the vector's properties?")
-    fig = draw_radar([1, 1, 1, 1, 1])
-    st.pyplot(fig, use_container_width=False)
+def preservation_scores(v, w, tol=1e-9):
+    """Scores in [0, 1] comparing w = I @ v with v (1 = perfectly preserved)."""
+    nv, nw = float(np.linalg.norm(v)), float(np.linalg.norm(w))
+    position = 1.0 - min(1.0, float(np.linalg.norm(w - v)) / max(nv, tol))
+    if nv < tol and nw < tol:
+        direction = angle = length = 1.0
+    elif nv < tol or nw < tol:
+        direction = angle = length = 0.0
+    else:
+        cos = float(np.clip(np.dot(v, w) / (nv * nw), -1.0, 1.0))
+        direction = max(0.0, cos)
+        angle = 1.0 - float(np.arccos(cos)) / np.pi
+        length = min(nv, nw) / max(nv, nw)
+    components = float(np.mean(np.isclose(v, w, atol=tol)))
+    return [position, direction, length, angle, components]
+
+
+def render_no_change_score(I, v):
+    st.header("5) Identity Scoreboard")
+    st.markdown("How much does identity preserve the vector's properties? (Measured live on your vector `v` vs `I @ v`.)")
+    scores = preservation_scores(v, I @ v)
+    fig = draw_radar(scores)
+    st.pyplot(fig, width="content")
     plt.close(fig)
-    st.success("Score: 100% unchanged. Identity is mathematically invisible.")
+    pct = 100.0 * float(np.mean(scores))
+    if pct > 99.999:
+        st.success("Score: 100% unchanged. Identity is mathematically invisible.")
+    else:
+        st.info(f"Average preservation score: {pct:.1f}%")
 
 
 def render_recap():
@@ -202,7 +229,7 @@ def main():
     render_intro()
 
     st.sidebar.header("Identity Controls")
-    n = st.sidebar.select_slider("Dimension of identity matrix", options=[2, 3, 4, 5, 6], value=3)
+    n = st.sidebar.select_slider("Dimension of identity matrix", options=[2, 3, 4, 5, 6], value=3, key="p16_n")
     st.sidebar.markdown(
         """
         ### Mission
@@ -215,11 +242,13 @@ def main():
 
     I = render_identity_builder(n)
     st.divider()
-    render_vector_experiment(I)
+    v = render_vector_experiment(I)
+    st.divider()
+    render_matrix_neutral(I)
     st.divider()
     render_proof_panel(I)
     st.divider()
-    render_no_change_score()
+    render_no_change_score(I, v)
     st.divider()
     render_recap()
 

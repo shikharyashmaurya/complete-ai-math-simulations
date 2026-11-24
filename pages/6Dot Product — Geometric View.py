@@ -102,31 +102,28 @@ def build_vector_figure(a: np.ndarray, b: np.ndarray) -> go.Figure:
         fig.add_annotation(
             x=projection_vector[0] * 0.55,
             y=projection_vector[1] * 0.55,
-            text=f"shadow length = {projection_length:.2f}",
+            text=f"signed shadow length = {projection_length:.2f}",
             showarrow=False,
             bgcolor="rgba(16,185,129,0.12)",
             bordercolor="#10B981",
             font=dict(size=14),
         )
         foot = projection_vector
-        perp = np.array([-unit_b[1], unit_b[0]])
-        corner = foot + 0.32 * perp
-        fig.add_shape(
-            type="line",
-            x0=foot[0],
-            y0=foot[1],
-            x1=corner[0],
-            y1=corner[1],
-            line=dict(color="#64748B", width=2),
-        )
-        fig.add_shape(
-            type="line",
-            x0=a[0],
-            y0=a[1],
-            x1=a[0] + 0.32 * perp[0],
-            y1=a[1] + 0.32 * perp[1],
-            line=dict(color="#64748B", width=2),
-        )
+        rejection_length = float(np.linalg.norm(rejection_vector))
+        if rejection_length > 1e-9:
+            # Right-angle marker: a small square at the foot of the perpendicular, with one side
+            # along B (pointing back toward the origin) and one side along the "missed sideways part".
+            size = 0.045 * axis_limit
+            along_b = -unit_b if projection_length > 1e-9 else unit_b
+            sideways = rejection_vector / rejection_length
+            p1 = foot + size * along_b
+            p2 = p1 + size * sideways
+            p3 = foot + size * sideways
+            fig.add_shape(
+                type="path",
+                path=f"M {p1[0]} {p1[1]} L {p2[0]} {p2[1]} L {p3[0]} {p3[1]}",
+                line=dict(color="#64748B", width=2),
+            )
 
     fig.update_layout(
         title="The dot product measures how much of A points along B",
@@ -144,23 +141,30 @@ def build_vector_figure(a: np.ndarray, b: np.ndarray) -> go.Figure:
     return fig
 
 
-def build_agreement_meter(cos_theta: float, dot_value: float) -> go.Figure:
-    color = "#10B981" if dot_value > 0 else "#EF4444" if dot_value < 0 else "#F59E0B"
-    label = "same direction energy" if dot_value > 0 else "opposite direction clash" if dot_value < 0 else "perfect sideways"
+SIDEWAYS_TOL = 0.01  # |cos(theta)| below this counts as "sideways" (avoids 1e-15 rounding noise at 90 degrees)
+
+
+def build_agreement_meter(cos_theta: float) -> go.Figure:
+    if cos_theta > SIDEWAYS_TOL:
+        color, label = "#10B981", "same direction energy"
+    elif cos_theta < -SIDEWAYS_TOL:
+        color, label = "#EF4444", "opposite direction clash"
+    else:
+        color, label = "#F59E0B", "perfect sideways"
 
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=cos_theta,
             number={"suffix": "", "font": {"size": 38}},
-            title={"text": f"Agreement meter<br><span style='font-size:0.7em'>{label}</span>"},
+            title={"text": f"Agreement meter: cos(θ)<br><span style='font-size:0.7em'>{label}</span>"},
             gauge={
                 "axis": {"range": [-1, 1]},
                 "bar": {"color": color},
                 "steps": [
-                    {"range": [-1, -0.01], "color": "rgba(239,68,68,0.18)"},
-                    {"range": [-0.01, 0.01], "color": "rgba(245,158,11,0.18)"},
-                    {"range": [0.01, 1], "color": "rgba(16,185,129,0.18)"},
+                    {"range": [-1, -SIDEWAYS_TOL], "color": "rgba(239,68,68,0.18)"},
+                    {"range": [-SIDEWAYS_TOL, SIDEWAYS_TOL], "color": "rgba(245,158,11,0.18)"},
+                    {"range": [SIDEWAYS_TOL, 1], "color": "rgba(16,185,129,0.18)"},
                 ],
             },
         )
@@ -169,30 +173,40 @@ def build_agreement_meter(cos_theta: float, dot_value: float) -> go.Figure:
     return fig
 
 
+PRESETS = {
+    "Best friends": (6.0, 20, 5.0, 20),
+    "Sideways strangers": (6.0, 90, 5.0, 0),
+    "Pulling opposite ways": (6.0, 180, 5.0, 0),
+}
+SLIDER_DEFAULTS = {"p06_mag_a": 6.0, "p06_angle_a": 35, "p06_mag_b": 5.0, "p06_angle_b": 0}
+for _key, _value in SLIDER_DEFAULTS.items():
+    st.session_state.setdefault(_key, _value)
+
+
+def apply_preset(values) -> None:
+    # Presets write into the slider keys so the sliders always show the vectors actually drawn
+    for key, value in zip(SLIDER_DEFAULTS, values):
+        st.session_state[key] = value
+
+
 st.title("Dot Product - Geometric View")
 st.caption("Two arrows meet. One casts a shadow on the other. That shadow decides the dot product.")
 
 with st.sidebar:
     st.header("Control the arrows")
     st.write("Pretend a flashlight shines perpendicular to vector `B`. The shadow of `A` falling on `B` tells the story.")
-    mag_a = st.slider("Length of A", 0.5, 10.0, 6.0, 0.1)
-    angle_a = st.slider("Angle of A (degrees)", -180, 180, 35)
-    mag_b = st.slider("Length of B", 0.5, 10.0, 5.0, 0.1)
-    angle_b = st.slider("Angle of B (degrees)", -180, 180, 0)
+    mag_a = st.slider("Length of A", 0.5, 10.0, step=0.1, key="p06_mag_a")
+    angle_a = st.slider("Angle of A (degrees)", -180, 180, key="p06_angle_a")
+    mag_b = st.slider("Length of B", 0.5, 10.0, step=0.1, key="p06_mag_b")
+    angle_b = st.slider("Angle of B (degrees)", -180, 180, key="p06_angle_b")
 
     st.markdown("### Quick presets")
-    preset = st.radio(
-        "Jump to a classic case",
-        ["Custom", "Best friends", "Sideways strangers", "Pulling opposite ways"],
-        index=0,
-    )
-
-if preset == "Best friends":
-    mag_a, angle_a, mag_b, angle_b = 6.0, 20, 5.0, 20
-elif preset == "Sideways strangers":
-    mag_a, angle_a, mag_b, angle_b = 6.0, 90, 5.0, 0
-elif preset == "Pulling opposite ways":
-    mag_a, angle_a, mag_b, angle_b = 6.0, 180, 5.0, 0
+    st.caption("Jump to a classic case (the sliders above move with it):")
+    for preset_name, preset_values in PRESETS.items():
+        st.button(preset_name, key=f"p06_preset_{preset_name}", on_click=apply_preset, args=(preset_values,),
+                  width="stretch")
+    st.button("Reset to start", key="p06_preset_reset", on_click=apply_preset,
+              args=(tuple(SLIDER_DEFAULTS.values()),), width="stretch")
 
 a = vector_from_polar(mag_a, angle_a)
 b = vector_from_polar(mag_b, angle_b)
@@ -208,18 +222,19 @@ shadow_length = 0.0 if norm_b == 0 else dot_value / norm_b
 col1, col2 = st.columns([1.7, 1])
 
 with col1:
-    st.plotly_chart(build_vector_figure(a, b), use_container_width=True)
+    st.plotly_chart(build_vector_figure(a, b), width="stretch")
 
 with col2:
-    st.plotly_chart(build_agreement_meter(cos_theta, dot_value), use_container_width=True)
+    st.plotly_chart(build_agreement_meter(cos_theta), width="stretch")
 
     st.metric("Dot product", f"{dot_value:.2f}")
     st.metric("Angle between A and B", f"{theta_deg:.1f}°")
-    st.metric("Shadow length of A on B", f"{shadow_length:.2f}")
+    st.metric("Signed shadow length of A on B", f"{shadow_length:.2f}",
+              help="The scalar projection A·B / |B|. It is negative when the shadow points against B.")
 
-    if dot_value > 0.05:
+    if cos_theta > SIDEWAYS_TOL:
         st.success("Positive dot product: A and B are mostly pointing together.")
-    elif dot_value < -0.05:
+    elif cos_theta < -SIDEWAYS_TOL:
         st.error("Negative dot product: A and B push in opposite directions.")
     else:
         st.warning("Near zero dot product: A is almost perfectly sideways to B.")
@@ -238,9 +253,9 @@ with tab1:
     )
 
     c1, c2, c3 = st.columns(3)
-    c1.markdown(f"**If the shadow points with B** \nDot product is **positive**.")
-    c2.markdown(f"**If the shadow disappears** \nDot product is **zero**.")
-    c3.markdown(f"**If the shadow points against B** \nDot product is **negative**.")
+    c1.markdown("**If the shadow points with B**  \nDot product is **positive**.")
+    c2.markdown("**If the shadow disappears**  \nDot product is **zero**.")
+    c3.markdown("**If the shadow points against B**  \nDot product is **negative**.")
 
     st.info(
         "The dot product is not just about length. It is about length multiplied by agreement in direction."
@@ -278,8 +293,8 @@ with tab3:
     )
 
     example_features = ["brightness", "curve-ness", "vertical edge", "loop shape"]
-    example_weights = [round(x, 1) for x in [0.9, 0.1, -0.7, 0.8]]
-    example_input = [round(x, 1) for x in [0.8, 0.2, 0.1, 0.9]]
+    example_weights = [0.9, 0.1, -0.7, 0.8]
+    example_input = [0.8, 0.2, 0.1, 0.9]
     ai_dot = sum(w * x for w, x in zip(example_weights, example_input))
 
     st.write("A pretend neuron pattern:")

@@ -1,0 +1,49 @@
+{
+  "page": 69,
+  "questions": [
+    {
+      "q": "The true class is Dog and the model gives it probability $0.5$. Using $\\text{Loss} = -\\ln(p_{\\text{true}})$, what is the loss?",
+      "options": [
+        "$1$",
+        "$0.5$",
+        "$\\approx 0.301$",
+        "$\\approx 0.693$"
+      ],
+      "answer": 3,
+      "explain": "$-\\ln 0.5 = \\ln 2 \\approx 0.693$ (nats). $1$ would be the value in bits ($-\\log_2 0.5$); $0.301$ uses $\\log_{10}$."
+    },
+    {
+      "q": "In the Dog/Cat/Bird game the logits are $z = [2,\\ 1,\\ 0]$ and the actual image is a Dog. After softmax, what is the cross-entropy loss?",
+      "options": [
+        "$\\approx 0.67$",
+        "$\\approx -0.69$",
+        "$\\approx 0.41$",
+        "$2$"
+      ],
+      "answer": 2,
+      "explain": "$p_{\\text{Dog}} = e^2/(e^2 + e^1 + e^0) \\approx 0.665$, so the loss is $-\\ln 0.665 \\approx 0.41$. $0.67$ is the probability itself, not the loss; the loss is never negative."
+    },
+    {
+      "q": "With $p = \\sigma(z)$ and true label $y = 1$, the model is confidently wrong at $p = 0.01$. How do the gradients w.r.t. $z$ compare?",
+      "options": [
+        "MSE: $\\approx -0.99$; CE: $\\approx -0.02$",
+        "MSE: $-2p(1-p)^2 \\approx -0.02$; CE: $p - 1 = -0.99$ (about 50× stronger)",
+        "Both are about the same size",
+        "Both are exactly $0$ because the model is saturated"
+      ],
+      "answer": 1,
+      "explain": "The sigmoid's flattening multiplies MSE's gradient by $p(1-p)$, which is tiny here. Cross-entropy cancels that factor, so the learning signal stays strong exactly when the model is most wrong."
+    },
+    {
+      "q": "With a one-hot target, which probabilities does cross-entropy **directly** penalize?",
+      "options": [
+        "Only the probability of the true class; other classes matter only because they steal probability from it",
+        "Every class probability equally",
+        "Only the largest wrong-class probability",
+        "Only the probabilities below 0.5"
+      ],
+      "answer": 0,
+      "explain": "$-\\sum_k y_k \\ln p_k$ keeps only the true-class term $-\\ln p_{\\text{true}}$. Because softmax probabilities sum to 1, raising a wrong class lowers $p_{\\text{true}}$ and thereby raises the loss."
+    }
+  ]
+}

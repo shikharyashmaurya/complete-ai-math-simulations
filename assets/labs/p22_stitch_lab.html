@@ -1,0 +1,386 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: white; }
+        #canvas-container { width: 100%; height: 750px; position: relative; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        #ui-layer {
+            position: absolute; top: 20px; right: 20px; bottom: 20px;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px);
+            padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+            width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 10;
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        
+        /* Custom Scrollbar for UI */
+        #ui-layer::-webkit-scrollbar { width: 6px; }
+        #ui-layer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        
+        .section-title { font-size: 14px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .section-title:first-child { margin-top: 0; }
+        
+        .slider-group { margin-bottom: 12px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; font-weight: 700; color: #cbd5e1; }
+        input[type="range"] { 
+            width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; outline: none; -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; }
+        
+        /* Thumb colors */
+        #a-slider::-webkit-slider-thumb, #b-slider::-webkit-slider-thumb { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+        .lane-a::-webkit-slider-thumb { background: #38bdf8; box-shadow: 0 0 10px #38bdf8; }
+        .lane-b::-webkit-slider-thumb { background: #f472b6; box-shadow: 0 0 10px #f472b6; }
+        .lane-c::-webkit-slider-thumb { background: #a78bfa; box-shadow: 0 0 10px #a78bfa; }
+        #x-slider::-webkit-slider-thumb { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+        
+        .val-display { font-variant-numeric: tabular-nums; font-weight: 900; }
+        
+        .info-box {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-top: 15px;
+            font-size: 13px; font-family: monospace; color: #94a3b8;
+        }
+        .info-box div { margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .info-box div:last-child { margin-bottom: 0; }
+        
+        .jump-val { font-weight: 900; }
+        .jump-good { color: #4ade80; }
+        .jump-bad { color: #fb7185; }
+
+        .instructions {
+            position: absolute; bottom: 20px; left: 20px; pointer-events: none;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);
+            padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8; font-size: 13px; font-weight: bold; display: flex; gap: 15px;
+        }
+        .instructions span { display: flex; align-items: center; gap: 6px; }
+        .kbd { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: white; }
+        .snap-btn {
+            margin-top: 6px; width: 100%; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+            background: rgba(74, 222, 128, 0.12); color: #4ade80; border: 1px solid #4ade80; font-weight: 800;
+        }
+        .snap-btn:hover { background: #4ade80; color: #0f172a; }
+        .snap-note { font-size: 11px; color: #94a3b8; margin-top: 6px; min-height: 14px; }
+        #load-error {
+            display: none; position: absolute; top: 20px; left: 20px; right: 360px; z-index: 20;
+            background: rgba(127, 29, 29, 0.9); color: #fecaca; border: 1px solid #f87171;
+            padding: 14px 18px; border-radius: 10px; font-size: 14px; line-height: 1.5;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+            integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+            integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf"
+            crossorigin="anonymous"></script>
+    </head>
+    <body>
+    <div id="canvas-container">
+        <div class="instructions">
+            <span><span class="kbd">Left Click</span> Rotate</span>
+            <span><span class="kbd">Right Click</span> Pan</span>
+            <span><span class="kbd">Scroll</span> Zoom</span>
+        </div>
+        <div id="ui-layer">
+            <div class="section-title">Breakpoints (Gates)</div>
+            <div class="slider-group">
+                <label><span>Gate a</span> <span id="a-val" class="val-display" style="color:#fbbf24">-2.0</span></label>
+                <input type="range" id="a-slider" min="-8" max="0" step="0.1" value="-2.0">
+            </div>
+            <div class="slider-group">
+                <label><span>Gate b</span> <span id="b-val" class="val-display" style="color:#fbbf24">2.0</span></label>
+                <input type="range" id="b-slider" min="0" max="8" step="0.1" value="2.0">
+            </div>
+
+            <div class="section-title" style="color:#38bdf8">Lane A (x < a)</div>
+            <div class="slider-group">
+                <label><span>m₁ (slope)</span> <span id="m1-val" class="val-display">0.5</span></label>
+                <input type="range" id="m1-slider" class="lane-a" min="-3" max="3" step="0.1" value="0.5">
+            </div>
+            <div class="slider-group">
+                <label><span>b₁ (intercept)</span> <span id="b1-val" class="val-display">2.00</span></label>
+                <input type="range" id="b1-slider" class="lane-a" min="-20" max="20" step="0.01" value="2.0">
+            </div>
+
+            <div class="section-title" style="color:#f472b6">Lane B (a ≤ x < b)</div>
+            <div class="slider-group">
+                <label><span>m₂ (slope)</span> <span id="m2-val" class="val-display">-1.0</span></label>
+                <input type="range" id="m2-slider" class="lane-b" min="-3" max="3" step="0.1" value="-1.0">
+            </div>
+            <div class="slider-group">
+                <label><span>b₂ (intercept)</span> <span id="b2-val" class="val-display">-1.00</span></label>
+                <input type="range" id="b2-slider" class="lane-b" min="-20" max="20" step="0.01" value="-1.0">
+            </div>
+
+            <div class="section-title" style="color:#a78bfa">Lane C (x ≥ b)</div>
+            <div class="slider-group">
+                <label><span>m₃ (slope)</span> <span id="m3-val" class="val-display">1.5</span></label>
+                <input type="range" id="m3-slider" class="lane-c" min="-3" max="3" step="0.1" value="1.5">
+            </div>
+            <div class="slider-group">
+                <label><span>b₃ (intercept)</span> <span id="b3-val" class="val-display">-6.00</span></label>
+                <input type="range" id="b3-slider" class="lane-c" min="-20" max="20" step="0.01" value="-6.0">
+            </div>
+
+            <div class="section-title" style="color:#4ade80">Probe</div>
+            <div class="slider-group">
+                <label><span>x-probe</span> <span id="x-val" class="val-display">0.0</span></label>
+                <input type="range" id="x-slider" min="-10" max="10" step="0.1" value="0.0">
+            </div>
+            
+            <div class="info-box">
+                <div><span>Jump at a (right − left):</span> <span id="jump-a" class="jump-val">0.00</span></div>
+                <div><span>Jump at b (right − left):</span> <span id="jump-b" class="jump-val">0.00</span></div>
+                <div style="margin-top: 10px; border-top: 1px solid #334155; padding-top: 5px;"><span>Output y:</span> <span id="y-val" class="jump-val" style="color:#4ade80">0.00</span></div>
+            </div>
+            <button type="button" id="snap-btn" class="snap-btn">🧵 Snap continuous (solve b₂, b₃)</button>
+            <div class="snap-note" id="snap-note">Tip: click a slider, then use ← / → for fine steps.</div>
+        </div>
+        <div id="load-error">⚠️ The 3D library (three.js) could not be loaded from the CDN, so the Stitch Lab cannot be drawn. Check your internet connection or firewall, then reload the page. The ReLU and XOR labs below still work.</div>
+    </div>
+    
+    <script>
+        (function () {
+        const container = document.getElementById('canvas-container');
+        if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
+            document.getElementById('load-error').style.display = 'block';
+            document.getElementById('ui-layer').style.opacity = '0.4';
+            return;
+        }
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+        
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 5, 25);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 50;
+        
+        // Environment
+        const grid = new THREE.GridHelper(40, 40, 0x334155, 0x1e293b);
+        grid.position.z = -0.1;
+        grid.rotation.x = Math.PI / 2;
+        scene.add(grid);
+        
+        // Axes
+        const axisMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, linewidth: 2 });
+        const xAxis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-20, 0, 0), new THREE.Vector3(20, 0, 0)]), axisMat);
+        const yAxis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -20, 0), new THREE.Vector3(0, 20, 0)]), axisMat);
+        scene.add(xAxis); scene.add(yAxis);
+        
+        // Create line segments
+        function createLineMesh(color) {
+            const mesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.9 }));
+            const glow = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2, side: THREE.BackSide }));
+            scene.add(mesh); scene.add(glow);
+            return { mesh, glow };
+        }
+        
+        const laneA = createLineMesh(0x38bdf8);
+        const laneB = createLineMesh(0xf472b6);
+        const laneC = createLineMesh(0xa78bfa);
+        
+        // Gates (Vertical lines)
+        const gateMat = new THREE.LineDashedMaterial({ color: 0xfbbf24, dashSize: 0.5, gapSize: 0.3, linewidth: 2 });
+        const gateA = new THREE.Line(new THREE.BufferGeometry(), gateMat);
+        const gateB = new THREE.Line(new THREE.BufferGeometry(), gateMat);
+        scene.add(gateA); scene.add(gateB);
+        
+        // Background Panels for lanes
+        const panelGeo = new THREE.PlaneGeometry(1, 40);
+        const panelA = new THREE.Mesh(panelGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.05, side: THREE.DoubleSide }));
+        const panelB = new THREE.Mesh(panelGeo, new THREE.MeshBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.05, side: THREE.DoubleSide }));
+        const panelC = new THREE.Mesh(panelGeo, new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.05, side: THREE.DoubleSide }));
+        panelA.position.z = -0.2; panelB.position.z = -0.2; panelC.position.z = -0.2;
+        scene.add(panelA); scene.add(panelB); scene.add(panelC);
+
+        // Probe
+        const probeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 32), new THREE.MeshBasicMaterial({ color: 0x4ade80 }));
+        const probeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.3 }));
+        probeMesh.add(probeGlow);
+        scene.add(probeMesh);
+        
+        const probeDropMat = new THREE.LineDashedMaterial({ color: 0x4ade80, dashSize: 0.3, gapSize: 0.15, linewidth: 2 });
+        const probeDropLine = new THREE.Line(new THREE.BufferGeometry(), probeDropMat);
+        scene.add(probeDropLine);
+
+        // UI Logic
+        const els = {
+            a: document.getElementById('a-slider'), b: document.getElementById('b-slider'),
+            m1: document.getElementById('m1-slider'), b1: document.getElementById('b1-slider'),
+            m2: document.getElementById('m2-slider'), b2: document.getElementById('b2-slider'),
+            m3: document.getElementById('m3-slider'), b3: document.getElementById('b3-slider'),
+            x: document.getElementById('x-slider')
+        };
+        const vals = {
+            a: document.getElementById('a-val'), b: document.getElementById('b-val'),
+            m1: document.getElementById('m1-val'), b1: document.getElementById('b1-val'),
+            m2: document.getElementById('m2-val'), b2: document.getElementById('b2-val'),
+            m3: document.getElementById('m3-val'), b3: document.getElementById('b3-val'),
+            x: document.getElementById('x-val')
+        };
+        const jumpA = document.getElementById('jump-a');
+        const jumpB = document.getElementById('jump-b');
+        const yVal = document.getElementById('y-val');
+
+        function updateTubeGeometry(lineObj, startX, startY, endX, endY) {
+            const path = new THREE.LineCurve3(new THREE.Vector3(startX, startY, 0), new THREE.Vector3(endX, endY, 0));
+            if(lineObj.mesh.geometry) lineObj.mesh.geometry.dispose();
+            if(lineObj.glow.geometry) lineObj.glow.geometry.dispose();
+            lineObj.mesh.geometry = new THREE.TubeGeometry(path, 1, 0.15, 8, false);
+            lineObj.glow.geometry = new THREE.TubeGeometry(path, 1, 0.4, 8, false);
+        }
+
+        function updateMath() {
+            // Force a < b
+            if (parseFloat(els.a.value) >= parseFloat(els.b.value)) {
+                if (document.activeElement === els.a) els.b.value = (parseFloat(els.a.value) + 0.1).toFixed(1);
+                else els.a.value = (parseFloat(els.b.value) - 0.1).toFixed(1);
+            }
+            
+            const a = parseFloat(els.a.value); const b = parseFloat(els.b.value);
+            const m1 = parseFloat(els.m1.value); const b1 = parseFloat(els.b1.value);
+            const m2 = parseFloat(els.m2.value); const b2 = parseFloat(els.b2.value);
+            const m3 = parseFloat(els.m3.value); const b3 = parseFloat(els.b3.value);
+            const x = parseFloat(els.x.value);
+            
+            // Update UI text (intercepts use 0.01 steps so exact continuity is reachable)
+            const twoDecimals = new Set(['b1', 'b2', 'b3']);
+            Object.keys(els).forEach(k => vals[k].innerText = parseFloat(els[k].value).toFixed(twoDecimals.has(k) ? 2 : 1));
+            
+            // Calc intersections and signed jumps (right piece minus left piece)
+            const y1_a = m1 * a + b1; const y2_a = m2 * a + b2;
+            const y2_b = m2 * b + b2; const y3_b = m3 * b + b3;
+            
+            const jA = y2_a - y1_a;
+            const jB = y3_b - y2_b;
+            const JUMP_TOL = 0.005; // anything smaller displays as 0.00
+            const fmtJump = j => Math.abs(j) < JUMP_TOL ? '0.00' : (j > 0 ? '+' : '−') + Math.abs(j).toFixed(2);
+            
+            jumpA.innerText = fmtJump(jA);
+            jumpA.className = 'jump-val ' + (Math.abs(jA) < JUMP_TOL ? 'jump-good' : 'jump-bad');
+            jumpB.innerText = fmtJump(jB);
+            jumpB.className = 'jump-val ' + (Math.abs(jB) < JUMP_TOL ? 'jump-good' : 'jump-bad');
+            
+            // Update Geometries
+            updateTubeGeometry(laneA, -20, m1 * -20 + b1, a, y1_a);
+            updateTubeGeometry(laneB, a, y2_a, b, y2_b);
+            updateTubeGeometry(laneC, b, y3_b, 20, m3 * 20 + b3);
+            
+            // Gates
+            gateA.geometry.setFromPoints([new THREE.Vector3(a, -20, 0), new THREE.Vector3(a, 20, 0)]);
+            gateB.geometry.setFromPoints([new THREE.Vector3(b, -20, 0), new THREE.Vector3(b, 20, 0)]);
+            gateA.computeLineDistances(); gateB.computeLineDistances();
+            
+            // Panels
+            panelA.scale.set(a - (-20), 1, 1); panelA.position.set(-20 + (a - (-20))/2, 0, -0.2);
+            panelB.scale.set(b - a, 1, 1); panelB.position.set(a + (b - a)/2, 0, -0.2);
+            panelC.scale.set(20 - b, 1, 1); panelC.position.set(b + (20 - b)/2, 0, -0.2);
+            
+            // Probe
+            let y = 0; let activeColor = 0xffffff;
+            laneA.mesh.material.opacity = 0.3; laneB.mesh.material.opacity = 0.3; laneC.mesh.material.opacity = 0.3;
+            laneA.glow.visible = false; laneB.glow.visible = false; laneC.glow.visible = false;
+
+            if (x < a) { 
+                y = m1 * x + b1; activeColor = 0x38bdf8; 
+                laneA.mesh.material.opacity = 1; laneA.glow.visible = true;
+            }
+            else if (x >= a && x < b) { 
+                y = m2 * x + b2; activeColor = 0xf472b6; 
+                laneB.mesh.material.opacity = 1; laneB.glow.visible = true;
+            }
+            else { 
+                y = m3 * x + b3; activeColor = 0xa78bfa; 
+                laneC.mesh.material.opacity = 1; laneC.glow.visible = true;
+            }
+            
+            yVal.innerText = y.toFixed(2);
+            probeMesh.position.set(x, y, 0);
+            probeMesh.material.color.setHex(activeColor);
+            probeGlow.material.color.setHex(activeColor);
+            
+            probeDropLine.geometry.setFromPoints([new THREE.Vector3(x, 0, 0), new THREE.Vector3(x, y, 0)]);
+            probeDropLine.computeLineDistances();
+            probeDropLine.material.color.setHex(activeColor);
+        }
+
+        Object.values(els).forEach(el => el.addEventListener('input', updateMath));
+
+        // Solve the intercepts that make both gates seamless: b2 = (m1 - m2)a + b1, b3 = (m2 - m3)b + b2
+        const snapNote = document.getElementById('snap-note');
+        const SNAP_TIP = snapNote.innerText;
+        Object.values(els).forEach(el => el.addEventListener('input', () => { snapNote.innerText = SNAP_TIP; }));
+        document.getElementById('snap-btn').addEventListener('click', () => {
+            const a = parseFloat(els.a.value), b = parseFloat(els.b.value);
+            const m1 = parseFloat(els.m1.value), m2 = parseFloat(els.m2.value), m3 = parseFloat(els.m3.value);
+            const b1 = parseFloat(els.b1.value);
+            const lo = parseFloat(els.b2.min), hi = parseFloat(els.b2.max);
+            const round2 = v => Math.round(v * 100) / 100;
+            const clamp = v => Math.min(hi, Math.max(lo, v));
+            const want2 = round2((m1 - m2) * a + b1);
+            const b2 = clamp(want2);
+            const want3 = round2((m2 - m3) * b + b2);
+            const b3 = clamp(want3);
+            els.b2.value = b2.toFixed(2);
+            els.b3.value = b3.toFixed(2);
+            snapNote.innerText = (want2 !== b2 || want3 !== b3)
+                ? 'Needed intercept is outside ±20 — reduce the slopes or move the gates closer to 0.'
+                : 'Snapped: b₂ = ' + b2.toFixed(2) + ', b₃ = ' + b3.toFixed(2) + ' → both jumps are 0.';
+            updateMath();
+        });
+        updateMath();
+        
+        // Animation Loop
+        const clock = new THREE.Clock();
+        let animationFrameId;
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+            controls.update();
+            const time = clock.getElapsedTime();
+            probeGlow.scale.setScalar(1 + 0.15 * Math.sin(time * 6));
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        function handleResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('pagehide', () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', handleResize);
+            const disposedGeometries = new Set();
+            const disposedMaterials = new Set();
+            controls.dispose();
+            scene.traverse(object => {
+                if (object.geometry && !disposedGeometries.has(object.geometry)) {
+                    disposedGeometries.add(object.geometry);
+                    object.geometry.dispose();
+                }
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
+                materials.forEach(material => {
+                    if (material && !disposedMaterials.has(material)) {
+                        disposedMaterials.add(material);
+                        material.dispose();
+                    }
+                });
+            });
+            renderer.dispose();
+            renderer.forceContextLoss();
+            renderer.domElement.remove();
+        }, { once: true });
+        })();
+    </script>
+    </body>
+    </html>
+    

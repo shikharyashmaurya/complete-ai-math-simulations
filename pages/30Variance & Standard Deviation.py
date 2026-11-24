@@ -93,7 +93,7 @@ def local_css():
     .section-header {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #e2e8f0;
         margin: 0 0 16px 0;
         display: flex;
         align-items: center;
@@ -183,7 +183,8 @@ def render_interactive_distribution():
         y = norm.pdf(x, mu, sigma)
        
         # Generate random sample points to visually show "data points"
-        rng = np.random.default_rng(42)
+        # (deterministic by default; the "Draw a new sample" button changes the seed)
+        rng = np.random.default_rng(42 + st.session_state.get("p30_sample_seed", 0))
         sample_size = 150
         sample_x = rng.normal(mu, sigma, sample_size)
         # Random y jitter just to spread the dots out vertically a little bit below the curve
@@ -228,7 +229,7 @@ def render_interactive_distribution():
         fig.add_vrect(
             x0=mu - sigma, x1=mu + sigma,
             fillcolor="rgba(16, 185, 129, 0.1)", layer="below", line_width=0,
-            annotation_text="68% of data", annotation_position="top left",
+            annotation_text="≈68.3% of the distribution", annotation_position="top left",
             annotation_font_size=12, annotation_font_color="#34d399"
         )
         fig.add_vline(x=mu - sigma, line_dash="dot", line_color="rgba(16, 185, 129, 0.6)")
@@ -276,7 +277,30 @@ def render_interactive_distribution():
             showlegend=False
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
+
+        # Compute the statistics of the plotted dots with both formulas from the left panel
+        sample_mean = sample_x.mean()
+        pop_formula_var = sample_x.var(ddof=0)
+        sample_formula_var = sample_x.var(ddof=1)
+        st.markdown(f"**The {sample_size} yellow dots are a sample from this distribution.** Their statistics:")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Sample mean x̄", f"{sample_mean:.3f}", help=f"True μ = {mu}")
+        m2.metric("Var, ÷N", f"{pop_formula_var:.3f}", help="Population formula applied to the dots (divides by N).")
+        m3.metric("Var, ÷(n−1)", f"{sample_formula_var:.3f}", help="Sample formula s² (divides by n−1): an unbiased estimate of σ².")
+        m4.metric("True σ²", f"{variance:.3f}")
+        st.caption(
+            f"Sample std s = {np.sqrt(sample_formula_var):.3f} vs true σ = {sigma:.2f}. "
+            "A finite sample never matches the true values exactly; dividing by n−1 corrects the small "
+            "downward bias that comes from measuring spread around x̄ instead of the unknown μ."
+        )
+        st.button(
+            "🎲 Draw a new sample",
+            key="p30_resample",
+            on_click=lambda: st.session_state.update(
+                p30_sample_seed=st.session_state.get("p30_sample_seed", 0) + 1
+            ),
+        )
 
     return mu, sigma, variance
 
@@ -289,7 +313,7 @@ def render_stats_cards(mu, sigma, variance):
         <div class="stat-card">
             <div class="stat-val" style="color:#10b981;">{mu:.2f}</div>
             <div class="stat-label">Expected Value (μ)</div>
-            <div class="stat-formula">E[X] = \u2211(x \u00b7 P(x))</div>
+            <div class="stat-formula">E[X] = \u222B x \u00b7 f(x) dx</div>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
@@ -317,7 +341,7 @@ def render_ai_context():
         ("🌫️ Noise & Uncertainty", "#10b981",
          "In Reinforcement Learning or generative models (like Diffusion), we constantly add or remove random 'noise'. The 'amount of noise' is directly controlled by the <strong>Standard Deviation (σ)</strong>."),
         ("📊 Feature Scaling", "#f59e0b",
-         "If one feature has σ=1000 and another has σ=0.1, the AI will get confused. We 'Standardize' data by dividing by σ so all features have the exact same spread (σ=1).")
+         "If one feature has σ=1000 and another has σ=0.1, the AI will get confused. We 'Standardize' data by subtracting the mean and dividing by σ so all features have mean 0 and the exact same spread (σ=1).")
     ]
 
     for col, (title, color, desc) in zip(cols, examples):

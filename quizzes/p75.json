@@ -1,0 +1,49 @@
+{
+  "page": 75,
+  "questions": [
+    {
+      "q": "Training loss keeps falling while validation loss rises and the gap widens. What does this pattern suggest?",
+      "options": [
+        "Underfitting",
+        "Overfitting (though the curves alone do not prove the cause)",
+        "The model has not started learning yet",
+        "The learning rate is too small"
+      ],
+      "answer": 1,
+      "explain": "A widening generalization gap (validation − training) is the classic overfitting signature. Underfitting looks different: both losses stay high and close together."
+    },
+    {
+      "q": "With Model Capacity set to 2, both losses stay high and close together. What is this?",
+      "options": [
+        "Underfitting: the model is not flexible enough to fit even the training data",
+        "Overfitting with a small gap",
+        "A perfectly generalizing model",
+        "Early stopping triggered too late"
+      ],
+      "answer": 0,
+      "explain": "A small gap with high losses means the model cannot capture the pattern at all. More capacity (or features) would help here, not regularization."
+    },
+    {
+      "q": "Validation losses for epochs 1–7 are $1.0,\\ 0.8,\\ 0.7,\\ 0.72,\\ 0.71,\\ 0.75,\\ 0.8$. With early-stopping **patience 3**, when does training stop and which weights are restored?",
+      "options": [
+        "Stops at epoch 7, restores epoch 7",
+        "Stops at epoch 4, restores epoch 3",
+        "Stops at epoch 6, restores epoch 5",
+        "Stops at epoch 6, restores epoch 3"
+      ],
+      "answer": 3,
+      "explain": "The best validation loss is $0.7$ at epoch 3. Epochs 4, 5, 6 do not beat it, and at epoch 6 we have $6 - 3 = 3 \\ge$ patience, so training stops and the best weights (epoch 3) are restored. $0.71$ at epoch 5 is not an improvement over $0.7$."
+    },
+    {
+      "q": "Why can't a real training run simply use the 'hindsight minimum' (lowest validation loss over all 100 epochs)?",
+      "options": [
+        "It is always worse than the online early-stopping epoch",
+        "It uses the test set",
+        "It requires knowing future validation losses, which are not available while training",
+        "It only exists for underfitting models"
+      ],
+      "answer": 2,
+      "explain": "Online early stopping only uses validation results observed so far. The hindsight minimum is shown just for comparison; with noisy curves and small patience the online rule may stop earlier or later."
+    }
+  ]
+}

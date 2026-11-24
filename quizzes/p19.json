@@ -1,0 +1,49 @@
+{
+  "page": 19,
+  "questions": [
+    {
+      "q": "What does $g \\circ f$ (\"g after f\") mean?",
+      "options": [
+        "Multiply the outputs of $f$ and $g$",
+        "Apply $f$ and $g$ to $x$ separately and add the results",
+        "Apply $g$ first, then $f$",
+        "Apply $f$ first, then feed its output into $g$"
+      ],
+      "answer": 3,
+      "explain": "$(g \\circ f)(x) = g(f(x))$: the output of the first machine $f$ becomes the input of the second machine $g$."
+    },
+    {
+      "q": "Preset **Double, then add one**: $f(x) = 2x$, $g(z) = z + 1$. With $x = 1.25$, what is $g(f(x))$?",
+      "options": [
+        "3.25",
+        "2.5",
+        "4.5",
+        "3.5"
+      ],
+      "answer": 3,
+      "explain": "$f(1.25) = 2.5$, then $g(2.5) = 3.5$. Doing them in the other order, $2(1.25 + 1) = 4.5$, is $f \\circ g$."
+    },
+    {
+      "q": "In the DIY tab, $f(x) = 0.8x + 1.5$ and $g(z) = 2z - 0.5$ (the defaults). What is the composed machine $g(f(x))$?",
+      "options": [
+        "$2.8x + 1.0$",
+        "$1.6x + 1.0$",
+        "$1.6x + 3.0$",
+        "$1.6x + 2.5$"
+      ],
+      "answer": 3,
+      "explain": "$g(f(x)) = c(ax + b) + d = (ca)x + (cb + d) = 1.6x + (3 - 0.5) = 1.6x + 2.5$. Forgetting to multiply the shift $b$ by $c$ gives $1.6x + 1.0$."
+    },
+    {
+      "q": "What makes something a **function** in the page's \"machine\" picture?",
+      "options": [
+        "It must have exactly two inputs",
+        "Each input gives exactly one output, the same every time",
+        "Its output must be larger than its input",
+        "It must be a straight line"
+      ],
+      "answer": 1,
+      "explain": "A function is a reliable vending machine: one input, one rule, exactly one output. It can be curved, like $x^2$ or $|3\\sin x|$."
+    }
+  ]
+}

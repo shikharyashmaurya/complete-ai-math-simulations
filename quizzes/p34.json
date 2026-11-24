@@ -1,0 +1,49 @@
+{
+  "page": 34,
+  "questions": [
+    {
+      "q": "In $f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2}$, what is the job of the factor $\\frac{1}{\\sigma\\sqrt{2\\pi}}$?",
+      "options": [
+        "It shifts the curve left or right",
+        "It normalizes the curve so the total area equals exactly 1",
+        "It makes the curve symmetric",
+        "It sets the probability of $x = \\mu$"
+      ],
+      "answer": 1,
+      "explain": "Without the normalizer the area under the bell would not be 1, so it would not be a valid probability distribution. Symmetry comes from squaring $(x-\\mu)/\\sigma$; the shift comes from $\\mu$."
+    },
+    {
+      "q": "You shrink $\\sigma$ from $1.5$ to $0.2$ (keeping $\\mu = 0$). What happens to the peak height $f(0)$?",
+      "options": [
+        "It stays the same",
+        "It drops because the curve is thinner",
+        "It is capped at 1 because it is a probability",
+        "It rises from about $0.27$ to about $1.99$ — densities can exceed 1"
+      ],
+      "answer": 3,
+      "explain": "$f(\\mu) = \\frac{1}{\\sigma\\sqrt{2\\pi}}$: $\\approx 0.266$ at $\\sigma = 1.5$ and $\\approx 1.995$ at $\\sigma = 0.2$. A thinner bell must get taller to keep area 1; a density value is not a probability."
+    },
+    {
+      "q": "For a Normal distribution, about what fraction of values falls within $\\mu \\pm 2\\sigma$?",
+      "options": [
+        "About 95.4%",
+        "About 68.3%",
+        "About 99.7%",
+        "Exactly 100%"
+      ],
+      "answer": 0,
+      "explain": "The 68.3 / 95.4 / 99.7 rule covers $\\pm 1, 2, 3\\,\\sigma$. Tails are never exactly zero, so it is never 100%."
+    },
+    {
+      "q": "Which AI use of the Normal distribution is described on the page?",
+      "options": [
+        "Softmax outputs are always Normally distributed",
+        "Neural network weights are initialized to exactly zero",
+        "Diffusion models start from pure Gaussian noise and gradually denoise it into an image",
+        "Decision trees split on the bell curve"
+      ],
+      "answer": 2,
+      "explain": "Diffusion models (e.g. Stable Diffusion) denoise Gaussian static. Weights are *sampled* from a Normal (not set to zero) to break symmetry, and VAEs push their latent space toward a standard Normal."
+    }
+  ]
+}

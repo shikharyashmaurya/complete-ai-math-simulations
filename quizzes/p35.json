@@ -1,0 +1,49 @@
+{
+  "page": 35,
+  "questions": [
+    {
+      "q": "A test has mean $\\mu = 70$ and standard deviation $\\sigma = 10$. You scored $x = 85$. What is your Z-score?",
+      "options": [
+        "$15$",
+        "$0.85$",
+        "$1.5$",
+        "$8.5$"
+      ],
+      "answer": 2,
+      "explain": "$Z = \\frac{x - \\mu}{\\sigma} = \\frac{85 - 70}{10} = 1.5$: you are 1.5 standard deviations above the mean. $15$ is the raw distance before dividing by $\\sigma$."
+    },
+    {
+      "q": "If the scores are (approximately) Normal, about what percentile does $Z = 1.5$ correspond to?",
+      "options": [
+        "About 50%",
+        "About 68%",
+        "About 99.7%",
+        "About 93%"
+      ],
+      "answer": 3,
+      "explain": "$\\Phi(1.5) \\approx 0.933$, so about 93% of a Normal population lies below $x$. This reading is only valid for (roughly) Normal data."
+    },
+    {
+      "q": "What does standardizing a skewed dataset with $Z = (x - \\mu)/\\sigma$ do to its shape?",
+      "options": [
+        "Keeps it skewed — it only shifts the center to 0 and scales the spread to 1",
+        "Makes it Normal",
+        "Removes all outliers",
+        "Makes all values positive"
+      ],
+      "answer": 0,
+      "explain": "Standardization is a shift and a scale; the shape of the distribution is unchanged. Skewed data stays skewed, so bell-curve percentiles don't apply to it."
+    },
+    {
+      "q": "Why does standardizing input features help gradient descent?",
+      "options": [
+        "It reduces the number of features",
+        "Features on very different scales create a long, skinny loss valley where gradient descent zig-zags; standardized features give a rounder bowl",
+        "It guarantees the global minimum is zero",
+        "It makes the learning rate irrelevant"
+      ],
+      "answer": 1,
+      "explain": "With features like square footage (thousands) vs. bedrooms (1–5), the loss surface is elongated. Z-scoring puts features on a level playing field and lets descent head more directly to the minimum."
+    }
+  ]
+}

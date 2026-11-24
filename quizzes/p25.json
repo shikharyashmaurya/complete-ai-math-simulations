@@ -1,0 +1,49 @@
+{
+  "page": 25,
+  "questions": [
+    {
+      "q": "Club A has 40 students: 16 like Math ($A$), 20 are in the AI Club ($B$) and 12 are in both. What is $P(A \\mid B)$?",
+      "options": [
+        "$0.30$",
+        "$0.75$",
+        "$0.40$",
+        "$0.60$"
+      ],
+      "answer": 3,
+      "explain": "Conditioning shrinks the universe to the 20 AI-Club students: $P(A \\mid B) = 12/20 = 0.60$. $0.30 = 12/40$ forgets to change the denominator, $0.75 = 12/16$ is $P(B \\mid A)$, and $0.40$ is the unconditional $P(A)$."
+    },
+    {
+      "q": "In the same club, why is $P(B \\mid A) = 0.75$ different from $P(A \\mid B) = 0.60$?",
+      "options": [
+        "Because one of the two formulas uses a different numerator",
+        "Because $A$ and $B$ are independent",
+        "Both share the numerator $P(A \\cap B)$ but divide by different denominators, $P(A)$ vs. $P(B)$",
+        "They should be equal; the difference is sampling noise"
+      ],
+      "answer": 2,
+      "explain": "$P(A \\mid B) = P(A \\cap B)/P(B)$ and $P(B \\mid A) = P(A \\cap B)/P(A)$. Same overlap, different new universe — they agree only when $P(A) = P(B)$."
+    },
+    {
+      "q": "Club B has 40 students: 16 like Math, 20 are in the AI Club, 8 are in both. What does conditioning on \"in the AI Club\" do?",
+      "options": [
+        "Leaves it unchanged: $P(A \\mid B) = 8/20 = 0.40 = P(A)$ — the events are independent",
+        "Raises the chance of liking Math to $0.50$",
+        "Lowers it to $0.20$",
+        "Makes it undefined because the overlap is small"
+      ],
+      "answer": 0,
+      "explain": "$P(A \\mid B) = 8/20 = 0.40$ and $P(A) = 16/40 = 0.40$. The clue tells you nothing new — that is independence."
+    },
+    {
+      "q": "If $P(A \\cap B) = 0.15$ and $P(B) = 0.5$, what is $P(A \\mid B)$?",
+      "options": [
+        "$0.075$",
+        "$0.30$",
+        "$0.15$",
+        "$0.65$"
+      ],
+      "answer": 1,
+      "explain": "$P(A \\mid B) = P(A \\cap B)/P(B) = 0.15/0.5 = 0.30$. Multiplying ($0.075$) or ignoring the condition ($0.15$) are common slips."
+    }
+  ]
+}

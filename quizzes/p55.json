@@ -1,0 +1,18 @@
+{"page": 55, "questions": [
+  {"q": "Which statement is the definition of a convex function $f$?",
+   "options": ["$f(\\lambda a + (1-\\lambda) b) \\le \\lambda f(a) + (1-\\lambda) f(b)$ for all $a, b$ and $\\lambda \\in [0,1]$: every chord lies on or above the graph", "$f$ has exactly one minimum", "$f'(x) \\ge 0$ for all $x$", "$f$ is differentiable everywhere"],
+   "answer": 0,
+   "explain": "Convexity is the chord condition. $|x|$ is convex but not differentiable, $e^x$ is convex but has no minimum, and $f' \\ge 0$ only means increasing ($x^3$ is increasing yet not convex)."},
+  {"q": "$f(\\mathbf v) = \\tfrac12 \\mathbf v^\\top H \\mathbf v$ where $H$ has eigenvalues $2$ and $-1$. What is the surface, and is $f$ convex?",
+   "options": ["A bowl; convex", "A trough; convex but not strictly", "A saddle; not convex", "A dome; convex"],
+   "answer": 2,
+   "explain": "Convex ⇔ Hessian positive semidefinite (all eigenvalues ≥ 0). One positive and one negative eigenvalue means uphill along one axis and downhill along the other: a saddle, so not convex."},
+  {"q": "Gradient descent runs on an $L$-smooth convex function with $L = 4$. For which learning rates does the descent lemma guarantee that the loss decreases at every step (unless already at the minimum)?",
+   "options": ["$0 < \\eta < 0.5$", "$0 < \\eta < 2$", "Any $\\eta > 0$, because the function is convex", "Only $\\eta = 0.25$"],
+   "answer": 0,
+   "explain": "$f(x^+) \\le f(x) - \\eta(1 - L\\eta/2)\\|\\nabla f\\|^2$ gives a guaranteed decrease for $0 < \\eta < 2/L = 0.5$. Convexity alone is not enough: on $\\tfrac12 L x^2$ with $\\eta > 2/L$ the iterates diverge."},
+  {"q": "Why is a neural network's loss generally NOT convex in its weights?",
+   "options": ["Because it uses the MSE loss, which is never convex", "Swapping two hidden units gives two different weight vectors with the same (minimal) loss, yet weights on the chord between them have a higher loss", "Because it has more than two weights", "Because convex functions cannot have a gradient"],
+   "answer": 1,
+   "explain": "If the loss were convex, every point on the chord between two minimisers would also have loss ≤ the minimum. The unit-swap example shows a loss bump in between. MSE itself is convex in the predictions; the non-linear hidden layer breaks convexity in the weights."}
+]}

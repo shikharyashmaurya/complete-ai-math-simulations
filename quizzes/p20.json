@@ -1,0 +1,49 @@
+{
+  "page": 20,
+  "questions": [
+    {
+      "q": "In $y = wx + b$, what happens to $y$ when $x$ increases by 1?",
+      "options": [
+        "$y$ changes by $w + b$",
+        "$y$ changes by $b$",
+        "$y$ changes by $w$",
+        "$y$ always increases by 1"
+      ],
+      "answer": 2,
+      "explain": "The weight $w$ is the sensitivity (slope): a unit step in $x$ gives a $w$-sized jump in $y$. The bias $b$ does not depend on $x$."
+    },
+    {
+      "q": "In the Number Lab with the defaults $w = 1.5$, $b = -1$, what is $y$ at $x = 2$?",
+      "options": [
+        "1",
+        "−0.5",
+        "4",
+        "2"
+      ],
+      "answer": 3,
+      "explain": "$y = 1.5 \\cdot 2 + (-1) = 3 - 1 = 2$."
+    },
+    {
+      "q": "What does changing the bias $b$ do to the graph?",
+      "options": [
+        "Bends the line into a curve",
+        "Changes the slope",
+        "Rotates the line around the origin",
+        "Shifts the whole line up or down without changing its steepness"
+      ],
+      "answer": 3,
+      "explain": "$b$ is a universal offset (the intercept): same tilt, different altitude."
+    },
+    {
+      "q": "Strictly speaking (in linear algebra), why is $y = 2x + 3$ called **affine** rather than linear?",
+      "options": [
+        "Because its graph is curved",
+        "Because it has only one input",
+        "Because the slope is greater than 1",
+        "Because $b \\neq 0$ moves the origin: $x = 0$ gives $y = 3$, but a linear map must keep the origin fixed"
+      ],
+      "answer": 3,
+      "explain": "A linear map sends 0 to 0; adding a shift $b \\neq 0$ makes it a linear map plus a shift — affine. In everyday ML talk both are called \"linear\"."
+    }
+  ]
+}

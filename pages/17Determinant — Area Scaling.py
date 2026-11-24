@@ -1,14 +1,26 @@
+import functools
+import sys
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import streamlit as st
 
+# Repo root on sys.path so `common` also imports when this page runs on its own (or under AppTest).
+_ROOT = str(Path(__file__).resolve().parents[1])
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from common import matrix_display  # noqa: E402
+from common.linalg2d import det2, rotation_matrix, transform_points, unit_square  # noqa: E402
+
 
 st.set_page_config(page_title="Determinant — Area Scaling", layout="wide")
 
-
-def det2(M):
-    return float(M[0, 0] * M[1, 1] - M[0, 1] * M[1, 0])
+matrix_html = functools.partial(
+    matrix_display.matrix_html, theme="slate", cell_style="plain", font_size=18, cell_padding="7px 14px", min_width=48
+)
 
 
 def polygon_area(verts):
@@ -16,32 +28,6 @@ def polygon_area(verts):
     x = verts[:, 0]
     y = verts[:, 1]
     return 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
-
-
-def unit_square():
-    return np.array([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]], dtype=float)
-
-
-def transform_points(M, pts):
-    return (M @ pts[:, :2].T).T
-
-
-def matrix_html(M, title, precision=2):
-    html = f"""
-    <div style="padding:12px;border:1px solid #334155;border-radius:12px;background:#0f172a22;">
-      <h4 style="margin:0 0 8px 0;">{title}</h4>
-      <table style="border-collapse:collapse;font-size:18px;">
-    """
-    for i in range(2):
-        html += "<tr>"
-        for j in range(2):
-            html += (
-                f"<td style='border:1px solid #475569;padding:7px 14px;text-align:center;"
-                f"min-width:48px;'>{M[i, j]:.{precision}f}</td>"
-            )
-        html += "</tr>"
-    html += "</table></div>"
-    return html
 
 
 def draw_determinant_story(M, show_grid=True):
@@ -54,7 +40,8 @@ def draw_determinant_story(M, show_grid=True):
     d = det2(M)
     abs_area = polygon_area(par[:-1])
 
-    lim = max(3.0, float(np.max(np.abs(par))) * 1.35 + 0.5)
+    # Symmetric limits so parallelograms with negative coordinates (flips, rotations) are never clipped.
+    lim = max(1.6, float(np.max(np.abs(par))) * 1.15 + 0.4)
 
     for ax, title, poly, fill_color, edge_color in zip(
         axes,
@@ -79,8 +66,8 @@ def draw_determinant_story(M, show_grid=True):
         ax.add_patch(patch)
         ax.plot(poly[:, 0], poly[:, 1], color=edge_color, lw=2.2)
         ax.set_aspect("equal", adjustable="box")
-        ax.set_xlim(-0.15, lim)
-        ax.set_ylim(-0.15, lim)
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
         ax.set_title(title, color="#e2e8f0", fontsize=12, pad=10)
         ax.tick_params(colors="#cbd5e1")
         for spine in ax.spines.values():
@@ -165,8 +152,8 @@ def render_main_lab(M):
         "The columns of `M` are where the basis arrows land. They **span** the output shape — "
         "so the area of that parallelogram is exactly what the determinant measures (up to sign)."
     )
-    fig, d, abs_area = draw_determinant_story(M, show_grid=st.checkbox("Show light grid", value=True))
-    st.pyplot(fig, use_container_width=True)
+    fig, d, abs_area = draw_determinant_story(M, show_grid=st.checkbox("Show light grid", value=True, key="p17_grid"))
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
     c1, c2, c3 = st.columns(3)
@@ -177,10 +164,12 @@ def render_main_lab(M):
     with c3:
         if abs(d) < 1e-9:
             st.metric("Story", "Collapsed!")
+        elif abs(d) < NEAR_SINGULAR:
+            st.metric("Story", "Almost flat")
         elif d < 0:
             st.metric("Story", "Flipped space")
         else:
-            st.metric("Story", "Pure stretch/shear")
+            st.metric("Story", "Orientation kept")
 
     st.caption(
         f"Shoelace area of transformed polygon ≈ {abs_area:.6f} — matches |det| = {abs(d):.6f} "
@@ -206,7 +195,7 @@ def render_vector_view(M):
     col_left, col_right = st.columns([1.1, 1])
     with col_left:
         fig = draw_column_vectors(M)
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
     with col_right:
         st.markdown(
@@ -219,7 +208,19 @@ def render_vector_view(M):
         )
 
 
-def preset_matrix(preset):
+NEAR_SINGULAR = 0.05
+
+
+def wild_card_matrix(seed):
+    rng = np.random.default_rng(seed)
+    base = rng.uniform(-1.2, 1.2, size=(2, 2))
+    if abs(np.linalg.det(base)) < 0.15:
+        base = base + 0.35 * np.eye(2)
+    # Round to the sliders' 0.01 step so the sliders show exactly this matrix.
+    return np.round(base, 2)
+
+
+def preset_matrix(preset, wild_seed=17):
     if preset == "Identity (no change)":
         return np.eye(2)
     if preset == "Uniform zoom":
@@ -229,21 +230,17 @@ def preset_matrix(preset):
     if preset == "Shear (book on a desk)":
         return np.array([[1.0, 0.9], [0.0, 1.0]])
     if preset == "Rotate 25°":
-        t = np.deg2rad(25.0)
-        return np.array([[np.cos(t), -np.sin(t)], [np.sin(t), np.cos(t)]])
+        return rotation_matrix(25.0)
     if preset == "Mirror world (flip)":
         return np.array([[1.0, 0.2], [0.6, -0.4]])
     if preset == "Near-singular (almost flat)":
-        return np.array([[1.0, 0.95], [0.95, 0.9025]])
-    rng = np.random.default_rng(17)
-    base = rng.uniform(-1.2, 1.2, size=(2, 2))
-    if abs(np.linalg.det(base)) < 0.15:
-        base = base + 0.35 * np.eye(2)
-    return base
+        # det = 1*0.91 - 0.95*0.95 = 0.0075: tiny but NOT zero.
+        return np.array([[1.0, 0.95], [0.95, 0.91]])
+    return wild_card_matrix(wild_seed)
 
 
 def render_playground():
-    st.header("4) Playground — presets + fine tuning")
+    st.header("Playground — presets + fine tuning")
 
     preset = st.radio(
         "Quick vibe",
@@ -258,51 +255,46 @@ def render_playground():
             "Wild card",
         ],
         horizontal=True,
+        key="p17_preset_radio",
     )
 
-    base = preset_matrix(preset)
+    st.session_state.setdefault("p17_wild_seed", 17)
+    reroll = False
+    if preset == "Wild card":
+        reroll = st.button("🎲 New wild card", key="p17_reroll")
+        if reroll:
+            st.session_state.p17_wild_seed += 1
 
-    if "d17_preset" not in st.session_state:
-        st.session_state.d17_preset = preset
-        st.session_state.d17_a = float(base[0, 0])
-        st.session_state.d17_b = float(base[0, 1])
-        st.session_state.d17_c = float(base[1, 0])
-        st.session_state.d17_d = float(base[1, 1])
-
-    if preset != st.session_state.d17_preset:
-        st.session_state.d17_preset = preset
-        st.session_state.d17_a = float(base[0, 0])
-        st.session_state.d17_b = float(base[0, 1])
-        st.session_state.d17_c = float(base[1, 0])
-        st.session_state.d17_d = float(base[1, 1])
+    if reroll or st.session_state.get("p17_preset") != preset:
+        base = preset_matrix(preset, st.session_state.p17_wild_seed)
+        st.session_state.p17_preset = preset
+        for k, v in zip(("p17_a", "p17_b", "p17_c", "p17_d"), base.ravel()):
+            st.session_state[k] = float(v)
 
     st.markdown("Tweak entries (preset above writes new defaults when you switch):")
     r1c1, r1c2, r2c1, r2c2 = st.columns(4)
     with r1c1:
-        a = st.slider("a (top-left)", -3.0, 3.0, key="d17_a")
+        a = st.slider("a (top-left)", -3.0, 3.0, key="p17_a")
     with r1c2:
-        b = st.slider("b (top-right)", -3.0, 3.0, key="d17_b")
+        b = st.slider("b (top-right)", -3.0, 3.0, key="p17_b")
     with r2c1:
-        c = st.slider("c (bottom-left)", -3.0, 3.0, key="d17_c")
+        c = st.slider("c (bottom-left)", -3.0, 3.0, key="p17_c")
     with r2c2:
-        d = st.slider("d (bottom-right)", -3.0, 3.0, key="d17_d")
+        d = st.slider("d (bottom-right)", -3.0, 3.0, key="p17_d")
 
-    M = np.array(
-        [[st.session_state.d17_a, st.session_state.d17_b], [st.session_state.d17_c, st.session_state.d17_d]],
-        dtype=float,
-    )
-    return M
+    return np.array([[a, b], [c, d]], dtype=float)
 
 
 def render_trivia_challenge():
-    st.header("5) Micro-challenge")
+    st.header("4) Micro-challenge")
     st.markdown("Without touching sliders: if you **double both columns**, what happens to the area?")
     choice = st.selectbox(
         "Pick one",
         ["It doubles", "It stays 1", "It quadruples", "It becomes zero"],
         index=0,
+        key="p17_quiz",
     )
-    if st.button("Reveal answer"):
+    if st.button("Reveal answer", key="p17_reveal"):
         if choice == "It quadruples":
             st.success("Yes — each side doubles, so area scales like 2×2 = 4. Determinant scales the same way.")
         else:
@@ -320,7 +312,8 @@ def render_recap():
         - Start with the **unit square** (area 1). After `M`, it becomes a **parallelogram**.
         - **|det(M)|** is exactly the **area** of that parallelogram — the factor by which area scales.
         - **sign(det)** tells you whether orientation is preserved (**+**) or flipped (**−**).
-        - **det = 0** means the parallelogram collapses to a line: the transform **squashes** 2D area to nothing.
+        - **det = 0** means the parallelogram collapses to a line (or even a single point): the transform **squashes** 2D area to nothing.
+        - **|det| tiny but not 0** (try *Near-singular*) means the plane is *almost* flattened — still invertible, but barely.
         """
     )
 
@@ -332,7 +325,7 @@ def main():
         """
         **Mission:** watch area breathe.
 
-        - Drag matrix entries in section 4.
+        - Drag matrix entries in the Playground at the top.
         - Try a **negative** determinant and notice the **mirror** tint.
         - Slide toward **singular** to see the world **collapse** to a line.
         """

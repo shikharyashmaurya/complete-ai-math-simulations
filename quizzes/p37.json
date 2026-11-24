@@ -1,0 +1,49 @@
+{
+  "page": 37,
+  "questions": [
+    {
+      "q": "With the default logits Cat $= 2$, Dog $= -1$, Car $= 0.5$ and $T = 1$, what is (approximately) $P(\\text{Cat})$?",
+      "options": [
+        "$\\approx 1.33$",
+        "$\\approx 0.67$",
+        "$\\approx 0.44$",
+        "$\\approx 0.79$"
+      ],
+      "answer": 3,
+      "explain": "$\\frac{e^{2}}{e^{2} + e^{-1} + e^{0.5}} = \\frac{7.39}{7.39 + 0.37 + 1.65} \\approx 0.786$. Dividing raw scores by their sum gives $2/1.5 \\approx 1.33$ — not even a valid probability."
+    },
+    {
+      "q": "Why does Softmax exponentiate instead of simply dividing the raw scores by their sum?",
+      "options": [
+        "Exponentials are faster to compute",
+        "$e^z$ makes every value strictly positive (raw sums can give negative probabilities or divide by zero) and exaggerates differences",
+        "Because dividing by the sum would not add up to 1",
+        "To make all probabilities equal"
+      ],
+      "answer": 1,
+      "explain": "A logit of $-2$ would give a negative \"probability\", and scores like $2$ and $-2$ sum to $0$. Exponentiating fixes both and widens gaps ($e^2 = 7.39$ vs. $e^1 = 2.72$)."
+    },
+    {
+      "q": "Real implementations compute Softmax of $z_i - \\max_j z_j$. What does this change about the output?",
+      "options": [
+        "It makes the largest probability exactly 1",
+        "It changes the ranking of the classes",
+        "Nothing — adding the same constant to every logit cancels out, but it prevents overflow",
+        "It is equivalent to setting $T = 0$"
+      ],
+      "answer": 2,
+      "explain": "$\\frac{e^{z_i - c}}{\\sum_j e^{z_j - c}} = \\frac{e^{z_i}}{\\sum_j e^{z_j}}$ because $e^{-c}$ cancels. With $c = \\max z$ the largest exponent is $e^0 = 1$, so $e^{1000}$ never overflows to `inf`."
+    },
+    {
+      "q": "Raising the temperature from $T = 1$ to $T = 5$ (dividing every logit by $T$) does what to the probabilities?",
+      "options": [
+        "Makes them softer — closer to uniform",
+        "Pushes them toward argmax (one-hot on the top class)",
+        "Leaves them unchanged",
+        "Makes them sum to more than 1"
+      ],
+      "answer": 0,
+      "explain": "Dividing by a large $T$ shrinks the gaps between logits, so $P(\\text{Cat})$ falls from $\\approx 0.79$ to $\\approx 0.44$ here. Low $T$ (e.g. $0.5$) sharpens toward argmax instead."
+    }
+  ]
+}

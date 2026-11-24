@@ -1,9 +1,8 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+from matplotlib.colors import ListedColormap
 from matplotlib.patches import FancyBboxPatch, Rectangle
-import seaborn as sns
 
 st.set_page_config(page_title="What is a Matrix?", layout="wide")
 
@@ -20,7 +19,7 @@ st.markdown("""
     .section-title {
         font-size: 2em;
         font-weight: bold;
-        color: #A23B72;
+        color: #D63384;
         margin-top: 1em;
         margin-bottom: 0.5em;
     }
@@ -32,6 +31,9 @@ st.markdown("""
         border-left: 4px solid #2E86DE;
         box-shadow: 0 2px 10px rgba(46, 134, 222, 0.08);
         margin-bottom: 1em;
+    }
+    .concept-box p, .concept-box li, .concept-box strong {
+        color: #111827;
     }
     .highlight {
         background-color: #FFD66D;
@@ -69,8 +71,8 @@ with col1:
 with col2:
     # Create a simple visual spreadsheet
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.set_xlim(-0.5, 4.5)
-    ax.set_ylim(-0.5, 4.5)
+    ax.set_xlim(-2.0, 2.8)
+    ax.set_ylim(-1.2, 3.3)
     ax.axis('off')
     
     # Draw grid
@@ -85,11 +87,14 @@ with col2:
             # Add number
             ax.text(j, 2-i, str(val), ha='center', va='center', fontsize=20, fontweight='bold', color='#2E86DE')
     
-    ax.text(-0.7, 1, "Store A\nStore B\nStore C", fontsize=10, ha='right', va='center', fontweight='bold')
-    ax.text(0, -0.7, "Red  Blue  Green", fontsize=10, ha='center', va='top', fontweight='bold')
-    ax.text(0, 2.8, "Inventory Matrix", fontsize=14, ha='center', fontweight='bold', color='#A23B72')
+    # One label per row / column so each one lines up with its cells
+    for i, store in enumerate(["Store A", "Store B", "Store C"]):
+        ax.text(-0.6, 2-i, store, fontsize=10, ha='right', va='center', fontweight='bold')
+    for j, colour in enumerate(["Red", "Blue", "Green"]):
+        ax.text(j, -0.6, colour, fontsize=10, ha='center', va='top', fontweight='bold')
+    ax.text(1, 2.75, "Inventory Matrix", fontsize=14, ha='center', fontweight='bold', color='#A23B72')
     
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 # ============ SECTION 2: Dimensions & Notation ============
@@ -97,6 +102,7 @@ st.markdown('<div class="section-title">📐 Part 2: Rows, Columns & Dimensions<
 
 st.markdown("""
 <div class="concept-box">
+
 A matrix's <span class="highlight">m × n</span> notation tells you:
 - <strong>m</strong> = number of ROWS (horizontal layers)
 - <strong>n</strong> = number of COLUMNS (vertical stacks)
@@ -109,11 +115,11 @@ Think: **Rows across, Columns down** (like reading a book: left to right, top to
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    rows = st.slider("Number of Rows (m)", 1, 6, 3, key="rows")
+    rows = st.slider("Number of Rows (m)", 1, 6, 3, key="p10_rows")
 with col2:
-    cols = st.slider("Number of Columns (n)", 1, 6, 3, key="cols")
+    cols = st.slider("Number of Columns (n)", 1, 6, 3, key="p10_cols")
 with col3:
-    color_choice = st.selectbox("Color Theme", ["Blue", "Purple", "Green", "Orange"])
+    color_choice = st.selectbox("Color Theme", ["Blue", "Purple", "Green", "Orange"], key="p10_color")
 
 color_map = {
     "Blue": "#2E86DE",
@@ -123,8 +129,13 @@ color_map = {
 }
 chosen_color = color_map[color_choice]
 
-# Generate random matrix
-matrix = np.random.randint(-10, 11, size=(rows, cols))
+# Random matrix: generated from a seed kept in session_state, so it only changes when the shape changes
+# or the user asks for new numbers (not every time another widget moves).
+if "p10_matrix_seed" not in st.session_state:
+    st.session_state.p10_matrix_seed = 0
+if st.button("🎲 New random numbers", key="p10_new_matrix"):
+    st.session_state.p10_matrix_seed += 1
+matrix = np.random.default_rng([st.session_state.p10_matrix_seed, rows, cols]).integers(-10, 11, size=(rows, cols))
 
 # Visualize the matrix with labels
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -157,17 +168,18 @@ for j in range(cols):
 ax.text(cols/2-0.5, rows+1.2, f"A {rows}×{cols} Matrix", ha='center', fontsize=16, 
        fontweight='bold', color=chosen_color)
 
-st.pyplot(fig, use_container_width=True)
+st.pyplot(fig, width="stretch")
 plt.close(fig)
 
 # Show the mathematical notation
-st.markdown(f"**Matrix Notation:** A ∈ ℝ^({rows}×{cols})")
+st.markdown(rf"**Matrix Notation:** $A \in \mathbb{{R}}^{{{rows} \times {cols}}}$")
 
 # ============ SECTION 3: Element Naming ============
 st.markdown('<div class="section-title">🏷️ Part 3: How to Read Individual Elements</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="concept-box">
+
 Each element in a matrix has an <span class="highlight">address</span>: <strong>A[i,j]</strong>
 - <strong>i</strong> = row index (which row, counting from top)
 - <strong>j</strong> = column index (which column, counting from left)
@@ -180,9 +192,18 @@ Example: A[2,3] means the element in Row 2, Column 3
 col1, col2 = st.columns(2)
 
 with col1:
-    sel_row = st.slider("Select Row (i)", 1, rows, 1, key="sel_row")
+    if rows > 1:
+        sel_row = st.slider("Select Row (i)", 1, rows, 1, key="p10_sel_row")
+    else:
+        # A slider needs min < max, so with a single row there is nothing to choose
+        sel_row = 1
+        st.caption("Only one row, so i = 1.")
 with col2:
-    sel_col = st.slider("Select Column (j)", 1, cols, 1, key="sel_col")
+    if cols > 1:
+        sel_col = st.slider("Select Column (j)", 1, cols, 1, key="p10_sel_col")
+    else:
+        sel_col = 1
+        st.caption("Only one column, so j = 1.")
 
 # Highlight the selected element
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -229,7 +250,7 @@ for j in range(cols):
 ax.text(cols/2-0.5, rows+1.2, f"A[{sel_row},{sel_col}] = {selected_val}", ha='center', 
        fontsize=16, fontweight='bold', color=chosen_color)
 
-st.pyplot(fig, use_container_width=True)
+st.pyplot(fig, width="stretch")
 plt.close(fig)
 
 # ============ SECTION 4: Real-World Examples ============
@@ -241,8 +262,12 @@ with tabs[0]:
     st.markdown("**An image is a matrix of pixel colors!**")
     st.markdown("Each pixel has RGB values (or just grayscale). Here's a tiny 4×4 image:")
     
-    # Create a small image matrix
-    img_matrix = np.random.randint(0, 256, size=(4, 4))
+    # Create a small image matrix (seeded, with its own button for a new random image)
+    if "p10_image_seed" not in st.session_state:
+        st.session_state.p10_image_seed = 0
+    if st.button("🎲 New random image", key="p10_new_image"):
+        st.session_state.p10_image_seed += 1
+    img_matrix = np.random.default_rng([st.session_state.p10_image_seed, 4]).integers(0, 256, size=(4, 4))
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     
@@ -263,11 +288,11 @@ with tabs[0]:
     ax2.set_title("Rendered as Image", fontsize=12, fontweight='bold')
     ax2.axis('off')
     
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 with tabs[1]:
-    st.markdown("**A chess board is a 8×8 matrix!**")
+    st.markdown("**A chess board is an 8×8 matrix!**")
     
     board = np.array([
         [1, 0, 1, 0, 1, 0, 1, 0],
@@ -281,7 +306,8 @@ with tabs[1]:
     ])
     
     fig, ax = plt.subplots(figsize=(8, 8))
-    im = ax.imshow(board, cmap='RdGy', vmin=0, vmax=1)
+    # Dark squares = 0, light squares = 1 (so a1, bottom-left, is dark as on a real board)
+    ax.imshow(board, cmap=ListedColormap(['#b58863', '#f0d9b5']), vmin=0, vmax=1)
     
     ax.set_xticks(range(8))
     ax.set_yticks(range(8))
@@ -289,7 +315,7 @@ with tabs[1]:
     ax.set_yticklabels(['8', '7', '6', '5', '4', '3', '2', '1'])
     ax.set_title("Chess Board as 8×8 Matrix", fontsize=14, fontweight='bold')
     
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 with tabs[2]:
@@ -315,11 +341,11 @@ with tabs[2]:
     # Add value labels
     for i in range(5):
         for j in range(4):
-            text = ax.text(j, i, f'{students[i, j]}', ha="center", va="center",
+            ax.text(j, i, f'{students[i, j]}', ha="center", va="center",
                           color="black", fontsize=10, fontweight='bold')
     
     plt.colorbar(im, ax=ax, label='Grade')
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 with tabs[3]:
@@ -339,17 +365,17 @@ with tabs[3]:
     ax.set_xticks(range(7))
     ax.set_yticks(range(5))
     ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
-    ax.set_yticklabels(['NYC', 'Alaska', 'Delhi', 'London', 'Sydney'])
+    ax.set_yticklabels(['NYC', 'Anchorage', 'Delhi', 'London', 'Sydney'])
     ax.set_title("5×7 Temperature Matrix (°C)", fontsize=14, fontweight='bold')
     
     # Add value labels
     for i in range(5):
         for j in range(7):
-            text = ax.text(j, i, f'{temps[i, j]}°', ha="center", va="center",
+            ax.text(j, i, f'{temps[i, j]}°', ha="center", va="center",
                           color="black", fontsize=9, fontweight='bold')
     
     plt.colorbar(im, ax=ax, label='Temperature (°C)')
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 # ============ SECTION 5: Special Matrices ============
@@ -381,7 +407,7 @@ with col1:
             ax.text(j, 2-i, str(square[i, j]), ha='center', va='center', fontsize=14, fontweight='bold')
     
     ax.text(1, 3.3, "3×3 Square Matrix", ha='center', fontsize=12, fontweight='bold')
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 with col2:
@@ -406,7 +432,7 @@ with col2:
         ax.text(j, 0, str(row_vec[0, j]), ha='center', va='center', fontsize=14, fontweight='bold')
     
     ax.text(1.5, 1.3, "1×4 Row Vector", ha='center', fontsize=12, fontweight='bold')
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 col1, col2 = st.columns(2)
@@ -420,8 +446,8 @@ with col1:
     """)
     
     col_vec = np.array([[5], [-2], [8], [3]])
-    fig, ax = plt.subplots(figsize=(2, 6))
-    ax.set_xlim(-0.5, 1.5)
+    fig, ax = plt.subplots(figsize=(2.6, 5))
+    ax.set_xlim(-1.0, 1.0)
     ax.set_ylim(-0.5, 4.5)
     ax.axis('off')
     
@@ -433,7 +459,8 @@ with col1:
         ax.text(0, 3-i, str(col_vec[i, 0]), ha='center', va='center', fontsize=14, fontweight='bold')
     
     ax.text(0, 4.3, "4×1 Column Vector", ha='center', fontsize=12, fontweight='bold')
-    st.pyplot(fig, use_container_width=True)
+    # Tall, narrow figure: keep its natural size instead of stretching it to the column width
+    st.pyplot(fig, width="content")
     plt.close(fig)
 
 with col2:
@@ -459,7 +486,7 @@ with col2:
             ax.text(j, 2-i, "0", ha='center', va='center', fontsize=14, fontweight='bold', color='#2E86DE')
     
     ax.text(1, 3.3, "3×3 Zero Matrix", ha='center', fontsize=12, fontweight='bold')
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 # ============ SECTION 6: Key Takeaway ============
@@ -467,6 +494,7 @@ st.markdown('<div class="section-title">🎓 Key Takeaways</div>', unsafe_allow_
 
 st.markdown("""
 <div class="concept-box">
+
 ✅ <strong>A matrix is an m × n rectangular grid of numbers</strong>
 - <strong>m</strong> rows (horizontal)
 - <strong>n</strong> columns (vertical)
@@ -491,4 +519,4 @@ Next: Learn how matrices ADD, SUBTRACT, and most importantly—MULTIPLY! 🚀
 """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.markdown("💭 **Fun Fact:** A single image (1920×1080 pixels) is a matrix of 2,073,600 numbers! Your computer stores and processes millions of matrices every second.")
+st.markdown("💭 **Fun Fact:** A single grayscale Full-HD image (1920×1080 pixels) is a matrix of 2,073,600 numbers — and a colour image has 3 such matrices (red, green, blue), so 6,220,800 numbers! Your computer stores and processes millions of matrices every second.")

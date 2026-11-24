@@ -1,0 +1,49 @@
+{
+  "page": 71,
+  "questions": [
+    {
+      "q": "Training error is tiny but validation error is much higher. What does this gap indicate?",
+      "options": [
+        "Underfitting: the model is too simple",
+        "Overfitting: the model is fitting noise in the training data",
+        "The ideal model: low training error is all that matters",
+        "The validation set must be broken"
+      ],
+      "answer": 1,
+      "explain": "When a model fits training data much better than held-out data, the gap is evidence of overfitting: the extra flexibility wiggles between (and beyond) the training points."
+    },
+    {
+      "q": "As you raise the polynomial degree, what happens to the **training** error (exact least squares, nested models)?",
+      "options": [
+        "It cannot increase",
+        "It always forms a U-shape",
+        "It always increases",
+        "It stays constant"
+      ],
+      "answer": 0,
+      "explain": "A higher-degree polynomial can always reproduce a lower-degree fit (set the extra coefficients to 0), so its best training error is at most as large. It is the *validation* error that often forms a U-shape."
+    },
+    {
+      "q": "The data noise level is $\\sigma = 0.5$. What is the lowest expected MSE even the **true** hidden pattern would achieve on new data?",
+      "options": [
+        "$0.5$",
+        "$0$",
+        "$1$",
+        "$0.25$"
+      ],
+      "answer": 3,
+      "explain": "The noise is irreducible: even a perfect model has expected MSE $\\sigma^2 = 0.5^2 = 0.25$. A validation MSE far below $\\sigma^2$ on a fresh sample would be suspicious."
+    },
+    {
+      "q": "Why does the page report a separate **test** MSE after choosing the degree on the validation set?",
+      "options": [
+        "The test set is larger, so its error is always lower",
+        "The validation error is computed on training data",
+        "The validation error influenced the choice, so it tends to be optimistic; an untouched test set gives a fair estimate",
+        "To pick the degree a second time"
+      ],
+      "answer": 2,
+      "explain": "Selecting the best of many validation scores biases that score downward. The test set is looked at once; if you kept tuning on it, it would become a second validation set."
+    }
+  ]
+}

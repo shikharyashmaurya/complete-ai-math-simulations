@@ -1,0 +1,49 @@
+{
+  "page": 73,
+  "questions": [
+    {
+      "q": "On the dartboard, the darts form a tight cluster far from the bullseye. Which diagnosis fits?",
+      "options": [
+        "Low bias, high variance: overfitting",
+        "Low bias, low variance: ideal model",
+        "High bias, high variance",
+        "High bias, low variance: underfitting"
+      ],
+      "answer": 3,
+      "explain": "Bias is how far the *average* dart lands from the bullseye; variance is how much the darts scatter around their own average. A consistent miss in the same direction is bias, the signature of a too-simple model."
+    },
+    {
+      "q": "In the dartboard lab you set bias $= 2$ and per-axis variance $= 1.5$. What is the expected average squared miss on the 2-D board?",
+      "options": [
+        "$5.5$",
+        "$5$",
+        "$7$",
+        "$3.5$"
+      ],
+      "answer": 2,
+      "explain": "Bias$^2$ + 2 × per-axis variance $= 2^2 + 2(1.5) = 4 + 3 = 7$ (two axes). $5.5$ counts the variance on only one axis; $5$ forgets to square the bias."
+    },
+    {
+      "q": "For squared error, the expected error splits into Bias² + Variance + Noise. Which part can **no** choice of model complexity remove?",
+      "options": [
+        "Bias²",
+        "Noise (irreducible error)",
+        "Variance",
+        "None: all three go to zero at the sweet spot"
+      ],
+      "answer": 1,
+      "explain": "Noise comes from the data itself, so it sets a floor on the total error. Complexity only trades Bias² against Variance; the sweet spot minimizes their sum."
+    },
+    {
+      "q": "Moving the Model Complexity slider from 1 toward 10, what tends to happen?",
+      "options": [
+        "Bias² tends to fall while Variance tends to rise (a common tradeoff, not a strict law)",
+        "Bias² and Variance both fall steadily",
+        "Bias² rises while Variance falls",
+        "Total error keeps decreasing all the way to 10"
+      ],
+      "answer": 0,
+      "explain": "Flexible models can follow the pattern (less bias) but also chase noise in each training set (more variance). On the overfitting side Variance dominates, so total error rises again after the sweet spot."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{"page": 98, "questions": [
+  {"q": "If the components of $q$ and $k$ are independent with mean 0 and variance 1, what is $\\operatorname{Var}(q \\cdot k)$ for $d_k$-dimensional vectors, and why does that motivate dividing by $\\sqrt{d_k}$?",
+   "options": ["It is 1, so the scaling is only cosmetic", "It is $d_k$; dividing by $\\sqrt{d_k}$ brings it back to 1 so softmax doesn't saturate", "It is $d_k^2$; dividing by $d_k$ fixes it", "It is $\\sqrt{d_k}$; dividing by $\\sqrt{d_k}$ makes it 0"], "answer": 1,
+   "explain": "Each $q_i k_i$ has variance 1 and the $d_k$ terms add up, so the variance is $d_k$. Large logits push softmax to one-hot weights with tiny gradients; $\\operatorname{Var}(q\\cdot k/\\sqrt{d_k}) = 1$ keeps them at unit scale."},
+  {"q": "How does a causal mask stop token $i$ from attending to future tokens $j > i$?",
+   "options": ["It sets those attention weights to 0 after softmax and leaves the rows as they are", "It sets those scores to 0 before softmax", "It sets those scores to $-\\infty$ before softmax, so $e^{-\\infty} = 0$ and the remaining weights still sum to 1", "It deletes the future tokens from the value matrix $V$"], "answer": 2,
+   "explain": "A score of 0 still gets weight $e^0 > 0$. Using $-\\infty$ makes the future weights exactly 0 while softmax renormalises over the allowed keys, so each row still sums to 1."},
+  {"q": "You double the context length $n$ of a transformer. Roughly how does the size of each attention score matrix change?",
+   "options": ["It stays the same", "It doubles", "It quadruples", "It grows 8×"], "answer": 2,
+   "explain": "The score matrix is $n \\times n$, so it grows as $n^2$: doubling $n$ gives $4\\times$. The KV cache, by contrast, grows only linearly in $n$."},
+  {"q": "A head puts weight 0.9 from the token \"mat\" onto \"sat\". What is the safest conclusion?",
+   "options": ["The model's output was caused by the word \"sat\"", "In this head and layer, the new representation of \"mat\" mostly reads the value vector of \"sat\" — not a full explanation of the model's decision", "All other heads must also attend to \"sat\"", "Removing \"sat\" will change the prediction by exactly 90%"], "answer": 1,
+   "explain": "Attention weights show where one head reads information from. Values, $W_O$, residual paths, MLPs and other heads all mix the signal, so attention ≠ explanation."}
+]}

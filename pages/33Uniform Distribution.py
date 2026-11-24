@@ -1,8 +1,6 @@
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import time
 
 st.set_page_config(page_title="Uniform Distribution", layout="wide", initial_sidebar_state="expanded")
 
@@ -184,7 +182,7 @@ def render_hero():
     <div class="hero-box">
         <div class="hero-title">📏 Page 33: The Uniform Distribution</div>
         <div class="hero-sub">
-            The baseline of all randomness. <strong>Every equal-sized interval is equally likely.</strong>
+            The baseline of all randomness. <strong>Within its range, every equal-sized interval is equally likely.</strong>
             Before we introduce complex curves, bell shapes, and biases, we start here.
             Whether you're rolling a perfectly fair die or picking a random number between A and B,
             each discrete outcome or equal-width interval has the same probability.
@@ -229,7 +227,7 @@ def render_discrete_section(n):
         height=350,
         margin=dict(l=20, r=20, t=50, b=40),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Stats
     mean = (n + 1) / 2
@@ -242,7 +240,7 @@ def render_discrete_section(n):
         <div class="stat-card">
             <div class="stat-val">{mean:.2f}</div>
             <div class="stat-label">Expected Value (Mean)</div>
-            <div class="stat-formula">E[X] = (a+b)/2</div>
+            <div class="stat-formula">E[X] = (n+1)/2</div>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
@@ -261,7 +259,9 @@ def render_discrete_section(n):
 
 def render_continuous_section(a, b):
     st.markdown('<div class="section-header">🌀 Continuous Uniform: The Infinite Spinner</div>', unsafe_allow_html=True)
-    st.markdown(f"Imagine a spinner that can land on **any real number** between **{a}** and **{b}**. It doesn't just hit integers; it could be {a + 0.12345:.5f} or {b - 0.98765:.5f}. There are infinite possibilities.")
+    example_1 = a + 0.123456 * (b - a)
+    example_2 = a + 0.987654 * (b - a)
+    st.markdown(f"Imagine a spinner that can land on **any real number** between **{a:g}** and **{b:g}**. It doesn't just hit integers; it could be {example_1:.5f} or {example_2:.5f}. There are infinite possibilities.")
    
     st.latex(r"f(x) = \begin{cases} \frac{1}{b - a} & \text{for } a \le x \le b \\ 0 & \text{otherwise} \end{cases}")
 
@@ -275,7 +275,7 @@ def render_continuous_section(a, b):
             </div>
         </div>
         """, unsafe_allow_html=True)
-        st.caption("The spinner wheel stops uniformly anywhere in the 360° circle.")
+        st.caption("Decorative spinner: imagine stopping it at a random moment — every angle from 0° to 360° is equally likely, which is exactly a continuous uniform distribution. (The simulation below draws the actual random values.)")
    
     with col2:
         # Chart
@@ -283,8 +283,9 @@ def render_continuous_section(a, b):
        
         # We need a small pad for x axis
         pad = (b - a) * 0.2
-        x_vals = np.linspace(a - pad, b + pad, 500)
-        y_vals = np.where((x_vals >= a) & (x_vals <= b), height, 0)
+        # Exact rectangle corners so the jumps at a and b are perfectly vertical
+        x_vals = np.array([a - pad, a, a, b, b, b + pad])
+        y_vals = np.array([0, 0, height, height, 0, 0])
        
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -294,7 +295,7 @@ def render_continuous_section(a, b):
             fillcolor='rgba(59, 130, 246, 0.4)',
             mode='lines',
             line=dict(color='#3b82f6', width=3),
-            name=f"PDF f(x) = 1/({b}-{a})"
+            name=f"PDF f(x) = 1/({b:g}-{a:g})"
         ))
        
         # Add dashed lines for boundaries
@@ -312,7 +313,7 @@ def render_continuous_section(a, b):
             margin=dict(l=20, r=20, t=50, b=40),
             showlegend=True
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # Stats
     mean = (a + b) / 2
@@ -323,21 +324,21 @@ def render_continuous_section(a, b):
     with c1:
         st.markdown(f"""
         <div class="stat-card">
-            <div class="stat-val">{mean:.2f}</div>
+            <div class="stat-val">{mean:.4g}</div>
             <div class="stat-label">Expected Value (Mean)</div>
             <div class="stat-formula">E[X] = (a+b)/2</div>
         </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
         <div class="stat-card" style="border-top-color:#3b82f6;">
-            <div class="stat-val" style="color:#60a5fa;">{variance:.2f}</div>
+            <div class="stat-val" style="color:#60a5fa;">{variance:.4g}</div>
             <div class="stat-label">Variance</div>
             <div class="stat-formula">Var(X) = (b-a)²/12</div>
         </div>""", unsafe_allow_html=True)
     with c3:
         st.markdown(f"""
         <div class="stat-card" style="border-top-color:#f43f5e;">
-            <div class="stat-val" style="color:#fb7185;">{std_dev:.2f}</div>
+            <div class="stat-val" style="color:#fb7185;">{std_dev:.4g}</div>
             <div class="stat-label">Std Deviation</div>
             <div class="stat-formula">σ = (b-a)/√12</div>
         </div>""", unsafe_allow_html=True)
@@ -350,7 +351,7 @@ def render_continuous_section(a, b):
 
 def render_simulation(mode, a, b, n):
     st.markdown('<div class="section-header">🛠️ Law of Large Numbers Simulation</div>', unsafe_allow_html=True)
-    st.markdown("Let's draw random samples. Watch how the histogram starts chunky and random, but slowly forms the perfect flat uniform rectangle as we pull more samples.")
+    st.markdown("Let's draw random samples. Watch how the histogram starts chunky and random, but gets closer and closer to the flat uniform shape as we pull more samples.")
    
     n_samples = st.select_slider(
         "Number of Samples to Draw",
@@ -358,65 +359,64 @@ def render_simulation(mode, a, b, n):
         value=500
     )
    
-    if st.button("🚀 Draw Samples!", use_container_width=True):
-        if mode.startswith("Discrete"):
-            samples = np.random.default_rng().integers(1, n + 1, n_samples)
-            fig = go.Figure()
-            # Count frequencies
-            unique, counts = np.unique(samples, return_counts=True)
-            freqs = counts / n_samples
-           
-            # Map all possible faces so missing ones show as 0
-            full_freqs = []
-            for i in range(1, n+1):
-                if i in unique:
-                    idx = np.where(unique == i)[0][0]
-                    full_freqs.append(freqs[idx])
-                else:
-                    full_freqs.append(0)
-                   
-            fig.add_trace(go.Bar(
-                x=list(range(1, n+1)),
-                y=full_freqs,
-                name="Observed Frequency",
-                marker_color='rgba(16, 185, 129, 0.7)',
-                marker_line_color='#34d399',
-                marker_line_width=1
-            ))
-            fig.add_hline(y=1/n, line_dash="dash", line_color="#ef4444", annotation_text=f"True Prob (1/{n})")
-           
-            fig.update_layout(
-                title=f"Discrete Empirical Distribution ({n_samples} rolls)",
-                xaxis_title="Outcome",
-                yaxis_title="Relative Frequency",
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#f8fafc'),
-                xaxis=dict(tickmode='linear', dtick=1)
-            )
-            st.plotly_chart(fig, use_container_width=True)
-           
-        else:
-            samples = np.random.default_rng().uniform(a, b, n_samples)
-            fig = go.Figure()
-            fig.add_trace(go.Histogram(
-                x=samples,
-                histnorm='probability density',
-                name="Observed Density",
-                marker_color='rgba(59, 130, 246, 0.7)',
-                marker_line_color='#60a5fa',
-                marker_line_width=1,
-                nbinsx=30
-            ))
-            fig.add_shape(type="rect", x0=a, y0=0, x1=b, y1=1/(b-a), line=dict(color="#ef4444", width=2, dash="dash"), fillcolor="rgba(0,0,0,0)")
-            fig.add_annotation(x=(a+b)/2, y=1/(b-a), text=f"True Density (1/{b-a})", showarrow=False, yshift=15, font=dict(color="#ef4444"))
-           
-            fig.update_layout(
-                title=f"Continuous Empirical Distribution ({n_samples} draws)",
-                xaxis_title="Value",
-                yaxis_title="Density",
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#f8fafc'),
-                bargap=0.05
-            )
-            st.plotly_chart(fig, use_container_width=True)
+    # Deterministic by default (so the chart survives reruns); the button draws a fresh sample.
+    if st.button("🚀 Draw New Samples!", key="p33_draw_new", width="stretch"):
+        st.session_state["p33_sample_seed"] = st.session_state.get("p33_sample_seed", 0) + 1
+    seed = st.session_state.get("p33_sample_seed", 0)
+    rng = np.random.default_rng(seed)
+    st.caption(f"Sample set #{seed + 1}. Change the slider to draw more or fewer values from the same random stream.")
+
+    if mode.startswith("Discrete"):
+        samples = rng.integers(1, n + 1, n_samples)
+        fig = go.Figure()
+        # Relative frequency of every face (faces never rolled show as 0)
+        full_freqs = np.bincount(samples, minlength=n + 1)[1:] / n_samples
+               
+        fig.add_trace(go.Bar(
+            x=list(range(1, n+1)),
+            y=full_freqs,
+            name="Observed Frequency",
+            marker_color='rgba(16, 185, 129, 0.7)',
+            marker_line_color='#34d399',
+            marker_line_width=1
+        ))
+        fig.add_hline(y=1/n, line_dash="dash", line_color="#ef4444", annotation_text=f"True Prob (1/{n})")
+       
+        fig.update_layout(
+            title=f"Discrete Empirical Distribution ({n_samples} rolls)",
+            xaxis_title="Outcome",
+            yaxis_title="Relative Frequency",
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#f8fafc'),
+            xaxis=dict(tickmode='linear', dtick=1)
+        )
+        st.plotly_chart(fig, width="stretch")
+       
+    else:
+        samples = rng.uniform(a, b, n_samples)
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(
+            x=samples,
+            histnorm='probability density',
+            name="Observed Density",
+            marker_color='rgba(59, 130, 246, 0.7)',
+            marker_line_color='#60a5fa',
+            marker_line_width=1,
+            # Bins aligned exactly with [a, b]; auto "nice" bins would straddle the edges
+            # and make the outer bars systematically too short.
+            xbins=dict(start=a, end=b, size=(b - a) / 30),
+            autobinx=False
+        ))
+        fig.add_shape(type="rect", x0=a, y0=0, x1=b, y1=1/(b-a), line=dict(color="#ef4444", width=2, dash="dash"), fillcolor="rgba(0,0,0,0)")
+        fig.add_annotation(x=(a+b)/2, y=1/(b-a), text=f"True Density 1/(b−a) = {1/(b-a):.4g}", showarrow=False, yshift=15, font=dict(color="#ef4444"))
+       
+        fig.update_layout(
+            title=f"Continuous Empirical Distribution ({n_samples} draws)",
+            xaxis_title="Value",
+            yaxis_title="Density",
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#f8fafc'),
+            bargap=0.05
+        )
+        st.plotly_chart(fig, width="stretch")
 
 def render_ai_connection():
     st.markdown('<div class="section-header">🤖 Why Does AI Care About This?</div>', unsafe_allow_html=True)
@@ -426,7 +426,7 @@ def render_ai_connection():
         ("🎲 Weight Initialization", "#10b981",
          "When a neural network starts, its weights are often initialized using a uniform distribution (e.g., <strong>Xavier/Glorot Uniform</strong> or <strong>He Uniform</strong>) to break symmetry without favoring any specific value."),
         ("🔍 Random Search for Hyperparameters", "#3b82f6",
-         "When tuning models, picking learning rates or dropout rates uniformly at random from a range is often more efficient than a rigid grid search."),
+         "When tuning models, sampling hyperparameters at random is often more efficient than a rigid grid search. Rates like dropout are drawn uniformly from a range; learning rates are usually drawn uniformly on a log scale (e.g. the exponent between −5 and −1)."),
         ("🛡️ Noise Injection & Augmentation", "#f59e0b",
          "Adding uniform random noise to images or audio during training makes models more robust to small, unexpected variations.")
     ]
